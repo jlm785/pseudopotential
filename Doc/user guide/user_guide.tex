@@ -1,0 +1,350 @@
+% Manual for the ATOM program
+%
+% To generate the printed version:
+%
+% pdflatex manual
+%
+%
+\documentclass[11pt]{article}
+
+\tolerance 10000
+\textheight 24cm
+\textwidth 16cm
+\oddsidemargin 1mm
+\topmargin -20mm
+
+\parindent=0cm
+\baselineskip=12pt
+\parskip 5pt
+
+\begin{document}
+
+% TITLE PAGE
+% --------------------------------------------------------------
+
+\begin{titlepage}
+
+\begin{center}
+~
+\vfill
+\vspace{1cm}
+{\Huge {\bf ATOM User Manual}}
+\par\vspace{3cm}
+\hrulefill
+\par\vspace{3cm}
+{\Large {\bf Version 6.0.5, October 2021}}
+\par\vspace{2cm}
+\hrulefill
+
+{\Large Jos\'e Lu\'{\i}s Martins \\
+Departamento de F\'{\i}sica, Instituto Superior T\'ecnico, Lisboa, Portugal
+
+INESC MN, Lisboa, Portugal
+
+\texttt{jlmartins@inesc-mn.pt}
+
+\texttt{jose.l.martins@tecnico.ulisboa.pt}
+}
+vfill
+\end{center}
+
+\end{titlepage}
+% END TITLE PAGE
+% --------------------------------------------------------------
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+\label{sec:intro}
+
+This is a modernized version of a old code that generates and tests pseudopotentials to be
+used in electronic structure theory calculations.
+
+The original code was written by Sverre Froyen at the University of California Berkeley. 
+Phys. Rev. B 26, 1738 (1982), https://doi.org/10.1103/PhysRevB.26.1738
+
+That code had major enhancements by Norman J. Troullier at the University of Minnesota, Minneapolis.
+Phys. Rev. B 43, 1993 (1991), https://doi.org/10.1103/PhysRevB.43.1993
+
+Since then the code has been maintained and improved by Jos\'e Lu\'{\i}s Martins.  Peter Schuster and Manuel Maria Alemany
+wrote new plotting packages.  GGA were introduced by Carlos Balbas and José Soler in a collaboration
+with the SIESTA code.
+
+The present code is a "translation" from old FORTRAN (Fortran 70) to modern Fortran (90 -> present)
+with detailed documentation by Jos\'e Lu\'{\i}s Martins, plus a few enhancements.
+
+\section{Installation}
+\label{sec:install}
+
+\subsection{Step 1: Downloading and extracting the archive}
+\label{sec:step1}
+
+The code is available from Jos\'e Lu\'{\i}s Martins home page:
+
+\noindent\texttt{https://fenix.tecnico.ulisboa.pt/homepage/ist13146/pseudopotential}
+
+and from GitHub
+
+\noindent\texttt{https://github.com/jlm785/}
+
+If you downloaded the \texttt{atom-6.x.y.tgz} file (where \texttt{x} and \texttt{y}
+are the minor version numbers) just extract it,
+
+\noindent\texttt{\$ tar xzf atom-6.x.y.tgz}
+
+and you will have a \texttt{atom-6.x.y} directory
+
+If you cloned the git you alredy have the relevant code in the main directory.
+
+\subsection{Step 2: Generating the documentation}
+\label{sec:step2}
+
+The documentation is in the \texttt{atom-6.x.y/Doc} directory.  It includes a short description of the key input file
+\texttt{atom.dat} taken from the SIESTA documentation by Alberto Garcia, this file, and the means to generate a detailed
+description of the code for developers.
+
+For that detailed description you need doxygen (\texttt{https://www.doxygen.nl}) and 
+graphviz (\texttt{https://graphviz.org/}), both are
+available on most distributions.  To check that your computer has doxygen and graphviz installed
+run the commands
+
+\noindent\texttt{atom-6.x.y/Doc\$ dpkg -s doxygen}
+
+\noindent\texttt{atom-6.x.y/Doc\$ dpkg -s graphviz}
+
+on a Debian based distribution (ubuntu et al), or use equivalent tools (yum, rpm, dnf zypper,...) or the relevant GUI.
+
+If they are not available just install them
+
+\noindent\texttt{atom-6.x.y/Doc\$ sudo apt install doxygen}
+
+\noindent\texttt{atom-6.x.y/Doc\$ sudo apt install graphviz}
+
+again for debian based distros, or use equivalent tools (yum, rpm, dnf zypper,...) or the relevant GUI.
+
+Finally run doxyfile in the doxy directory
+
+\noindent\texttt{atom-6.x.y/Doc/doxy\$ doxygen Doxyfile}
+
+If you know what you are doing you can edit \texttt{atom-6.x.y/Doc/doxy/Doxyfile}.
+
+Finally it is useful to create a link to the file \texttt{atom-6.x.y/Doc/html/index.html}
+
+\noindent\texttt{atom-6.x.y/Doc\$ ln -s html/index.html documentation.html}
+
+Opening that link in your browser will allow you to see the documentation for every file in the present code.
+
+\subsection{Step 3: Compiling the code}
+\label{sec:step3}
+
+The code has been tested with several Fortran compilers, \texttt{ifort} (from Intel oneAPI), 
+\texttt{gfortran} (from gnu), 
+\texttt{pgfortran} (from Portland), and even LLVM (experimental Intel compiler).
+
+As the performance is not an issue for these ``simple'' one-dimensional (radial Schrödinger) calculations
+just use the compiler that is more familiar for you.
+
+The choice of compiler is in the \texttt{atom-6.x.y/Src/make.inc} file.  You may edit it for your convenience,
+but in principle you have to make just two choices.  The first is to identify which CPU you are using,
+as it narrows the choice of possible compilers.  This is done by commenting/uncommenting
+the lines below \texttt{\#   compiler for the job}.
+
+The second is the compiler you want, and is the key decision.  Agaim comment/uncommnet the lines below
+\texttt{\#   Suggestions for compilers}.
+
+For any other modification of the file it is assumed you know what you are doing...
+
+To compile just go to \texttt{atom-6.x.y/Src} and type make
+
+\noindent\texttt{atom-6.x.y\$ cd Src}
+
+\noindent\texttt{atom-6.x.y/Src\$ make}
+
+In a few seconds you should have the main library \texttt{libatom{\_}}\textit{compiler}\texttt{.a} 
+and a few executables \texttt{atom{\_}}\textit{compiler}\texttt{.exe}, etc... 
+where \textit{compiler} is the name of the chosen compiler. 
+As you probably are not interested in comparing compilers, modify
+the script \texttt{copyit} to simplify the names and relocate the executables.  In my case
+I just copy them to \texttt{atom-6.x.y} removing the compiler name.
+
+The code relies on gnuplot (\texttt{http://www.gnuplot.info}) to produce graphics.  Just install it
+on your machine (apt, yum, rpm, dnf zypper,...) if you want to see them.  Otherwise you will
+have to adapt the code to your favorite function plotter.  \texttt{gnuplot} is simple and old,
+just send me your modifications for inclusion in a later release.
+
+
+
+
+\section{Running the code}
+\label{sec:run}
+
+I assume you have a working directory separate from the source.  In the following I will call it
+\texttt{atom-6.x.y/WORK}
+
+This is a code with a long history.  Keeping it back-compatible (the original code still runs fine!)
+makes it easier to check that modifications did not introduce bugs, at the cost of some compromises,
+mainly in the number and format of files.
+
+The old code and new additions communicated through files.  The new code still uses the same file formats
+of several decades ago.
+The good news about the present version, is that except fot their presence in the working directory
+you do not have to worry about them in most cases.
+
+
+\subsection{The all-electron structure}
+\label{sec:run-ae}
+
+The starting point of a pseudopotential construction is an all-electron calculation.
+This is done by running the ``atom'' code:
+
+\noindent\texttt{atom-6.x.y/WORK\$ ../atom.exe}
+
+the program searches for a file \texttt{atom.dat} in the \texttt{WORK} directory with the information on the atomic
+configuration and options of the calculation such as the exchange and correlation model.
+This is the key input file and is described on a separate document adapted from the SIESTA
+documentation.
+
+If the file \texttt{atom.dat} is not present, the code asks the user the chemical symbol of the element to be calculated,
+writes a \texttt{atom.dat} file with tdefault values and runs the calculation.
+The user may edit the \texttt{atom.dat} file to change the default choices, taking into account that the
+file is for fixed format read (back-compatibility).
+
+In \texttt{atom-6.x.y/Doc/atom{\_}table.dat} the user can find an example of input file for elements H to Pu.
+
+At the end of the calculation a file \texttt{datafile.dat} is written with the information of the 
+atomic configuration and self-consistent potential.
+
+
+\subsection{Constructing the pseudopotential}
+\label{sec:run-psd}
+
+The key operation is the construction of the pseudopotential.  To generate the Troullier-Martins
+pseudopotential run
+
+\noindent\texttt{atom-6.x.y/WORK\$ ../psd{\_}gen.exe}
+
+The program reads the all-electron results from the \texttt{datafile.dat}, suggested core radii from the
+\texttt{atom.dat} file, and presents that information plus data on maxima and last node of the
+valence wave-functions to the user and ask if it accepts the defaults.  In the neagative case the user
+chooses new core radii.
+
+At the end of the calculation the user has three new files (back compatibility), an unformatted
+\texttt{pseudo.dat} file used later in tests and compatible with SIESTA,
+a \texttt{plot.dat} file used for later plotting, and
+a formatted \texttt{psd.pot} file compatible with parsec and used for the Kleinman-Bylander transformation.
+This last file is therefore the key output file of the program.
+
+
+\subsection{Visualizing the pseudopotential}
+\label{sec:run-show}
+
+If \texttt{gnuplot} is installed the user can compare pseudo and all-electron wave-functions,
+observe the pseudopotential and respective Fourier transforms by running
+
+\noindent\texttt{atom-6.x.y/WORK\$ ../plot{\_}show.exe}
+
+The program will read \texttt{plot.dat} (or another file chosen by the user) and allow
+the user to change the range of the axis of the plots, and save a \texttt{pdf} version of
+the plots.  If the user doesn't clean the \texttt{*.gp} files at the last question,
+the \texttt{WORK} directory will have several \texttt{command{\_}}{\it name}\texttt{.gp} and
+{\it name}\texttt{.gp} files.  The user can see the plots again with gnuplot
+
+\noindent\texttt{atom-6.x.y/WORK\$ command{\_}}{\it name}\texttt{.gp}
+
+and can edit the command file to change the plot.  The user can also use the data in {\it name}\texttt{.gp} files
+to generate plots with other software, including xmgrace.
+
+
+\subsection{Applying the Kleinman-Bylander transformation.}
+\label{sec:run-KB}
+
+In plane-wave codes the pseudopotential is used in its Kleinman-Bylander form.  That transformation
+plus the generation of an efficient atomic basis set can be achieved by
+
+\noindent\texttt{atom-6.x.y/WORK\$ ../kb{\_}conv.exe}
+
+the program will read the \texttt{psd.pot} file and ask the users if he accepts the defaults and
+in the negative case allows the choice of new parameters.
+
+The key decision here is the choice of the local component of the pseudopotential.  A bad choice
+can introduce ``ghost states'' and the code will check if they appear.
+
+At the end of the calculation the program writes three new files (back compatibility), an unformatted
+\texttt{pseudo{\_}kb.dat} used later in tests,
+a \texttt{plot{\_}kb.dat} file used for later plotting, and
+a formatted {\it Xy}\texttt{{\_}POTKB{\_}F.DAT} file compatible with the \texttt{cpw2000 code} where  {\it Xy}
+is the chemical symbol of the relevant element.
+
+The program also suggests the range of energy cutoffs for the plane-wave calculations.  It is a range because
+different properties converge at different rates.
+
+
+\subsection{Visualizing the KB operators.}
+\label{sec:run-show-KB}
+
+If \texttt{gnuplot} is installed the user can compare the pseudo wave-functions with the atomic basis functions,
+observe the KB operators and respective Fourier transforms, and have an estimate of the rate 
+of convergence of the total energy with plane-wave basis size by running
+
+\noindent\texttt{atom-6.x.y/WORK\$ ../plot{\_}kb{\_}show.exe}
+
+The program will read the \texttt{plot{\_}kb.dat} file or another file specified by the user.  See the section on
+visualizing the pseudopotential for dealing with the files generated by the program.
+
+
+\subsection{Logarithmic derivatives plots.}
+\label{sec:run-show-ln}
+
+If \texttt{gnuplot} is installed the user can generate the plots of the logarithmic derivatives of the
+wave-functions with respect to energy for a given radius with
+
+\noindent\texttt{atom-6.x.y/WORK\$ ../plot{\_}ln{\_}show.exe}
+
+The program will read the \texttt{pseudo.dat}, \texttt{pseudo{\_}kb.dat} and \texttt{datafile.dat} files (or the files specified
+by the user).   See the section on
+visualizing the pseudopotential for dealing with the files generated by the program.
+
+
+\subsection{Testing the pseudopotentials}
+\label{sec:run-test}
+
+By editing the \texttt{atom.dat} file and running
+
+\noindent\texttt{atom-6.x.y/WORK\$ ../atom.exe} 
+
+the user can either see the all electron results for a
+different configuration (\texttt{ae} keyword on the first line and deleting the second line, back-compatibility
+as you should have guessed) or see the result of a different configuration on the pseudopotential
+described in \texttt{pseudo.dat}.  Running
+
+\noindent\texttt{atom-6.x.y/WORK\$ ../atom{\_}kb.exe} 
+
+the user achieves the same type of test for the KB pseudopotential described by \texttt{pseudo{\_}kb.dat}.
+
+A series of tests of ionization and promotion energies can be done with the original \texttt{atom.dat}
+by running
+
+\noindent\texttt{atom-6.x.y/WORK\$ ../atom{\_}test.exe} 
+
+At the end the program will print a comparison of the ionization energies and promotion energies
+with all- electrons pseudopotential and pseudopotential in KB form.
+
+Discrepancies on the range of a few hundreth of eV are to be expected, anything larger
+may indicate a bad paseudopotential.
+
+
+\subsection{Running all of it at once}
+\label{sec:run-all}
+
+Assuming you have gnuplot installed and you copied the executables to the code root, you can run 
+all the code at once with a simple command
+
+\noindent\texttt{atom-6.x.y/WORK\$ ../atom{\_}all.exe Si}
+
+where you can swap the chemical symbol of my prefered element for the chemical symbol of any element
+that interests you from Hydrogen to Oganesson (https://doi.org/10.1103/PhysRevB.26.4199).
+
+You will get several pdf files, and many other files.  Those are described in the previous subsections.
+
+\end{document}

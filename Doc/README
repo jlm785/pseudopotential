@@ -1,0 +1,28 @@
+This directory may contain detailed information of the interfaces of all files, and other
+relevant information.
+
+If documentatin.html is present just open it with your browser.
+
+If documentation.html is not present, check that your computer has doxygen and graphviz installed.
+
+Doc$ dpkg -s doxygen
+Doc$ dpkg -s graphviz
+
+in debian based distributions like ubuntu.
+If they are not just install them
+
+Doc$ sudo apt install doxygen
+Doc$ sudo apt install graphviz
+
+again in Debian based distros.
+
+Run doxygen in the doxy directory
+
+Doc/doxy$ doxygen Doxyfile  
+
+Then just link html/index.html to here
+
+Doc$ ln -s html/index.html documentation.html
+
+If the documentation is already present just refresh the link.
+

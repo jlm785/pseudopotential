@@ -1,0 +1,24 @@
+/*! \mainpage Pseudopotential generation and test program 
+ *
+ * \section intro_sec Introduction
+ *
+ * This is a modernized version of a old code that generates and tests pseudopotentials to be
+ * used in electronic structure theory calculations.
+ *
+ * The original code was written by Sverre Froyen at the University of California Berkeley. 
+ * Phys. Rev. B 26, 1738 (1982), https://doi.org/10.1103/PhysRevB.26.1738
+ *
+ * That code had a major enhancement by Norman J. Troullier at the University of Minnesota, Minneapolis.
+ * Phys. Rev. B 43, 1993 (1991), https://doi.org/10.1103/PhysRevB.43.1993
+ *
+ * Since then the code has been maintained and improved by José Luís Martins.  Peter Schuster and Manuel Maria Alemany
+ * wrote new plotting packages.  GGA were introduced by Carlos Balbas and José Soler in a collaboration
+ * with the SIESTA code.
+ *
+ * The present code is a "translation" from old FORTRAN (Fortran 70) to modern Fortran (90 -> present)
+ * with detailed documentation by José Luís Martins, with the following main enhancements:
+ *
+ * A basis of SIESTA-like atomic orbitals is generated.
+ * Default values for all parameters are available.  
+ * 
+ */
