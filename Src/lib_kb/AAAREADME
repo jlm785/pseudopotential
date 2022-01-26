@@ -1,0 +1,2 @@
+Subroutines used to construct the Kleiman-Bylander projectors (atom_kb_*) and
+test those projectors (atom_kb_test*).

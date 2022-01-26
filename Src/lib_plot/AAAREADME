@@ -1,0 +1,4 @@
+Subroutines for ploting (atom_plot_*) including with KB projectors (atom_plot_kb_*)
+and the log derivatives (atom_plot_ln_*).
+
+TODO:  split codes in plots instead of tasks.  Makes it easier to add/modify plots

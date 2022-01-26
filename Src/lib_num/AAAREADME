@@ -1,0 +1,15 @@
+Numerical subroutines used by the atom program
+
+ft_*.f90         :  Fourier transforms for different situations.  Could be simplified
+                    but if ain't broken don't fix it...
+
+poly_interp.f90  :  Lagrange polynomial interpolation with derivatives.  Couldn't find
+                    a code on the net after googling, and writing was faster than
+                    keeping googling...
+
+sbessj.f90       :  Spherical Bessel function.
+
+spli*.f90        :  Spline interpolation.  A "golden oldie" set of subroutines modernized to fortran90.
+
+broyden*.f90     :  A reverse communication interface to solve non-linear equations.
+

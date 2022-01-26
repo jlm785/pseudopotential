@@ -1,0 +1,8 @@
+This directory contains blas, linpack and lapack subroutines used by the atom program.
+BLAS subroutines were updated to 3.8.0, so have fortran90 features:-)
+linpack subroutines were upgraded to fortran90 style.
+
+lapack subroutines iparmq.f and dlaebz.f may have some warnings during compilation of unused variables...
+
+Old eispack subroutines were replaced with LAPACK subroutines to avoid the obsolescent feature (in fortran2003)
+of a computed GOTO and arithmetic IF.  Unfortunately ilaenv.f still has a computed goto:-(

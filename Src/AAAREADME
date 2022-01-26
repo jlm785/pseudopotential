@@ -1,0 +1,23 @@
+To compile the code, edit make.inc to choose the compiler and respective options.
+
+To compile all programs just run "make".
+
+To clean just run "make clean"
+
+Obviously if you know how to use make you can compile just what you want.
+
+The programs are:
+
+atom.f90          All-electron calculation or pseudopotential test.
+psd_gen.f90       Pseudopotential construction.
+kb_conv.f90       Converts to Kleinman-Bylander form.
+kb_test.f90       Test the pseudopotential in the KB form.
+plot_show.f90     Plots to compare all-electron with pseudopotential results.
+plot_kb_show.f90  Plots related to the KB projectors.
+plot_ln_show.f90  Plots of the log derivatives (scattering) of the potentials.
+
+atom_all.f90      Does all of the above in the correct sequence.
+
+After compiling
+
+"atom_all.exe Si" will just do all the work for the element Si.

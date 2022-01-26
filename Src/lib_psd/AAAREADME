@@ -1,0 +1,4 @@
+Subroutines to construct the pseudopotential (atom_psd_*).
+
+For the moment only the Troullier-Martins pseudopotential is
+implemented (atom_psd_tm2_*).

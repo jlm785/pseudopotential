@@ -1,0 +1,3 @@
+Subroutines used in the all-electron code (atom_atm_*), default configuration
+and parameters for all elements (atom_p_tbl_*), exchange and correlation (atom_xc_*),
+and the version (atom_version.f90).
