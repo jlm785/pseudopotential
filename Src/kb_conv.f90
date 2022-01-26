@@ -13,6 +13,9 @@ program kb_conv
   integer                           ::  iokb                             !  default tape for pseudopotential in KB format
   character(len=12)                  ::  sfilekb                         !  suffix for default tape for writing pseudopotential in KB format
 
+  integer                           ::  ioupf                            !  default tape for pseudopotential in UPF format
+  character(len=7)                  ::  sfileupf                         !  suffix for default tape for writing pseudopotential in UPF format
+
   integer                           ::  iopsdkb                          !  default tape for KB pseudopotential in real space
   character(len=15)                 ::  filepsdkb                        !  name of default tape for writeing KB pseudopotential in real space
 
@@ -50,6 +53,9 @@ program kb_conv
   iokb = 9
   sfilekb = '_POTKB_F.DAT'
 
+  ioupf = 9
+  sfileupf = '_TM.UPF'
+
   iopsdkb = 10
   filepsdkb = 'pseudokb.dat   '
 
@@ -83,7 +89,7 @@ program kb_conv
 
   call atom_kb_sub(llocal, nql, delql, nql, delql,                       &
       lmax_bas, n_bas, r_bas, nz_bas,                                    &
-      iowrite, ioparsec, fileparsec, iokb, sfilekb,                      &
+      iowrite, ioparsec, fileparsec, iokb, sfilekb, ioupf, sfileupf,     &
       iopsdkb, filepsdkb, ioplotkb, fileplotkb, mxdnr, mxdl)
 
   stop

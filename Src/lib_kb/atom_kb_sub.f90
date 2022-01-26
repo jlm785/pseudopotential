@@ -7,7 +7,7 @@
 
 subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
          lmax_bas, n_bas, r_bas, nz_bas,                                 &
-         iowrite, ioparsec, fileparsec, iokb, sfilekb,                   &
+         iowrite, ioparsec, fileparsec, iokb, sfilekb, ioupf, sfileupf,  &
          iopsdkb, filepsdkb, ioplot, fileplot, mxdnr, mxdl)
 
 ! converts a semi-local pseudopotential to the Kleinman and Bylander
@@ -50,6 +50,9 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   integer, intent(in)               ::  iokb                             !<  default tape for pseudopotential in KB format
   character(len=*), intent(in)      ::  sfilekb                          !<  suffix for default tape for writing pseudopotential in KB format
 
+  integer, intent(in)               ::  ioupf                            !<  default tape for pseudopotential in UPF format
+  character(len=*), intent(in)      ::  sfileupf                         !<  suffix for default tape for writing pseudopotential in UPF format
+
   integer , intent(in)              ::  iopsdkb                          !<  default tape for KB pseudopotential in real space
   character(len=15), intent(in)     ::  filepsdkb                        !<  name of default tape for writeing KB pseudopotential in real space
 
@@ -81,6 +84,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   character(len=5)                  ::  version                          !  program version (should be the same as in atomic program)
 
   character(len=30)                 ::  filekb                           !  name of default tape for writing pseudopotential in KB format
+  character(len=30)                 ::  fileupf                           !  name of default tape for writing pseudopotential in upf format
 
 ! variables from the output file of psd_gen
 
@@ -166,6 +170,8 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 
   real(REAL64)                      ::  qb, qa
 
+  character(len=5)                  ::  scorr
+
 ! constants
 
   real(REAL64), parameter           ::  ZERO = 0.0_REAL64, ONE = 1.0_REAL64
@@ -187,7 +193,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   write(iowrite,*)
   write(iowrite,*)
   write(iowrite,'("   Kleinman-Bylander pseudopotential conversion")')
-  write(iowrite,'("   and Bessel/Fourier transform program. Version  ",a4)') version
+  write(iowrite,'("   and Bessel/Fourier transform program. Version  ",a5)') version
   write(iowrite,*)
   write(iowrite,'("   Run on ",a10)') dated
   write(iowrite,*)
@@ -493,12 +499,25 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
          norbas, lo_b, rpsi_b,                                           &
          mxdl, mxdnr, nqmax, nqbas, norbas)
 
+! pseudo file names
+
+  if(icorr == 'pw' .or. icorr == 'ca' .or. icorr == 'PW' .or. icorr == 'CA') then
+    scorr = '_LDA_'
+  elseif(icorr == 'pb' .or. icorr == 'PB') then
+    scorr = '_GGA_'
+  else
+    scorr = '_UNK_'
+  endif
+
   if(nameat(1:1) == ' ') then
     filekb = nameat(2:2)//sfilekb
+    fileupf = nameat(2:2)//scorr//sfileupf
   elseif(nameat(2:2) == ' ') then
     filekb = nameat(1:1)//sfilekb
+    fileupf = nameat(1:1)//scorr//sfileupf
   else
     filekb = nameat//sfilekb
+    fileupf = nameat//scorr//sfileupf
   endif
 
   call atom_kb_psd_out_four(iokb, filekb,                                &
@@ -508,6 +527,11 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
          norbas, lo_b, basft,                                            &
          mxdl, nqmax, nqbas, norbas)
 
+  call atom_kb_psd_out_upf(ioupf, fileupf,                               &
+         nameat, icorr, irel, nicore, irdate, irvers, irayps, ititle,    &
+         nr, r,  zion, vlocal, cdc, cdv,                                 &
+         llocal, lmax_pot, vkbproj, inorm, lmax_pot, rpsi,               &
+         mxdl, mxdnr)
 
   call atom_kb_plot(ioplot, fileplot, irel, nr, r, vlocal,               &
       rpsi(:,:,0), rpsi_b, nqbas, delqbas, ektot,                        &

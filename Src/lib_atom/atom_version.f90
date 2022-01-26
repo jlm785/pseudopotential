@@ -11,7 +11,7 @@ subroutine atom_version(vers)
 
   character(len=5), intent(out)     ::  vers                             !<  version of the code
 
-  vers = '6.0.6'
+  vers = '6.0.7'
 
   return
 
