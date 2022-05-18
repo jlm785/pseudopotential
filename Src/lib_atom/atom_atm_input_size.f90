@@ -1,11 +1,13 @@
 !>  reads by default from atom.dat and obtain the required array dimensions
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.013
-!>  \date         22 June 2021
+!>  \version      6.0.8
+!>  \date         22 June 2021, 21 April 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_atm_input_size(ioread, iopsd, filepsd, mxdnr, mxdorb, mxdl)
+
+! calls default mesh. 21 April 2022. JLM
 
   implicit none
 
@@ -75,6 +77,8 @@ subroutine atom_atm_input_size(ioread, iopsd, filepsd, mxdnr, mxdorb, mxdl)
   integer                    ::  nrm
   integer                    ::  npotd, npotu
 
+  real(REAL64)               ::  rmax_def, aa_def, bb_def
+
 ! counters
 
   integer     ::  i
@@ -126,9 +130,11 @@ subroutine atom_atm_input_size(ioread, iopsd, filepsd, mxdnr, mxdorb, mxdl)
 
 ! set up grid if you are not testing or modifying a pseudopotential
 
-    if (abs(rmax) < EPS) rmax = 120*ONE
-    if (abs(aa) < EPS) aa = 6*ONE
-    if (abs(bb) < EPS) bb = 80*ONE
+    call atom_atm_default_mesh(rmax_def, aa_def, bb_def)
+
+    if (abs(rmax) < EPS) rmax = rmax_def
+    if (abs(aa) < EPS) aa = aa_def
+    if (abs(bb) < EPS) bb = bb_def
 
 !   bb = 40.0 standard
 !   bb = 80.0 2 * standard

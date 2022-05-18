@@ -1,8 +1,8 @@
 !>  atomic self-consistent calculation for a given atomic configuration
 !>
 !>  \author       Sverre Froyen, Norm Troullier, Jose Luis Martins
-!>  \version      6.0.5
-!>  \date         22 June 2021, 5 August 2021. 18 October 2021.
+!>  \version      6.0.8
+!>  \date         22 June 2021, 5 August 2021. 18 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_atm_scf(etotal,                                          &
@@ -15,6 +15,7 @@ subroutine atom_atm_scf(etotal,                                          &
 ! translated to f90 from atm.f version 5.805
 ! vionic, so->iso, vhxc, 12 September 2021. JLM
 ! vhxc in atom_atm_datout. 18 October 2021. JLM
+! deallocate vhxc_in. 18 May 2022. JLM
 
 
 
@@ -400,6 +401,7 @@ subroutine atom_atm_scf(etotal,                                          &
   deallocate(cdv)
 
   deallocate(vhxc_out)
+  deallocate(vhxc_in)
   deallocate(vionic)
 
   deallocate(vhxc_orb)

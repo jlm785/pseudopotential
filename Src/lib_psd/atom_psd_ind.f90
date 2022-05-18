@@ -2,7 +2,7 @@
 !>  to calculate the pseudopotentials for a given angular momentum, spin or j.
 !>
 !>  \author       Sverre Froyen,  Norm Troullier, Jose Luis Martins
-!>  \version      6.0.6
+!>  \version      6.0.8
 !>  \date         1980s and 1990s, 8 July 2021, 2 November 2021.
 !>  \copyright    GNU Public License v2
 
@@ -63,7 +63,7 @@ subroutine atom_psd_ind(indv, indx, nindx, lcmax, norb, ncore, lo, iso,  &
     else
       write(6,*)
       write(6,'("  warning in atom_psd_ind - more than ",i3,             &
-                    " valence orbitals")') mxdnw
+         &           " valence orbitals")') mxdnw
       write(6,'("  with angular momentum ",i2," and 2*spin ",i2," exist")') lo(i), iso(i)
       write(6,*)
     endif

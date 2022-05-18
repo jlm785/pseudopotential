@@ -4,13 +4,14 @@
 !>  User may edit that file to have the other cases.
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.0.7
-!>  \date         22 June 2021, 21 December 2021
+!>  \version      6.0.8
+!>  \date         22 June 2021, 21 April 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_atm_write_sub(ioread, filein, nameat)
 
 ! nval2, jhard. 21 December 2021. JLM
+! default mesh. 21 April 2022. JLM
 
   implicit none
 
@@ -70,9 +71,7 @@ subroutine atom_atm_write_sub(ioread, filein, nameat)
   ispp = ' '
   if(iz > 20) ispp = 'r'
 
-  rmax = 120*ONE
-  aa = 4*ONE
-  bb = 200*ONE
+  call atom_atm_default_mesh(rmax, aa, bb)
 
   jhard = 0
   call atom_p_tbl_config(nameat, ncore, nval, no, lo, zo, jhard)

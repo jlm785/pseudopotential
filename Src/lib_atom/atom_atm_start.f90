@@ -2,8 +2,8 @@
 !>  and sets the initial values of several quantities.
 !>
 !>  \author       Sverre Froyen, Norm Troullier, Carlos Balbas, Jose Luis Martins
-!>  \version      6.0.3
-!>  \date         1980s, 4 August 2021, 12 September 2021.
+!>  \version      6.0.8
+!>  \date         1980s, 4 August 2021, 21 April 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_atm_start(nameat, ctype, ititle, kerker, icorr, ispp,    &
@@ -30,6 +30,7 @@ subroutine atom_atm_start(nameat, ctype, ititle, kerker, icorr, ispp,    &
 ! minor cleanup, new name, 22 June 2021. JLM
 ! separate read file from processing, 4 August 2021. JLM
 ! so->iso 12 September 2021. JLM
+! default mesh. 21 April 2022.
 
 
   implicit none
@@ -119,6 +120,8 @@ subroutine atom_atm_start(nameat, ctype, ititle, kerker, icorr, ispp,    &
 
   integer           ::  iz
   character(len=9)  ::  bdate
+
+  real(REAL64)      ::  rmax_def, aa_def, bb_def
 
   integer           ::  jmax
 
@@ -244,9 +247,11 @@ subroutine atom_atm_start(nameat, ctype, ititle, kerker, icorr, ispp,    &
 
 ! set up grid if you are not testing or modifying a pseudopotential
 
-    if (abs(rmax) < EPS) rmax = 120*UM
-    if (abs(aa) < EPS) aa = 6*UM
-    if (abs(bb) < EPS) bb = 200*UM
+    call atom_atm_default_mesh(rmax_def, aa_def, bb_def)
+
+    if (abs(rmax) < EPS) rmax = rmax_def
+    if (abs(aa) < EPS) aa = aa_def
+    if (abs(bb) < EPS) bb = bb_def
 
 !   bb = 40.0 standard
 !   bb = 80.0 2 * standard
