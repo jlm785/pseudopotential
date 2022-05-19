@@ -1,18 +1,19 @@
 !>  writes the KB pseudopotential in the Quantum Espresso UPF format
 !>
 !>  \author       J.L.Martins
-!>  \version      6.0.7
-!>  \date         October 2018. 25 January 2022.
+!>  \version      6.0.8
+!>  \date         October 2018. 25 January 2022. 19 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_psd_out_upf(iotape, fname,                            &
-      nameat, icorr, irel, nicore, irdate, irvers, irayps, ititle,       &
+      nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,     &
       nr, r,  zion, vlocal, cdc, cdv,                                    &
       llocal, lmax_pot, vkbproj, inorm, lmax_psi, rpsi,                  &
       mxdl, mxdnr)
 
 ! Adapted by JLMartins October 2018
 ! Converted to new style. 25 January 2022. JLM
+! psdtitle, bug/feature reported by Raymond Atta-Fynn, 19 May 2022. JLM
 
   implicit none
 
@@ -34,7 +35,7 @@ subroutine atom_kb_psd_out_upf(iotape, fname,                            &
   character(len=4), intent(in)      ::  nicore                           !<  flag for core correction
   character(len=10), intent(in)     ::  irdate, irvers                   !<  date and version of original calculation
   character(len=10), intent(in)     ::  irayps(4)                        !<  type of pseudopotential
-  character(len=70), intent(in)     ::  ititle                           !<  pseudopotential parameters
+  character(len=10), intent(in)     ::  psdtitle(20)                     !<  pseudopotential parameters
 
   integer, intent(in)               ::  nr                               !<  number of points in the radial grid
   real(REAL64), intent(in)          ::  r(mxdnr)                         !<  radial grid points   r(i) = a*(exp(b*(i-1))-1), i=1,...,nr
@@ -64,6 +65,8 @@ subroutine atom_kb_psd_out_upf(iotape, fname,                            &
   real(REAL64)            ::  occup, rc
 
   integer                 ::  nproj
+
+  character(len=10)       ::  ctemp
 
 ! allocatable local variables
 
@@ -192,7 +195,7 @@ subroutine atom_kb_psd_out_upf(iotape, fname,                            &
 
   do i = 1,nproj
     do j = 1,nproj
-      dij(l,j) = ZERO
+      dij(i,j) = ZERO
     enddo
   enddo
   np = 0
@@ -290,8 +293,12 @@ subroutine atom_kb_psd_out_upf(iotape, fname,                            &
          &    "Relativistic Calculation")')
     endif
 
+!   the use of psdtitle is an hack.  Should be done right...
+
     if(llocal >= 0) then
-      read(ititle(llocal*20+16:llocal*20+20),*) rc
+      ctemp = psdtitle(2*llocal+2)
+      rc = ZERO
+      read(ctemp(6:10),*,iostat=ierr) rc
       write(iotape,'("    L of local component and cutoff radius",      &
            5x,i3,f11.5)') llocal, rc
     else
@@ -302,9 +309,14 @@ subroutine atom_kb_psd_out_upf(iotape, fname,                            &
     write(iotape,'("    Valence configuration:")')
     write(iotape,'("    nl",9x,"occ",12x,"Rcut")')
     do l = 0,lmax_pot
-      read(ititle(l*20+1:l*20+2),*) nl
-      read(ititle(l*20+4:l*20+9),*) occup
-      read(ititle(l*20+16:l*20+20),*) rc
+      ctemp = psdtitle(l*2+1)
+      nl = '  '
+      read(ctemp(1:2),'(a2)',iostat=ierr) nl
+      occup = ZERO
+      read(ctemp(4:9),*,iostat=ierr) occup
+      ctemp = psdtitle(l*2+2)
+      rc = ZERO
+      read(ctemp(6:10),*,iostat=ierr) rc
       if(nl /= '  ') then
         write(iotape,'(4x,a2,5x,f10.4,5x,f10.4)') nl,occup,rc
       endif
@@ -406,7 +418,9 @@ subroutine atom_kb_psd_out_upf(iotape, fname,                            &
         np = np+1
         write(iotape,'(a9,i1)') "<PP_BETA.",np
         write(iotape,'("  index=''",i1,"''")') np
-        read(ititle(l*20+1:l*20+2),*,iostat=ierr) nl
+        ctemp = psdtitle(l*2+1)
+        nl = '  '
+        read(ctemp(1:2),'(a2)',iostat=ierr) nl
         write(iotape,'("  label=''",a2,"''")') nl
         write(iotape,'("  angular_momentum=''",i1,"''")') l
         write(iotape,'("  cutoff_radius_index=''",i6,"''")') nrupf
@@ -431,11 +445,16 @@ subroutine atom_kb_psd_out_upf(iotape, fname,                            &
     do l = 0,lmax_pot
       write(iotape,'(a9,i1)') "<PP_CHI.",l+1
       write(iotape,'("  index=''",i1,"''")') l+1
-      read(ititle(l*20+1:l*20+2),*,iostat=ierr) nl
+      ctemp = psdtitle(l*2+1)
+      nl = '  '
+      read(ctemp(1:2),'(a2)',iostat=ierr) nl
       write(iotape,'("  label=''",a2,"''")') nl
       write(iotape,'("  l=''",i1,"''")') l
-      read(ititle(l*20+4:l*20+9),*,iostat=ierr) occup
-      write(iotape,'("  occupation=''",e22.15,"''")') occup
+      occup = ZERO
+      read(ctemp(4:9),*,iostat=ierr) occup
+      if(ierr == 0) then
+        write(iotape,'("  occupation=''",e22.15,"''")') occup
+      endif
       write(iotape,'("  pseudo_energy=''",e22.15,"''")') ZERO
       write(iotape,'("  cutoff_radius=''",e22.15,"''")') ZERO
       write(iotape,'("  ultrasoft_cutoff_radius=''",e22.15,"''")') ZERO
@@ -457,7 +476,14 @@ subroutine atom_kb_psd_out_upf(iotape, fname,                            &
   close(unit=iotape)
 
   deallocate(rupf,rabupf)
+
   deallocate(vlocupf)
+  deallocate(vnlupf)
+  deallocate(dij)
+  deallocate(chi)
+  deallocate(cdcupf)
+  deallocate(cdvupf)
+
   deallocate(yp,ypp,wlu)
   deallocate(ypi,yppi)
 

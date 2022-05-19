@@ -1,8 +1,8 @@
 !>  Transforms to Fourier space all the radial quantities
 !>
 !>  \author       Norm Troullier, J.L.Martins
-!>  \version      6.0.5
-!>  \date         early 90s, May 2012, 1 September 2021, 20 October 2021.
+!>  \version      6.0.8
+!>  \date         early 90s, May 2012, 1 September 2021, 19 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_pot_four(npot, lo, irel, nicore, nr, r, drdi, zion,   &
@@ -14,6 +14,7 @@ subroutine atom_kb_pot_four(npot, lo, irel, nicore, nr, r, drdi, zion,   &
 ! adapted from the old program jlm 11/6/2012
 ! mxdl, etc... 18 September 2021. JLM
 ! nrm -> nrm-1 bug. 20 October 2021. JLM
+! deallocate, 19 May 2022. JLM
 
 
   implicit none
@@ -59,10 +60,10 @@ subroutine atom_kb_pot_four(npot, lo, irel, nicore, nr, r, drdi, zion,   &
 
   real(REAL64), intent(out)         ::  vlocft(0:nqmax)                  !<  Fourier transform of local pseudopotential
   real(REAL64), intent(out)         ::  vql0                             !<  zero frequency of the integral without the Coulomb part
-  real(REAL64), intent(out)         :: vkbprft(0:nqmax,0:mxdl,-1:1)      !<  Fourier transform of kb-projector
-  real(REAL64), intent(out)         :: cdcft (0:nqmax)                   !<  Fourier transform of 4*pi*r**2 charge density of core
-  real(REAL64), intent(out)         :: cdvft(0:nqmax)                    !<  Fourier transform of 4*pi*r**2 charge density of valence.  kb_conv is not spin polarized...
-  real(REAL64), intent(out)         :: basft(0:nqmaxbas,mxdbas)          !< Fourier (Bessel) transform of the radial wavefunction
+  real(REAL64), intent(out)         ::  vkbprft(0:nqmax,0:mxdl,-1:1)     !<  Fourier transform of kb-projector
+  real(REAL64), intent(out)         ::  cdcft (0:nqmax)                  !<  Fourier transform of 4*pi*r**2 charge density of core
+  real(REAL64), intent(out)         ::  cdvft(0:nqmax)                   !<  Fourier transform of 4*pi*r**2 charge density of valence.  kb_conv is not spin polarized...
+  real(REAL64), intent(out)         ::  basft(0:nqmaxbas,mxdbas)         !< Fourier (Bessel) transform of the radial wavefunction
 
 ! allocatable arrays
 
@@ -177,7 +178,7 @@ subroutine atom_kb_pot_four(npot, lo, irel, nicore, nr, r, drdi, zion,   &
   enddo
 
   deallocate(fin)
-  deallocate(fout)
+  deallocate(fout,yp)
   deallocate(ypwf)
 
   return

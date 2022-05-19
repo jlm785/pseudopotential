@@ -3,8 +3,8 @@
 !>  using a reverse communication interface
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.0.6
-!>  \date         4 November 2021.
+!>  \version      6.0.8
+!>  \date         4 November 2021. 19 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_mrpp_eqsolve_rci(r, drdi, d2rodr, jrc, lo,           &
@@ -12,6 +12,7 @@ subroutine atom_psd_mrpp_eqsolve_rci(r, drdi, d2rodr, jrc, lo,           &
      iowrite, mxdnr)
 
 ! extracted from the atom_psd_tm2 code. 29 October 2021. JLM
+! deallocation, 19 May 2022. JLM
 
   implicit none
 
@@ -121,6 +122,10 @@ subroutine atom_psd_mrpp_eqsolve_rci(r, drdi, d2rodr, jrc, lo,           &
     STOP
 
   endif
+
+  deallocate(fvec)
+  deallocate(xj)
+  deallocate(xjac)
 
   return
 

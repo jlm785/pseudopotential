@@ -2,12 +2,12 @@
 !>  to file fname
 !>
 !>  \author       N. Troullier, J.L.Martins
-!>  \version      6.0.3
-!>  \date         November 1990, April-June 2012, 18 September 2021.
+!>  \version      6.0.8
+!>  \date         November 1990, April-June 2012, 19 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_psd_out_four(iotape, fname,                           &
-      nameat, icorr, irel, nicore, irdate, irvers, irayps, ititle,       &
+      nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,     &
       nql, nqnl, delql, nqbas, delqbas, zion, vql0,                      &
       npot, lo, ev, inorm, vkbprft, vlocft, cdcft, cdvft,                &
       norbas, lo_b, basft,                                               &
@@ -15,6 +15,7 @@ subroutine atom_kb_psd_out_four(iotape, fname,                           &
 
 ! modified by JLMartins 24/4/2012 and 12/6/2012
 ! wv -> bas.  18 September 2021. JLM
+! psdtitle. 19 May 2022. JLM
 
   implicit none
 
@@ -36,7 +37,7 @@ subroutine atom_kb_psd_out_four(iotape, fname,                           &
   character(len=4), intent(in)      ::  nicore                           !<  flag for core correction
   character(len=10), intent(in)     ::  irdate, irvers                   !<  date and version of original calculation
   character(len=10), intent(in)     ::  irayps(4)                        !<  type of pseudopotential
-  character(len=70), intent(in)     ::  ititle                           !<  pseudopotential parameters
+  character(len=10), intent(in)     ::  psdtitle(20)                     !<  pseudopotential parameters
 
   integer, intent(in)               ::  npot(-1:1)                       !<  number of orbitals (s,p,d,...).  -1:  j=l-1/2.  0:  average.  1:  j=l+1/2
   integer, intent(in)               ::  nql                              !<  number of points for the local Fourier grid
@@ -79,8 +80,8 @@ subroutine atom_kb_psd_out_four(iotape, fname,                           &
 
   open (unit = iotape, file = trim(fname), form='FORMATTED', status='UNKNOWN')
 
-  write(iotape,'(1x,a2,1x,a2,1x,a3,1x,a4,1x,6a10,1x,a70)')               &
-       nameat,icorr,irel,nicore,irdate,irvers,irayps,ititle
+  write(iotape,'(1x,a2,1x,a2,1x,a3,1x,a4,1x,6a10,1x,20a10)')             &
+       nameat,icorr,irel,nicore,irdate,irvers,irayps,psdtitle
   write(iotape,*) nint(zion),nql,delql,vql0
 
   if(irel == 'rel') then
@@ -91,7 +92,7 @@ subroutine atom_kb_psd_out_four(iotape, fname,                           &
         (inorm(lo(i,-1),-1),i=1,npot(-1)),                               &
         (inorm(lo(i,1),1),i=1,npot(1))
     write(iotape,*) (ev(lo(i,0),0)*HALF,i=1,npot(0)),                    &
-        (ev(lo(i,-1),-1)*HALF,i=1,npot(-1)),                            &
+        (ev(lo(i,-1),-1)*HALF,i=1,npot(-1)),                             &
         (ev(lo(i,1),1)*HALF,i=1,npot(1))
   else
     write(iotape,'(i5)') npot(0)

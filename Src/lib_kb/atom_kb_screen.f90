@@ -1,8 +1,8 @@
 !>  Calculates the screening potential and total charge
 !>
 !>  \author       N. Troullier, J.L.Martins
-!>  \version      6.0.3
-!>  \date         90s, May 2012, 20 September 2021. JLM
+!>  \version      6.0.8
+!>  \date         90s, May 2012, 19 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_screen(nr, r, drdi, cdv, cdc, icorr, ifcore, totvel, vscreen,   &
@@ -11,6 +11,7 @@ subroutine atom_kb_screen(nr, r, drdi, cdv, cdc, icorr, ifcore, totvel, vscreen,
 ! adapted from the old program jlm 22/5/2012
 ! kb_conv program does not have spin-polarization
 ! mxdnr, iowrite, 20 September 2021. JLM
+! deallocate, 19 May 2022. JLM
 
   implicit none
 
@@ -98,6 +99,10 @@ subroutine atom_kb_screen(nr, r, drdi, cdv, cdc, icorr, ifcore, totvel, vscreen,
   do i = 1,nr
     vscreen(i) = vscrtmp(i,0)
   enddo
+
+  deallocate(y,yp,ypp)
+  allocate(cdtmp,vscrtmp)
+  allocate(w)
 
   return
 

@@ -1,13 +1,14 @@
 !>  reads by default from atom.dat and obtain the required array dimensions
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.0.3
-!>  \date         22 June 2021
+!>  \version      6.0.8
+!>  \date         22 June 2021. 19 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_test_input_size(ioread, iopsd, filepsd, nr, norb, lmax)
 
-! mxdl. 18 September 2021.
+! mxdl. 18 September 2021. JLM
+! psdtitle, 19 May 2022. JLM
 
   implicit none
 
@@ -48,7 +49,7 @@ subroutine atom_kb_test_input_size(ioread, iopsd, filepsd, nr, norb, lmax)
   character(len=2)           ::  icorrt, namet
   character(len=3)           ::  irel
   character(len=4)           ::  nicore
-  character(len=10)          ::  iray(6), ititle(7)
+  character(len=10)          ::  iray(6), psdtitle(20)
 
   integer                    ::  nrm
   integer                    ::  npotd, npotu
@@ -105,7 +106,7 @@ subroutine atom_kb_test_input_size(ioread, iopsd, filepsd, nr, norb, lmax)
   open(unit=iopsd, file=trim(filepsd), form='unformatted', status='unknown')
 
   read(iopsd) namet, icorrt, irel ,nicore, (iray(i),i=1,6),              &
-      (ititle(i),i=1,7), npotd, npotu, nrm
+      (psdtitle(i),i=1,7), npotd, npotu, nrm
 
   nr = nrm + 1
 

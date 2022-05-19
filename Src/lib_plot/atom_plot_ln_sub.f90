@@ -4,8 +4,8 @@
 !>  Kleinman-Bylander pseudopotential
 !>
 !>  \author       Norm Troullier, Manuel Maria Alemany, Jose Luis Martins
-!>  \version      6.0.5
-!>  \date         1980s and 1990s, 21 August 2021, 25 September 2021.
+!>  \version      6.0.8
+!>  \date         1980s and 1990s, 21 August 2021, 19 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_ln_sub(iowrite, iodata, datafile, iopsd, pseudo,    &
@@ -42,6 +42,7 @@ subroutine atom_plot_ln_sub(iowrite, iodata, datafile, iopsd, pseudo,    &
 !  jlmartins@inesc-mn.pt
 
 ! printing. 21 October 2021. JLM
+! remove iray, ititle, 19 May 2022. JLM
 
   implicit none
 
@@ -131,7 +132,6 @@ subroutine atom_plot_ln_sub(iowrite, iodata, datafile, iopsd, pseudo,    &
   character(len=1)                  ::  ispp
   character(len=2)                  ::  icorr, nameat
   character(len=3)                  ::  irel
-  character(len=10)                 ::  iray(6), ititle(7)
 
   integer                           ::  npoint                           !  r(npoint) ~ rpoint
 
@@ -383,7 +383,7 @@ subroutine atom_plot_ln_sub(iowrite, iodata, datafile, iopsd, pseudo,    &
 ! open and read semi-local data from file pseudo
 
   call atom_plot_ln_in_psd(iopsd, pseudo, .FALSE.,                       &
-      nameat, icorr, irel, ifcore, iray, ititle,                         &
+      nameat, icorr, irel, ifcore,                                       &
       norb_ps, lo_ps, iso_ps, nr, r, drdi, d2rodr, znuc,                 &
       vionic, cdc, cdv,  vlocal, vkbproj, inorm,                         &
       mxdorb, mxdl, mxdnr)
@@ -410,7 +410,7 @@ subroutine atom_plot_ln_sub(iowrite, iodata, datafile, iopsd, pseudo,    &
 !   open and read non-local KB data from file pseudokb
 
     call atom_plot_ln_in_psd(iokb, pseudokb, .TRUE.,                     &
-        nameat, icorr, irel, ifcore, iray, ititle,                       &
+        nameat, icorr, irel, ifcore,                                     &
         norb_ps, lo_ps, iso_ps, nr, r, drdi, d2rodr, znuc,               &
         vionic, cdc, cdv,  vlocal, vkbproj, inorm,                       &
         mxdorb, mxdl, mxdnr)

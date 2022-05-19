@@ -7,7 +7,7 @@
 
 subroutine atom_psd_titles(typ, vers, indv, no, zo,                      &
        ispp, ifcore, rc, cfac, zratio, ncore, norb,                      &
-       iray, ititle, nicore, irel, npot,                                 &
+       iray, psdtitle, nicore, irel, npot,                               &
        mxdorb)
 
 ! extracted from pseud2 code. JLM
@@ -44,7 +44,7 @@ subroutine atom_psd_titles(typ, vers, indv, no, zo,                      &
 ! output
 
   character(len=10), intent(out)    ::  iray(6)                          !<  first title
-  character(len=10), intent(out)    ::  ititle(7)                        !<  second title
+  character(len=10), intent(out)    ::  psdtitle(20)                     !<  second title
   character(len=4), intent(out)     ::  nicore                           !<  type of core correction
   character(len=3), intent(out)     ::  irel                             !<  relativistic (or not)
   integer, intent(out)              ::  npot(-1:1)                       !<  number of potentials
@@ -84,15 +84,24 @@ subroutine atom_psd_titles(typ, vers, indv, no, zo,                      &
 
 ! encode the title array.
 
-  do i = 1,7
-    ititle(i) = '          '
+  do i = 1,20
+    psdtitle(i) = '          '
   enddo
 
-! OLD CONVENTION ONLY UP TO D!!!!!                      WARNING
+! paranoid check for future changes
+
+  if(2*lc + 2 > 20) then
+    write(6,*)
+    write(6,*) '  Stopped in atom_psd_titles.  Check LC'
+    write(6,*)
+
+    STOP
+
+  endif
 
   if(ispp == ' ') then
 
-    do l = 0,max(2,lc)
+    do l = 0,lc
       noi = 0
       do i = ncp,norb
         if(indv(l, 0) == i) then
@@ -101,14 +110,14 @@ subroutine atom_psd_titles(typ, vers, indv, no, zo,                      &
         endif
       enddo
       if(noi /= 0) then
-        write(ititle(2*l+1),'(i1,a1,"(",f6.2,")")') noi,IL(l), zelt
-        write(ititle(2*l+2),'(a1," rc=",f5.2)') ispp, rc(l)
+        write(psdtitle(2*l+1),'(i1,a1,"(",f6.2,")")') noi,IL(l), zelt
+        write(psdtitle(2*l+2),'(a1," rc=",f5.2)') ispp, rc(l)
       endif
     enddo
 
   elseif(ispp == 'r') then
 
-    do l = 0,max(2,lc)
+    do l = 0,lc
       noi = 0
       zelt = ZERO
       do i = ncp,norb
@@ -121,15 +130,15 @@ subroutine atom_psd_titles(typ, vers, indv, no, zo,                      &
           zelt = zelt + zo(i)
         endif
       enddo
-      if(noi /= 0 .AND. 2*L+2 < 8) then
-        write(ititle(2*l+1),'(i1,a1,"(",f6.2,")")') noi,IL(l), zelt
-        write(ititle(2*l+2),'(a1," rc=",f5.2)') ispp, rc(l)
+      if(noi /= 0) then
+        write(psdtitle(2*l+1),'(i1,a1,"(",f6.2,")")') noi,IL(l), zelt
+        write(psdtitle(2*l+2),'(a1," rc=",f5.2)') ispp, rc(l)
       endif
     enddo
 
   elseif(ispp == 's') then
 
-    do l = 0,max(2,lc)
+    do l = 0,lc
       noi = 0
       zelu = ZERO
       zeld = ZERO
@@ -143,9 +152,9 @@ subroutine atom_psd_titles(typ, vers, indv, no, zo,                      &
           zelu = zo(i)
         endif
       enddo
-      if(noi /= 0 .AND. 2*L+1 < 8) then
-        write(ititle(2*l+1),'(i1,a1,"(",f6.2,")")') noi,IL(l), zelu
-        write(ititle(2*i),'(f4.2,")",a1,f4.2)') zeld ,ispp, rc(l)
+      if(noi /= 0) then
+        write(psdtitle(2*l+1),'(i1,a1,"(",f6.2,")")') noi,IL(l), zelu
+        write(psdtitle(2*l+2),'(f4.2,")",a1,f4.2)') zeld ,ispp, rc(l)
       endif
     enddo
 

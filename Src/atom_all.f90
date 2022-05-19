@@ -309,6 +309,9 @@ lint = .FALSE.
   call atom_atm_test(iowrite, ioread, filein,                            &
          iopsd, filepsd, iopsdkb, filepsdkb)
 
+  deallocate(n_bas, r_bas, nz_bas)
+  deallocate(r_siesta, r_99)
+
   stop
 
 end program atom_all

@@ -92,6 +92,9 @@ program kb_conv
       iowrite, ioparsec, fileparsec, iokb, sfilekb, ioupf, sfileupf,     &
       iopsdkb, filepsdkb, ioplotkb, fileplotkb, mxdnr, mxdl)
 
+  deallocate(n_bas, r_bas, nz_bas)
+  deallocate(r_siesta, r_99)
+
   stop
 
 end program kb_conv

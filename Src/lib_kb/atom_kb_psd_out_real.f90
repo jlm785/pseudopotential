@@ -2,18 +2,19 @@
 !>  in Kleinman Bylander form in real space
 !>
 !>  \author       Norm Troullier, J.L.Martins
-!>  \version      6.0.3
-!>  \date         90s, 13 August 2021, 18 September 2021.
+!>  \version      6.0.8
+!>  \date         90s, 13 August 2021, 19 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_psd_out_real(iopsd, filepsd,                          &
-      nameat, icorr, irel, nicore, irdate, irvers, irayps, ititle,       &
+      nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,     &
       npot, lo, nr, a, b, r, zion,                                       &
       vlocal, inorm, vkbproj, cdc, cdv,                                  &
       mxdl, mxdnr)
 
 ! adapted from the old program August 2021. JLM
 ! mxdnr, mxdl, 18 September 2021. JLM
+! psdtitle, 19 May 2022. JLM
 
 
   implicit none
@@ -34,7 +35,7 @@ subroutine atom_kb_psd_out_real(iopsd, filepsd,                          &
   character(len=4), intent(in)      ::  nicore                           !<  flag for core correction
   character(len=10), intent(in)     ::  irdate, irvers                   !<  date and version of original calculation
   character(len=10), intent(in)     ::  irayps(4)                        !<  type of pseudopotential
-  character(len=10), intent(in)     ::  ititle(7)                        !<  pseudopotential parameters
+  character(len=10), intent(in)     ::  psdtitle(20)                     !<  pseudopotential parameters
 
   integer, intent(in)               ::  npot(-1:1)                       !<  number of orbitals to be calculated
   integer, intent(in)               ::  lo(mxdl+1,-1:1)                  !<  angular momentum of orbital
@@ -70,9 +71,11 @@ subroutine atom_kb_psd_out_real(iopsd, filepsd,                          &
 
   open(unit = iopsd, file = filepsd, status = 'unknown', form = 'unformatted')
 
+! hack that keeps compatibility with old versions
+
   write(iopsd) nameat, icorr, irel, nicore, irdate, irvers,              &
-     (irayps(i),i=1,4), (ititle(i),i=1,7),                               &
-     npot(0), npot(-1), nrm, a, b, zion
+     (irayps(i),i=1,4), (psdtitle(i),i=1,7),                             &
+     npot(0), npot(-1), nrm, a, b, zion, (psdtitle(i),i=8,20)
 
   write(iopsd) (r(i),i=2,nr)
 

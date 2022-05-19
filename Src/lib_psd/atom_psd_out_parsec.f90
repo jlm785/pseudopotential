@@ -1,12 +1,12 @@
 !>  Writes an output file that is compatible with the parsec and siesta codes
 !>
 !>  \author       FDP (parsec), Jose Luis Martins
-!>  \version      6.0.6
-!>  \date         200s?, May 2018. 30 June 2021. JLM
+!>  \version      6.0.8
+!>  \date         200s?, May 2018. 18 May 2022. JLM
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_out_parsec(itpars, filename, nameat,                 &
-      icorr, irel, nicore, iray, ititle,                                 &
+      icorr, irel, nicore, iray, psdtitle,                               &
       npot, nr, a, b, r, zion, indv, ifcore,                             &
       vpsd, cdc, cdpsd,                                                  &
       cfac, rcfac, ncp, norb, lo, rc, zo, rpsi_ps,                       &
@@ -19,6 +19,7 @@ subroutine atom_psd_out_parsec(itpars, filename, nameat,                 &
 ! converted to f90, 21 May 2018. JLM
 ! Modified rpsi_ps, dimensions, 9 July 2021
 ! rpsi_ps. 2 November 2021. JLM
+! psdtitle, 18 May 2022. JLM
 
   implicit none
 
@@ -43,7 +44,7 @@ subroutine atom_psd_out_parsec(itpars, filename, nameat,                 &
   character(len=4), intent(in)      ::  nicore                           !<  codes type of partial core correction  nc/pcec/...
 
   character(len=10), intent(in)     ::  iray(6)                          !<  code version, date, type of pseudopotential
-  character(len=10), intent(in)     ::  ititle(7)                        !<  configuration, code details
+  character(len=10), intent(in)     ::  psdtitle(20)                     !<  configuration, code details
 
   integer, intent(in)               ::  npot(-1:1)                       !<  number of pseudopotentials
 
@@ -127,7 +128,7 @@ subroutine atom_psd_out_parsec(itpars, filename, nameat,                 &
   open(unit = itpars, file = filename, status = 'unknown', form = 'formatted')
 
   write(itpars,'(1x,a2,1x,a2,1x,a3,1x,a4)') nameat, icorr, irel, nicore
-  write(itpars,'(1x,6a10,/,1x,7a10)') (iray(j),j=1,6), (ititle(j),j=1,7)
+  write(itpars,'(1x,6a10,/,1x,20a10)') (iray(j),j=1,6), (psdtitle(j),j=1,20)
 
   if (ifcore == 0) then
     write(itpars,'(1x,2i3,i5,3g20.12,a20)') npot(id), npot(-1), nrm,     &

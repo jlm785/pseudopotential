@@ -8,6 +8,7 @@
 subroutine atom_atm_input_size(ioread, iopsd, filepsd, mxdnr, mxdorb, mxdl)
 
 ! calls default mesh. 21 April 2022. JLM
+! psdtitle, 18 May 2022. JLM
 
   implicit none
 
@@ -72,7 +73,7 @@ subroutine atom_atm_input_size(ioread, iopsd, filepsd, mxdnr, mxdorb, mxdl)
   character(len=2)           ::  icorrt, namet
   character(len=3)           ::  irel
   character(len=4)           ::  nicore
-  character(len=10)          ::  iray(6), ititle(7)
+  character(len=10)          ::  iray(6), psdtitle(20)
 
   integer                    ::  nrm
   integer                    ::  npotd, npotu
@@ -158,7 +159,7 @@ subroutine atom_atm_input_size(ioread, iopsd, filepsd, mxdnr, mxdorb, mxdl)
     open(unit=iopsd, file=trim(filepsd), form='unformatted', status='unknown')
 
     read(iopsd) namet, icorrt, irel ,nicore, (iray(i),i=1,6),            &
-      (ititle(i),i=1,7), npotd, npotu, nrm
+      (psdtitle(i),i=1,7), npotd, npotu, nrm
 
     mxdnr = nrm + 1
 

@@ -1,8 +1,8 @@
 !>  kb test calculation for a given atomic configuration
 !>
 !>  \author       Norm Troullier, Jose Luis Martins
-!>  \version      6.0.6
-!>  \date         22 June 2021, 13 August 2021. 28 October 2021.
+!>  \version      6.0.8
+!>  \date         22 June 2021, 13 August 2021. 19 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_test_scf(etotal,                                      &
@@ -15,6 +15,7 @@ subroutine atom_kb_test_scf(etotal,                                      &
 ! mxdl. 18 September 2021. JLM
 ! number of iterations. 21 October 2021. JLM
 ! vhxc_orb in dsolv1. 28 October 2021. JLM
+! psdtitle, 19 May 2022. JLM
 
 
   implicit none
@@ -100,8 +101,6 @@ subroutine atom_kb_test_scf(etotal,                                      &
   character(len=3)                  ::  irel                             !  flag for relativistic (r) or spin-polarized (s) original calculation
   integer                           ::  ifcore                           !<  0 no partial core correction, 1 partial xc, 2 partial hartree
   character(len=10)                 ::  irdate, irvers                   !  date and version of original calculation
-  character(len=10)                 ::  irayps(4)                        !  type of pseudopotential
-  character(len=10)                 ::  ititle_kb(7)                     !  pseudopotential parameters
 
   real(REAL64)                      ::  znuc                             !  nuclear charge
   real(REAL64)                      ::  znuc_in                          !  nuclear charge
@@ -206,7 +205,7 @@ subroutine atom_kb_test_scf(etotal,                                      &
   itsm = nint(znuc/9 + 3)
 
   call atom_kb_test_in_real(iopsd, filepsd,                              &
-      nameat, icorr, irel, ifcore, irdate, irvers, irayps, ititle_kb,    &
+      nameat, icorr, irel, ifcore, irdate, irvers,                       &
       npot, lpot, nr, a, b, r, drdi, d2rodr, zion,                       &
       vlocal, inorm, vkbproj, cdc, cdv,                                  &
       mxdl, mxdnr)
@@ -372,6 +371,8 @@ subroutine atom_kb_test_scf(etotal,                                      &
   deallocate(ev)
   deallocate(ek)
   deallocate(ep)
+
+  deallocate(rpsi)
 
   deallocate(vmem)
 

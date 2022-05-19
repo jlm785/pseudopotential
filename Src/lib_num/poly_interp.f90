@@ -4,11 +4,13 @@
 !>  with the small difference algorithm of Numerical Recipes Eq. 3.1.5
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.0.6
-!>  \date         5 July 2021, 6 November 2021.
+!>  \version      6.0.8
+!>  \date         5 July 2021, 6 November 2021. 19 May 2022.
 !>  \copyright    GNU Public License v3
 
 subroutine poly_interp(y, dy, xin, yin, n, nd)
+
+! deallocation, 19 May 2022. JLM
 
   implicit none
 
@@ -108,7 +110,10 @@ subroutine poly_interp(y, dy, xin, yin, n, nd)
 
   enddo
 
-  return
+  deallocate(cmi,dmi)
+  deallocate(xnum)
+
+ return
 
 end subroutine poly_interp
 

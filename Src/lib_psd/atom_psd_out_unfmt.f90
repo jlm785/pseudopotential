@@ -1,12 +1,12 @@
 !>  Writes the old-style pseudopotential unformatted file
 !>
 !>  \author       Sverre Froyen,  Norm Troullier, Jose Luis Martins
-!>  \version      6.013
-!>  \date         1980s and 1990s, 21 May 2018.
+!>  \version      6.0.8
+!>  \date         1980s and 1990s, 18 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_out_unfmt(iopsd, filepsd, nameat,                    &
-       icorr, irel, nicore, iray, ititle,                                &
+       icorr, irel, nicore, iray, psdtitle,                              &
        npot, nr, a, b, r, zion, indv, ifcore,                            &
        vpsd, cdc, cdpsd,                                                 &
        mxdnr)
@@ -14,6 +14,7 @@ subroutine atom_psd_out_unfmt(iopsd, filepsd, nameat,                    &
 
 ! corrected bug reported by Alexander Dobin
 ! converted to f90, 21 May 2018. JLM
+! psdtitle, 18 May 2022. JLM
 
 
   implicit none
@@ -37,7 +38,7 @@ subroutine atom_psd_out_unfmt(iopsd, filepsd, nameat,                    &
   character(len=4), intent(in)      ::  nicore                           !<  codes type of partial core correction  nc/pcec/...
 
   character(len=10), intent(in)     ::  iray(6)                          !<  code version, date, type of pseudopotential
-  character(len=10), intent(in)     ::  ititle(7)                        !<  configuration, code details
+  character(len=10), intent(in)     ::  psdtitle(20)                     !<  configuration, code details
 
   integer, intent(in)               ::  npot(-1:1)                       !<  number of  pseudopotentials
 
@@ -108,8 +109,11 @@ subroutine atom_psd_out_unfmt(iopsd, filepsd, nameat,                    &
 
   open(unit = iopsd, file = filepsd, status = 'unknown', form = 'unformatted')
 
+! keep compatibility with old codes
+
   write(iopsd) nameat, icorr, irel, nicore, (iray(i),i=1,6),             &
-     (ititle(i),i=1,7), npot(id), npot(-1), nrm, a, b, zion
+     (psdtitle(i),i=1,7), npot(id), npot(-1), nrm, a, b, zion,           &
+     (psdtitle(i),i=8,20)
   write(iopsd) (r(i),i=2,nr)
 
 ! Write the potentials to the current pseudo.dat file (unit=1).

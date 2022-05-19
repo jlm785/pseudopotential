@@ -1,8 +1,8 @@
 !>  Chooses the local potential in KB transformation
 !>
 !>  \author       Norm Troullier, J.L.Martins
-!>  \version      6.0.5
-!>  \date         November 90, May 2012, July 2021, 19 October 2021
+!>  \version      6.0.8
+!>  \date         November 90, May 2012, July 2021, 19 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
@@ -30,6 +30,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 ! kinetic, 4 October 2021. JLM
 ! ev for scattering basis functions. 19 October 2021. JLM
 ! printing. 21 October 2021. JLM
+! psdtitle. 19 May 2022. JLM
 
 
   implicit none
@@ -103,7 +104,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
                                                                          !      fcec -> full core correction
   character(len=10)                 ::  irdate,irvers                    !  date and version of original calculation
   character(len=10)                 ::  irayps(4)                        !  type of pseudopotential
-  character(len=70)                 ::  ititle                           !  pseudopotential parameters
+  character(len=10)                 ::  psdtitle(20)                     !  pseudopotential parameters
   integer                           ::  npot(-1:1)                       !  number of orbitals (s,p,d,...). -1:  j=l-1/2.  0:  average.  1:  j=l+1/2
                                                                          !      meaning depends on irel
   integer                           ::  nr                               !  number of points in the radial grid
@@ -256,7 +257,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 
 
   call atom_kb_psd_in_parsec(ioparsec, fileparsec,                       &
-         nameat, icorr, irel, nicore, irdate, irvers, irayps, ititle,    &
+         nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,  &
          npot, nr, a, b, r, zion, lo, vionic, cdc, cdv,                  &
          zo, rc, rpsi(:,:,0),                                            &
          lmax_pot, mxdnr, mxdl)
@@ -266,10 +267,10 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   write(iowrite,'("   The semi-local pseudopotential for ",a2,           &
        &  " was created on ",a10)') nameat, irdate
   write(iowrite,'("   with atomic program version ",a10)') irvers
-  write(iowrite,'("   Pseudopotential type: ",4a10)') irayps
+  write(iowrite,'("   Pseudopotential type: ",4a10)') (irayps(i),i=1,4)
   write(iowrite,*)
   write(iowrite,'("   Pseudo parameters: ")')
-  write(iowrite,'(3x,a70)') ititle
+  write(iowrite,'(3x,20a10)') (psdtitle(i),i=1,20)
   write(iowrite,*)
 
 
@@ -412,7 +413,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 ! writes a file with the results in real space
 
   call atom_kb_psd_out_real(iopsdkb, filepsdkb,                          &
-      nameat, icorr, irel, nicore, irdate, irvers, irayps, ititle,       &
+      nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,     &
       npot, lo, nr, a, b, r, zion,                                       &
       vlocal, inorm, vkbproj,                                            &
       cdc, cdv,                                                          &
@@ -521,14 +522,14 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   endif
 
   call atom_kb_psd_out_four(iokb, filekb,                                &
-         nameat, icorr, irel, nicore, irdate, irvers, irayps, ititle,    &
+         nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,  &
          nql, nqnl, delql, nqbas, delqbas, zion, vql0,                   &
          npot, lo, ev, inorm, vkbprft, vlocft, cdcft, cdvft,             &
          norbas, lo_b, basft,                                            &
          mxdl, nqmax, nqbas, norbas)
 
   call atom_kb_psd_out_upf(ioupf, fileupf,                               &
-         nameat, icorr, irel, nicore, irdate, irvers, irayps, ititle,    &
+         nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,  &
          nr, r,  zion, vlocal, cdc, cdv,                                 &
          llocal, lmax_pot, vkbproj, inorm, lmax_pot, rpsi,               &
          mxdl, mxdnr)
@@ -539,6 +540,42 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
       inorm, vkbproj, nqnl, delql, vkbprft,                              &
       mxdnr, nqmax, mxdl, norbas)
 
+
+  deallocate(r)
+  deallocate(lo)
+  deallocate(vionic)
+  deallocate(cdc,cdv)
+
+  deallocate(zo)
+  allocate(rc)
+
+  deallocate(ev)
+  deallocate(rpsi)
+
+  deallocate(drdi)
+  deallocate(d2rodr)
+
+  deallocate(vscreen)
+
+  deallocate(ektot)
+
+  deallocate(vlocal)
+
+  deallocate(inorm)
+  deallocate(vkbproj)
+
+  deallocate(rpsi_b)
+  deallocate(drpsidr_b)
+  deallocate(veff_b)
+  deallocate(lo_b))
+  deallocate(ev_b)
+  deallocate(nrc_b)
+
+  deallocate(vlocft)
+  deallocate(vkbprft)
+  deallocate(cdcft)
+  deallocate(cdvft)
+  deallocate(basft))
 
   return
 

@@ -1,8 +1,8 @@
 !>  main subroutine to generate a pseudopotential
 !>
 !>  \author       Norm Troullier, Jose Luis Martins
-!>  \version      6.0.6
-!>  \date         April 1990, 30 June 2021, 3 November 2021.
+!>  \version      6.0.8
+!>  \date         April 1990, 30 June 2021, 18 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
@@ -16,6 +16,7 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
 ! printing. 21 October 2021. JLM
 ! indx, rpsi, 3 November 2021. JLM
 ! lrci, 4 November 2021. JLM
+! psdtitle, 18 may 2022. JLM
 
 
   implicit none
@@ -83,7 +84,7 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
 
   character(len=3)     ::  irel
   character(len=4)     ::  nicore
-  character(len=10)    ::  iray(6), ititle(7)
+  character(len=10)    ::  iray(6), psdtitle(20)
 
   integer              ::  isplot
 
@@ -337,17 +338,17 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
 
   call atom_psd_titles('tm2', vers, indv, no, zo,                        &
       ispp, ifcore, rc, cfac, zratio, ncore, norb,                       &
-      iray, ititle, nicore, irel, npot,                                  &
+      iray, psdtitle, nicore, irel, npot,                                &
       mxdorb)
 
   call atom_psd_out_unfmt(iopsd, filepsd, nameat,                        &
-      icorr, irel, nicore, iray, ititle,                                 &
+      icorr, irel, nicore, iray, psdtitle,                               &
       npot, nr, a, b, r, zion, indv, ifcore,                             &
       vpsd, cdc, cdpsd,                                                  &
       mxdnr)
 
   call atom_psd_out_parsec(ioparsec, fileparsec, nameat,                 &
-      icorr, irel, nicore, iray, ititle,                                 &
+      icorr, irel, nicore, iray, psdtitle,                               &
       npot, nr, a, b, r, zion, indv, ifcore,                             &
       vpsd, cdc, cdpsd,                                                  &
       cfac, rcfac, ncore+1, norb, lo, rc, zo, rpsi_ps,                   &

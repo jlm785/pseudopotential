@@ -2,18 +2,19 @@
 !>  in Kleinman Bylander form in real space
 !>
 !>  \author       Norm Troullier, J.L.Martins
-!>  \version      6.0.3
-!>  \date         13 August 2021, 17 September 2021.
+!>  \version      6.0.8
+!>  \date         13 August 2021, 19 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_test_in_real(iopsd, filepsd,                          &
-      nameat, icorr, irel, ifcore, irdate, irvers, irayps, ititle,       &
+      nameat, icorr, irel, ifcore, irdate, irvers,                       &
       npot, lpot, nr, a, b, r, drdi, d2rodr, zion,                       &
       vlocal, inorm, vkbproj, cdc, cdv,                                  &
       mxdl, mxdnr)
 
 ! adapted from the old program August 2021. JLM
 ! mxdl, mxdnr, 17 September 2021. JLM
+! irayps, psdtitle, 19 May 2022. JLM
 
 
   implicit none
@@ -36,8 +37,6 @@ subroutine atom_kb_test_in_real(iopsd, filepsd,                          &
   character(len=3), intent(out)     ::  irel                             !<  flag for relativistic (r) or spin-polarized (s) original calculation
   integer, intent(out)              ::  ifcore                           !<  0 no partial core correction, 1 partial xc, 2 partial hartree
   character(len=10), intent(out)    ::  irdate, irvers                   !<  date and version of original calculation
-  character(len=10), intent(out)    ::  irayps(4)                        !<  type of pseudopotential
-  character(len=10), intent(out)    ::  ititle(7)                        !<  pseudopotential parameters
 
   integer, intent(out)              ::  npot(-1:1)                       !<  number of orbitals to be calculated
   integer, intent(out)              ::  lpot(mxdl+1,-1:1)                !<  angular momentum of potential
@@ -65,6 +64,9 @@ subroutine atom_kb_test_in_real(iopsd, filepsd,                          &
   character(len=2)      ::  icorrt, namet
   integer               ::  nrm
 
+  character(len=10)     ::  irayps(4)                                    !  type of pseudopotential
+  character(len=10)     ::  psdtitle(20)                                 !  pseudopotential parameters
+
 ! parameters
 
   real(REAL64), parameter    ::  ZERO = 0.0_REAL64, UM = 1.0_REAL64
@@ -78,7 +80,7 @@ subroutine atom_kb_test_in_real(iopsd, filepsd,                          &
   open(unit = iopsd, file = filepsd, status = 'old', form = 'unformatted')
 
   read(iopsd) namet, icorrt, irel, nicore, irdate, irvers,               &
-     (irayps(i),i=1,4), (ititle(i),i=1,7),                               &
+     (irayps(i),i=1,4), (psdtitle(i),i=1,7),                             &
      npot(0), npot(-1), nrm, a, b, zion
 
   if(namet /= nameat) then

@@ -2,8 +2,8 @@
 !>  Note that vionic is the ionic potential times r.
 !>
 !>  \author       Sverre Froyen, Norm Troullier, Jose Luis Martins
-!>  \version      6.0.3
-!>  \date         22 June 2021, 11 September 2021.
+!>  \version      6.0.8
+!>  \date         22 June 2021, 18 May 2022.
 !>  \copyright    GNU Public License v2
 
  subroutine atom_atm_vpseudo(ispp, icorr, ifcore,                        &
@@ -28,6 +28,7 @@
 ! adapted from vionic.f
 ! remove Coulomb and rsh, zsh, 6 August 2021. JLM
 ! vionic, cdd, 10 September 2021. JLM
+! psdtitle, 18 May 2022. JLM
 
 
   implicit none
@@ -78,7 +79,7 @@
   character(len=2)           ::  icorrt, namet
   character(len=3)           ::  irel
   character(len=4)           ::  nicore
-  character(len=10)          ::  iray(6), ititle(7)
+  character(len=10)          ::  iray(6), psdtitle(20)
 
   integer                    ::  nrm
   real(REAL64)               ::  zion
@@ -88,6 +89,8 @@
   real(REAL64)               ::  rtry
 
   integer                    ::  lmax                                    !  maximum angular momentum
+
+  integer                    ::  ioerror
 
 ! parameters
 
@@ -103,10 +106,27 @@
 
   allocate(np(0:mxdl,-1:1))
 
+  do i = 1,6
+    iray(i) = '          '
+  enddo
+  do i = 1,20
+    psdtitle(i) = '          '
+  enddo
+
   open(unit=iopsd, file=trim(filepsd), form='unformatted', status='unknown')
 
-  read(iopsd) namet, icorrt, irel ,nicore, (iray(i),i=1,6),              &
-      (ititle(i),i=1,7), npot(1), npot(-1), nrm, a, b, zion
+! keep compatibility with old format
+
+  read(iopsd, iostat = ioerror) namet, icorrt, irel ,nicore,             &
+      (iray(i),i=1,6), (psdtitle(i),i=1,7), npot(1), npot(-1),           &
+      nrm, a, b, zion, (psdtitle(i),i=8,20)
+
+  if(ioerror /= 0) then
+    backspace(unit = iopsd)
+    read(iopsd) namet, icorrt, irel ,nicore,                             &
+      (iray(i),i=1,6), (psdtitle(i),i=1,7), npot(1), npot(-1),           &
+      nrm, a, b, zion
+  endif
 
   ifcore = 0
   if(nicore == 'fcec'.or.nicore == 'pcec') ifcore = 1
@@ -338,8 +358,8 @@
 ! printout
 
   write(iowrite,'(//,1x,a2,2x,a2,2x,a3,2x,a4,"  pseudopotential",        &
-      & " read from tape",/,1x,2a10,5x,4a10,/,1x,7a10,//)')              &
-       namet,icorrt,irel,nicore,(iray(i),i=1,6),(ititle(i),i=1,7)
+      & " read from tape",/,1x,2a10,5x,4a10,/,1x,20a10,//)')             &
+       namet,icorrt,irel,nicore,(iray(i),i=1,6),(psdtitle(i),i=1,20)
 
   if (nameat /= namet) write(iowrite,'(" input element ",a2,             &
       & " not equal to element on tape ",a2,//)') nameat,namet

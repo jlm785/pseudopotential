@@ -2,8 +2,8 @@
 !>  based on the SIESTA recipes
 !>
 !>  \author       J.L.Martins
-!>  \version      6.0.7
-!>  \date         30 August 2021, 17 September 2021.
+!>  \version      6.0.8
+!>  \date         30 August 2021, 19 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_basis_cutoff(tbasis, llocal, lmax_pot,                &
@@ -12,6 +12,7 @@ subroutine atom_kb_basis_cutoff(tbasis, llocal, lmax_pot,                &
 
 ! nrmax -> mxdnr.  17 September 2021. JLM
 ! jhard. 21 december 2021. JLM
+! psdtitle, ifcore. 19 May 2022. JLM
 
   implicit none
 
@@ -62,7 +63,7 @@ subroutine atom_kb_basis_cutoff(tbasis, llocal, lmax_pot,                &
                                                                          !      fcec -> full core correction
   character(len=10)                 ::  irdate,irvers                    !  date and version of original calculation
   character(len=10)                 ::  irayps(4)                        !  type of pseudopotential
-  character(len=70)                 ::  ititle                           !  pseudopotential parameters
+  character(len=10)                 ::  psdtitle(20)                     !  pseudopotential parameters
   integer                           ::  npot(-1:1)                       !  number of orbitals (s,p,d,...). -1:  j=l-1/2.  0:  average.  1:  j=l+1/2
                                                                          !      meaning depends on irel
   integer                           ::  nr                               !  number of points in the radial grid
@@ -79,7 +80,7 @@ subroutine atom_kb_basis_cutoff(tbasis, llocal, lmax_pot,                &
   real(REAL64), allocatable         ::  drdi(:)                          !  d r(i) / d i
   real(REAL64), allocatable         ::  d2rodr(:)                        !  (d^2 r / d i^2) / (d r / d i)
 
-  integer                           ::  itype                            !  derived from nicore
+  integer                           ::  ifcore                           !  derived from nicore
   real(REAL64)                      ::  totvel                           !  total number of valence electrons
   real(REAL64), allocatable         ::  vscreen(:)                       !  screening potential
 
@@ -167,7 +168,7 @@ subroutine atom_kb_basis_cutoff(tbasis, llocal, lmax_pot,                &
 ! reads the pseudopotential data file
 
   call atom_kb_psd_in_parsec(ioparsec, fileparsec,                       &
-         nameat, icorr, irel, nicore, irdate, irvers, irayps, ititle,    &
+         nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,  &
          npot, nr, a, b, r, zion, lo, vionic, cdc, cdv,                  &
          zo, rc, rpsi(:,:,0),                                            &
          lmax_pot, mxdnr, mxdl)
@@ -199,10 +200,14 @@ subroutine atom_kb_basis_cutoff(tbasis, llocal, lmax_pot,                &
   enddo
 
   allocate(vscreen(mxdnr))
-
-  call atom_kb_screen(nr, r, drdi, cdv, cdc, icorr, itype, totvel, vscreen,   &
+  
+  ifcore = 0
+  if(nicore == 'fcec'.or.nicore == 'pcec') ifcore = 1
+  if(nicore == 'fche'.or.nicore == 'pche') ifcore = 2
+  
+  call atom_kb_screen(nr, r, drdi, cdv, cdc, icorr, ifcore, totvel, vscreen,   &
          iowrite, mxdnr)
-
+  
   call atom_kb_wvfct(npot, lo, irel, nr, r, drdi, d2rodr,                &
          vionic, vscreen, ev, rpsi,                                      &
          iowrite, mxdl, mxdnr)
@@ -326,6 +331,9 @@ subroutine atom_kb_basis_cutoff(tbasis, llocal, lmax_pot,                &
   deallocate(veff)
   deallocate(rpsib)
   deallocate(drpsibdr)
+
+  deallocate(drdi)
+  deallocate(d2rodr)
 
   return
 

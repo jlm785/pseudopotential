@@ -2,18 +2,19 @@
 !>  (semi-local or KB non-local)
 !>
 !>  \author       Norm Troullier, J.L.Martins
-!>  \version      6.0.3
-!>  \date         22 August 2021. 25 September 2021.
+!>  \version      6.0.8
+!>  \date         22 August 2021. 19 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_ln_in_psd(iopsd, filepsd, lkb,                      &
-      nameat, icorr, irel, ifcore, iray, ititle,                         &
+      nameat, icorr, irel, ifcore,                                       &
       norb, lo, iso, nr, r, drdi, d2rodr, znuc,                          &
       vionic, cdc, cdv, vlocal, vkbproj, inorm,                          &
       mxdorb, mxdl, mxdnr)
 
 ! adapted from the old program August 2021. JLM
 ! unaverage vionic. 25 September 2021. JLM
+! remove ititle,iray from output, 19 May 2022. JLM
 
   implicit none
 
@@ -37,8 +38,6 @@ subroutine atom_plot_ln_in_psd(iopsd, filepsd, lkb,                      &
 
   character(len=3), intent(out)     ::  irel                             !<  flag for relativistic (r) or spin-polarized (s) original calculation
   integer, intent(out)              ::  ifcore                           !<  0 no partial core correction, 1 partial xc, 2 partial hartree
-  character(len=10), intent(out)    ::  iray(6)                          !<  date version and type of pseudopotential
-  character(len=10), intent(out)    ::  ititle(7)                        !<  pseudopotential parameters
 
   integer, intent(out)              ::  norb                             !<  number of orbitals to be calculated
   integer, intent(out)              ::  lo(mxdorb)                       !<  angular momentum of orbital
@@ -70,6 +69,9 @@ subroutine atom_plot_ln_in_psd(iopsd, filepsd, lkb,                      &
   character(len=4)      ::  nicore                                       !  flag for core correction
   character(len=2)      ::  icorrt, namet
 
+  character(len=10)     ::  iray(6)                                      !  date version and type of pseudopotential
+  character(len=10)     ::  psdtitle(20)                                 !  pseudopotential parameters
+
   real(REAL64)          ::  a, b                                         !  constants used to generate the radial grid
 
   integer               ::  numu
@@ -90,7 +92,7 @@ subroutine atom_plot_ln_in_psd(iopsd, filepsd, lkb,                      &
   open(unit = iopsd, file = trim(filepsd), status = 'old', form = 'unformatted')
 
   read(iopsd) namet, icorrt, irel, nicore, (iray(i),i=1,6),              &
-     (ititle(i),i=1,7), norb, numu, nrm, a, b, znuc
+     (psdtitle(i),i=1,7), norb, numu, nrm, a, b, znuc
 
   nr = nrm + 1
 

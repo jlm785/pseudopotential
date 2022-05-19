@@ -1,18 +1,19 @@
 !>  reads an output file that is compatible with the parsec and siesta codes
 !>
 !>  \author       J.L.Martins
-!>  \version      6.0.3
-!>  \date         25 May 2012, 17 Sepember 2021.
+!>  \version      6.0.8
+!>  \date         25 May 2012, 19 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_psd_in_parsec(iotape, fname,                          &
-    nameat, icorr, irel, nicore, irdate, irvers, irayps, ititle,         &
+    nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,       &
     npot, nr, a, b, r, zion, lo, vionic, cdc, cdv, zo, rc, rpsi_ps,      &
     lmax, mxdnr, mxdl)
 
 !  Written JLMartins
 !  it is based on FDP modifications in parsec's fork of the code.
 !  mxdl, mxdnr, 17 Sepember 2021. JLM
+!  psdtitle, 19 May 2022. JLM
 
   implicit none
 
@@ -44,7 +45,7 @@ subroutine atom_kb_psd_in_parsec(iotape, fname,                          &
 
   character(len=10), intent(out)    ::  irdate,irvers                    !<  date and version of original calculation
   character(len=10), intent(out)    ::  irayps(4)                        !<  type of pseudopotential
-  character(len=70), intent(out)    ::  ititle                           !<  pseudopotential parameters
+  character(len=10), intent(out)    ::  psdtitle(20)                     !<  pseudopotential parameters
 
   integer, intent(out)              :: npot(-1:1)                        !<  number of orbitals (s,p,d,...).  -1:  j=l-1/2.  0:  average.  1:  j=l+1/2
                                                                          !<  meaning it depends on irel
@@ -71,6 +72,7 @@ subroutine atom_kb_psd_in_parsec(iotape, fname,                          &
   integer                       ::  l
   integer                       ::  ios
   integer                       ::  nrm
+  
 
 
 ! parameters
@@ -87,7 +89,18 @@ subroutine atom_kb_psd_in_parsec(iotape, fname,                          &
 
   read(iotape,'(1x,a2,1x,a2,1x,a3,1x,a4)')                               &
                       nameat, icorr, irel, nicore
-  read(iotape,'(1x,2a10,4a10,/,1x,a70)') irvers, irdate, irayps, ititle
+  do i = 1,20
+    psdtitle(i) = '          '
+  enddo
+  read(iotape,'(1x,2a10,4a10,/,1x,20a10)', iostat = ios) irvers, irdate, &
+          irayps, psdtitle
+! keep compatibility with old files
+  if(ios /= 0) then
+    backspace iotape
+    read(iotape,'(1x,2a10,4a10,/,1x,20a10)') irvers, irdate, irayps,     &
+         (psdtitle(i),i=1,7)
+  endif
+ 
   ifcore = 1
   read(iotape,'(1x,2i3,i5,5g20.12)',iostat=ios)                          &
                    npot(1), npot(-1), nrm, a, b, zion, cfac, rcfac
