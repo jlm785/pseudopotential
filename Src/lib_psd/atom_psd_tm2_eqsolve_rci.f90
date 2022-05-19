@@ -118,9 +118,9 @@ subroutine atom_psd_tm2_eqsolve_rci(r, drdi, jrc, lo,                    &
 
   endif
 
-  allocate(fvec)
-  allocate(xj)
-  allocate(xjac)
+  deallocate(fvec)
+  deallocate(xj)
+  deallocate(xjac)
 
   return
 
