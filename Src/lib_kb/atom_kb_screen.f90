@@ -101,8 +101,8 @@ subroutine atom_kb_screen(nr, r, drdi, cdv, cdc, icorr, ifcore, totvel, vscreen,
   enddo
 
   deallocate(y,yp,ypp)
-  allocate(cdtmp,vscrtmp)
-  allocate(w)
+  deallocate(cdtmp,vscrtmp)
+  deallocate(w)
 
   return
 

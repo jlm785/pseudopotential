@@ -547,7 +547,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   deallocate(cdc,cdv)
 
   deallocate(zo)
-  allocate(rc)
+  deallocate(rc)
 
   deallocate(ev)
   deallocate(rpsi)
@@ -567,7 +567,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   deallocate(rpsi_b)
   deallocate(drpsidr_b)
   deallocate(veff_b)
-  deallocate(lo_b))
+  deallocate(lo_b)
   deallocate(ev_b)
   deallocate(nrc_b)
 
@@ -575,7 +575,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   deallocate(vkbprft)
   deallocate(cdcft)
   deallocate(cdvft)
-  deallocate(basft))
+  deallocate(basft)
 
   return
 
