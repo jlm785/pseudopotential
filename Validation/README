@@ -1,0 +1,15 @@
+Checking the full program for all named elements.
+
+The list of named elements is in the file "list_elements"
+
+Running the bash script run.sh will apply the full program to each
+named element.  Edit the path to executable to test the cod eyou want.
+
+For element X a res_X directory will be created with the results for that element.
+Check figures and the file atom.out.  You will also have the pseudopotential
+files that you can use in other codes.
+
+The file "ptb.out" will contain a summary of the code execution.  If everything
+went normal you should see a few lines with comparison of ionization energies and
+excitation energies.  As of 6.0.8 version, the tests for some rare-earths and actinides
+may not complete.
