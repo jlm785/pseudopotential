@@ -5,8 +5,8 @@
 !>  See Gonze, Kackell, and Scheffler, Phy. Rev. B. 41, 12264 (1990)
 !>
 !>  \author       J.L.Martins
-!>  \version      6.0.3
-!>  \date         early 90s, May 2012, 17 August 2021.
+!>  \version      6.0.8
+!>  \date         early 90s, May 2012, 22 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_ghost_test(npot, lo, llocal, irel, nr, r, drdi, d2rodr,    &
@@ -16,6 +16,7 @@ subroutine atom_kb_ghost_test(npot, lo, llocal, irel, nr, r, drdi, d2rodr,    &
 ! adapted from the old program jlm 22/5/2012
 ! converted to f90 10/6/2012
 ! mxdnr, mxdl, 17 August 2021. JLM
+! Tolerance for scattering states. 22 May 2022. JLM
 
   implicit none
 
@@ -51,6 +52,7 @@ subroutine atom_kb_ghost_test(npot, lo, llocal, irel, nr, r, drdi, d2rodr,    &
 
   integer                        ::  l, jmax, iflag
   real(REAL64)                   ::  evt
+  real(REAL64)                   ::  delta
 
 ! allocatable arrays
 
@@ -123,8 +125,11 @@ subroutine atom_kb_ghost_test(npot, lo, llocal, irel, nr, r, drdi, d2rodr,    &
              l, 2*l+j, ev0(l), ev1(l), ev(l,j), inorm(l,j)
         endif
 
-        if( (inorm(l,j) < 0 .and. ev(l,j) > ev0(l)) .or.                 &
-             (inorm(l,j) > 0 .and. ev(l,j) > ev1(l)) ) then
+        delta = ZERO
+        if(ev(l,j) > ZERO) delta = TOL
+
+        if( (inorm(l,j) < 0 .and. ev(l,j) > ev0(l) + delta) .or.         &
+             (inorm(l,j) > 0 .and. ev(l,j) > ev1(l) + delta) ) then
           write(iowrite,'(//,"  WARNING:     GHOST STATE   GHOST!!!",//)')
           if(iowrite /= 6) then
             write(6,'(//,"  WARNING:     GHOST STATE   GHOST!!!",//)')

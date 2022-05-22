@@ -25,7 +25,8 @@ subroutine atom_p_tbl_config(name, ncore, nval, no, lo, zo, jhard)
 
   implicit none
 
-  integer, parameter          :: REAL64 = selected_real_kind(12)
+  integer, parameter          ::  REAL64 = selected_real_kind(12)
+  integer, parameter          ::  lc = 4
 
 ! input
 
@@ -36,8 +37,8 @@ subroutine atom_p_tbl_config(name, ncore, nval, no, lo, zo, jhard)
 
   integer, intent(out)              ::  ncore                            !<  canonical number of core orbitals
   integer, intent(out)              ::  nval                             !<  canonical number of interesting valence orbitals
-  integer, intent(out)              ::  no(5), lo(5)                     !<  configuration
-  real(REAL64), intent(out)         ::  zo(5)                            !<  occupation
+  integer, intent(out)              ::  no(lc+1), lo(lc+1)               !<  configuration
+  real(REAL64), intent(out)         ::  zo(lc+1)                         !<  occupation
 
   real(REAL64), parameter    ::  ONE = 1.0_REAL64
 
@@ -1554,7 +1555,7 @@ subroutine atom_p_tbl_config(name, ncore, nval, no, lo, zo, jhard)
     write(6,*)
     write(6,*)
     write(6,'("  Element ",a2," unknown")') name
-    write(6,'("  Using charge 200")')
+    write(6,'("  Using ncore = 19, nval = 1")')
     write(6,*)
     ncore = 19
     nval = 1

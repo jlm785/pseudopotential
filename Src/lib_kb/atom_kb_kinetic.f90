@@ -67,7 +67,7 @@ subroutine atom_kb_kinetic(npot, lo, zo, irel, nr, r, drdi,              &
 ! parameters
 
   real(REAL64), parameter    ::  ZERO = 0.0_REAL64, ONE = 1.0_REAL64
-  real(REAL64), parameter    ::  SMALL = 1.0E-4_REAL64
+  real(REAL64), parameter    ::  SMALL = 2.0E-4_REAL64
 
 ! counters
 

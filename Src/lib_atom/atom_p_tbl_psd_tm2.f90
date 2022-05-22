@@ -519,7 +519,7 @@ subroutine atom_p_tbl_psd_tm2(name, rc, status)
     rc(2) = 2.80
     rc(3) = 2.80
     status = 'hard guess                    '
-  elseif (name == ' U' .or. name == 'U ') then
+  elseif (name == 'U ' .or. name == ' U') then
     rc(0) = 3.10
     rc(1) = 3.90
     rc(2) = 2.80
@@ -538,139 +538,139 @@ subroutine atom_p_tbl_psd_tm2(name, rc, status)
     rc(3) = 2.80
     status = 'hard guess                    '
   elseif (name == 'Am') then
-    rc(0) = 2.80
+    rc(0) = 2.90
     rc(1) = 3.80
-    rc(2) = 2.80
-    rc(3) = 2.80
+    rc(2) = 2.90
+    rc(3) = 2.90
     status = 'hard guess                    '
   elseif (name == 'Cm') then
-    rc(0) = 2.80
+    rc(0) = 2.90
     rc(1) = 3.80
-    rc(2) = 2.80
-    rc(3) = 2.80
+    rc(2) = 2.90
+    rc(3) = 2.90
     status = 'hard guess                    '
   elseif (name == 'Bk') then
-    rc(0) = 2.80
+    rc(0) = 2.90
     rc(1) = 3.80
-    rc(2) = 2.80
-    rc(3) = 2.80
+    rc(2) = 2.90
+    rc(3) = 2.90
     status = 'hard guess                    '
   elseif (name == 'Cf') then
-    rc(0) = 2.80
+    rc(0) = 2.90
     rc(1) = 3.80
-    rc(2) = 2.80
-    rc(3) = 2.80
+    rc(2) = 2.90
+    rc(3) = 2.90
     status = 'hard guess                    '
   elseif (name == 'Es') then
-    rc(0) = 2.80
+    rc(0) = 3.00
     rc(1) = 3.80
-    rc(2) = 2.80
-    rc(3) = 2.80
+    rc(2) = 2.90
+    rc(3) = 2.90
     status = 'hard guess                    '
   elseif (name == 'Fm') then
-    rc(0) = 2.80
+    rc(0) = 2.90
     rc(1) = 3.80
-    rc(2) = 2.80
-    rc(3) = 2.80
+    rc(2) = 2.90
+    rc(3) = 2.90
     status = 'hard guess                    '
   elseif (name == 'Md') then
     status = 'hard guess                    '
-    rc(0) = 2.80
+    rc(0) = 2.90
     rc(1) = 3.80
-    rc(2) = 2.80
-    rc(3) = 2.80
+    rc(2) = 2.90
+    rc(3) = 2.90
   elseif (name == 'No') then
-    rc(0) = 2.80
+    rc(0) = 2.90
     rc(1) = 3.80
-    rc(2) = 2.80
-    rc(3) = 2.80
+    rc(2) = 2.90
+    rc(3) = 2.90
     status = 'hard guess                    '
   elseif (name == 'Lr') then
-    rc(0) = 2.80
+    rc(0) = 2.90
     rc(1) = 3.80
-    rc(2) = 2.80
-    rc(3) = 2.80
+    rc(2) = 2.90
+    rc(3) = 2.90
     status = 'hard guess                    '
   elseif (name == 'Rf') then
-    rc(0) = 2.80
+    rc(0) = 2.90
     rc(1) = 3.80
-    rc(2) = 2.80
+    rc(2) = 2.90
     status = 'hard guess                    '
   elseif (name == 'Db') then
-    rc(0) = 2.80
+    rc(0) = 2.90
     rc(1) = 3.80
-    rc(2) = 2.80
+    rc(2) = 2.90
     status = 'hard guess                    '
   elseif (name == 'Sg') then
-    rc(0) = 2.80
+    rc(0) = 2.90
     rc(1) = 3.80
-    rc(2) = 2.80
+    rc(2) = 2.90
     status = 'hard guess                    '
   elseif (name == 'Bh') then
-    rc(0) = 2.80
+    rc(0) = 2.90
     rc(1) = 3.80
-    rc(2) = 2.80
+    rc(2) = 2.90
     status = 'hard guess                    '
   elseif (name == 'Hs') then
-    rc(0) = 2.80
+    rc(0) = 2.90
     rc(1) = 3.80
-    rc(2) = 2.80
+    rc(2) = 2.90
     status = 'hard guess                    '
   elseif (name == 'Mt') then
-    rc(0) = 2.80
+    rc(0) = 2.90
     rc(1) = 3.80
-    rc(2) = 2.80
+    rc(2) = 2.90
     status = 'hard guess                    '
   elseif (name == 'Ds') then
-    rc(0) = 2.80
+    rc(0) = 2.90
     rc(1) = 3.80
-    rc(2) = 2.80
+    rc(2) = 2.90
     status = 'hard guess                    '
   elseif (name == 'Rg') then
-    rc(0) = 2.80
+    rc(0) = 2.90
     rc(1) = 3.80
-    rc(2) = 2.80
+    rc(2) = 2.90
     status = 'hard guess                    '
   elseif (name == 'Cn') then
-    rc(0) = 2.80
+    rc(0) = 2.90
     rc(1) = 3.80
-    rc(2) = 2.80
+    rc(2) = 2.90
     status = 'hard guess                    '
   elseif (name == 'Nh') then
-    rc(0) = 2.80
+    rc(0) = 3.00
     rc(1) = 3.80
-    rc(2) = 2.80
+    rc(2) = 3.30
     status = 'hard guess                    '
   elseif (name == 'Fl') then
-    rc(0) = 2.80
+    rc(0) = 3.00
     rc(1) = 3.80
-    rc(2) = 2.80
+    rc(2) = 3.00
     status = 'hard guess                    '
   elseif (name == 'Mc') then
-    rc(0) = 2.80
+    rc(0) = 3.00
     rc(1) = 3.80
-    rc(2) = 2.80
+    rc(2) = 3.00
     status = 'hard guess                    '
   elseif (name == 'Lv') then
-    rc(0) = 2.80
+    rc(0) = 3.00
     rc(1) = 3.80
-    rc(2) = 2.80
+    rc(2) = 3.00
     status = 'hard guess                    '
   elseif (name == 'Ts') then
-    rc(0) = 2.80
+    rc(0) = 3.00
     rc(1) = 3.80
-    rc(2) = 2.80
+    rc(2) = 3.00
     status = 'hard guess                    '
   elseif (name == 'Og') then
-    rc(0) = 2.80
+    rc(0) = 3.00
     rc(1) = 3.80
-    rc(2) = 2.80
+    rc(2) = 3.00
     status = 'hard guess                    '
   else
     write(6,*)
     write(6,*)
     write(6,'("  Element ",a2," unknown")') name
-    write(6,'("  Using charge 200")')
+    write(6,'("  Using rc = 0.0")')
     write(6,*)
     status = 'unknown element               '
   endif

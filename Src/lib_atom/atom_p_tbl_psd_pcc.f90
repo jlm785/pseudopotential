@@ -274,7 +274,7 @@ subroutine atom_p_tbl_psd_pcc(name, pcc, jhard)
     write(6,*)
     write(6,*)
     write(6,'("  Element ",a2," unknown")') name
-    write(6,'("  Using charge 200")')
+    write(6,'("  Using pcc = pg")')
     write(6,*)
     pcc = 'pg'
   endif
