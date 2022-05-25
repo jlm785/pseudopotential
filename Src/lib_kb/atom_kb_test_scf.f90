@@ -2,7 +2,7 @@
 !>
 !>  \author       Norm Troullier, Jose Luis Martins
 !>  \version      6.0.8
-!>  \date         22 June 2021, 13 August 2021. 19 May 2022.
+!>  \date         22 June 2021, 13 August 2021. 25 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_test_scf(etotal,                                      &
@@ -16,6 +16,7 @@ subroutine atom_kb_test_scf(etotal,                                      &
 ! number of iterations. 21 October 2021. JLM
 ! vhxc_orb in dsolv1. 28 October 2021. JLM
 ! psdtitle, 19 May 2022. JLM
+! initialize itype. 25 May 2022. JLM
 
 
   implicit none
@@ -326,6 +327,7 @@ subroutine atom_kb_test_scf(etotal,                                      &
 
 !  Find the total energy.  jlm
 
+  itype = 4
   call atom_atm_etotal(itype, nameat, norb,                              &
       no, lo, iso, zo, etot, ev, ek, ep,                                 &
       iowrite, mxdorb)

@@ -1,11 +1,14 @@
 !>  Swows the comparison of log derivatives of all-electron and pseudo potentials.
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.0.3
-!>  \date         September 2021
+!>  \version      6.0.8
+!>  \date         September 2021. 25 May 2022.
 !>  \copyright    GNU Public License v2
 
 program plot_ln_show
+
+
+! Initializes lkb. 25 May 2022. JLM
 
   implicit none
 
@@ -49,6 +52,7 @@ program plot_ln_show
   integer     ::  l
 
 
+  lkb = .TRUE.
   lint = .TRUE.
 !  lint = .FALSE.
 

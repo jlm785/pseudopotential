@@ -2,11 +2,14 @@
 !>  Four point formula.  4 pi r^2 in the input function
 !>
 !>  \author       Sverre Froyen, Norm Troullier, JL Martins
-!>  \version      6.013
-!>  \date         80s, April 2012
+!>  \version      6.0.8
+!>  \date         80s, April 2012. 25 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine ft_charge(nr, nql, r, drdi, qp, fin, fout)
+
+
+! correct initialization of w and y. 25 May 2022. JLM
 
   implicit none
 
@@ -17,7 +20,7 @@ subroutine ft_charge(nr, nql, r, drdi, qp, fin, fout)
   integer, intent(in)               ::  nr                               !<  number of points in the radial grid
   integer, intent(in)               ::  nql                              !<  number of points for the local Fourier grid
 
-  real(REAL64), intent(in)          ::  r(0:nr)                          !<  radial grid points   r(i) = a*(exp(b*i)-1), i=1,...,nr  
+  real(REAL64), intent(in)          ::  r(0:nr)                          !<  radial grid points   r(i) = a*(exp(b*i)-1), i=1,...,nr
   real(REAL64), intent(in)          ::  drdi(0:nr)                       !<  d r(i) / d i
   real(REAL64), intent(in)          ::  qp(0:nql)                        !<  fourier grid points
 
@@ -34,7 +37,7 @@ subroutine ft_charge(nr, nql, r, drdi, qp, fin, fout)
 ! parameters
 
   real(REAL64), parameter    ::  ZERO = 0.0_REAL64
-  
+
 ! counters
 
   integer     ::  j, k
@@ -46,6 +49,10 @@ subroutine ft_charge(nr, nql, r, drdi, qp, fin, fout)
     w(j) = drdi(j)*fin(j)/r(j)
   enddo
   w(0) = ZERO
+  do j = nr+1,nr+4
+    w(j) = ZERO
+    y(j) = ZERO
+  enddo
 
   do k = 1,nql
     fout(k) = ZERO

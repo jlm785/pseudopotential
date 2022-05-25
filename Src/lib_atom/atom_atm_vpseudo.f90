@@ -3,7 +3,7 @@
 !>
 !>  \author       Sverre Froyen, Norm Troullier, Jose Luis Martins
 !>  \version      6.0.8
-!>  \date         22 June 2021, 18 May 2022.
+!>  \date         22 June 2021, 25 May 2022.
 !>  \copyright    GNU Public License v2
 
  subroutine atom_atm_vpseudo(ispp, icorr, ifcore,                        &
@@ -29,6 +29,7 @@
 ! remove Coulomb and rsh, zsh, 6 August 2021. JLM
 ! vionic, cdd, 10 September 2021. JLM
 ! psdtitle, 18 May 2022. JLM
+! initialize np. 25 May 2022. JLM
 
 
   implicit none
@@ -105,6 +106,12 @@
 ! read pseudopotentials from iopsd
 
   allocate(np(0:mxdl,-1:1))
+
+  do j = -1,1
+  do i = 0,mxdl
+    np(i,j) = 0
+  enddo
+  enddo
 
   do i = 1,6
     iray(i) = '          '

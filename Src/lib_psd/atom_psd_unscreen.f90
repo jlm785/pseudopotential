@@ -1,8 +1,8 @@
 !>  unscreens the pseudopotential
 !>
 !>  \author       Norm Troullier, Jose Luis Martins
-!>  \version      6.013
-!>  \date         1980s and 1990s, 30 June 2021
+!>  \version      6.0.8
+!>  \date         1980s and 1990s, 30 June 2021, 25 May 2022.
 !>  \copyright    GNU Public License v2
 
 
@@ -16,6 +16,7 @@ subroutine atom_psd_unscreen(ifcore, icorr, ispp, nr, r, drdi,           &
 ! pseudopotential generation subroutines were broken in several subroutines
 ! and converted to f90.
 ! Modified (cleaning) 8 July 2021. JLM
+! Initializes vpsd. 25 May 2022. JLM
 
 !mmga  modifications from early Sverre code by Manuel Maria Gonzalez Alemany
 !njtj  modifications from early Sverre code by Norm Troullier
@@ -100,8 +101,18 @@ subroutine atom_psd_unscreen(ifcore, icorr, ispp, nr, r, drdi,           &
 
 ! counters
 
-  integer     ::  i, j
+  integer     ::  i, j, l
 
+
+! initializes vpsd
+
+  do i =-1,1
+  do l = 0,lc
+  do j = 1,mxdnr
+    vpsd(j,l,i) = ZERO
+  enddo
+  enddo
+  enddo
 
 ! Reset the n quantum numbers to include all valence orbitals.
 ! Compute the ratio between the valence charge present and the

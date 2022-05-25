@@ -3,7 +3,7 @@
 !>
 !>  \author       Peter Schuster, Manuel Maria Alemany, Jose Luis Martins
 !>  \version      6.0.8
-!>  \date         4 September 2021, 21 October 2021. 19 May 2022.
+!>  \date         4 September 2021, 21 October 2021. 25 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_kb_input (iowrite, ioplot,                          &
@@ -19,6 +19,7 @@ subroutine atom_plot_kb_input (iowrite, ioplot,                          &
 ! kinetic, 9 October 2021. JLM
 ! printing. New interface. 21 October 2021. JLM
 ! deallocate, 19 May 2022. JLM
+! initialized px,py. 25 May 2022. JLM
 
 
   implicit none
@@ -82,12 +83,20 @@ subroutine atom_plot_kb_input (iowrite, ioplot,                          &
 
 ! constants
 
+  real(REAL64), parameter       ::  ZERO = 0.0_REAL64
   character(len=1), parameter   ::  IL(7) = (/'s','p','d','f','g','h','i'/)
 
 ! counters
 
-  integer     ::  i
+  integer     ::  i, j
 
+
+  do j = 1,nump
+  do i = 1,nmax
+    px(i,j) = ZERO
+    py(i,j) = ZERO
+  enddo
+  enddo
 
   allocate(absc(nmax),ord(nmax))
 

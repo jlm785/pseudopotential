@@ -1,11 +1,14 @@
 !>  Calls the whole atomic pseudo-potential test plot chain
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.0.6
-!>  \date         21 October 2021
+!>  \version      6.0.8
+!>  \date         21 October 2021. 25 May 2022.
 !>  \copyright    GNU Public License v2
 
 program atom_all
+
+
+! Initializes lkb. 25 May 2022. JLM
 
   implicit none
 
@@ -279,6 +282,8 @@ lint = .FALSE.
 
   call atom_psd_print_info(iowrite, ioae, fileae, nameat)
 
+  lkb = .TRUE.
+
   if(lint) then
 
     write(6,*)' Enter distance (in a.u.) at which the'
@@ -286,8 +291,6 @@ lint = .FALSE.
     read(5,*) rpoint
     write(6,*)
     write(6,*)
-
-    lkb = .TRUE.
 
   else
 

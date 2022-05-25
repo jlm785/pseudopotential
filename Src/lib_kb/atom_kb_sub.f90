@@ -2,7 +2,7 @@
 !>
 !>  \author       Norm Troullier, J.L.Martins
 !>  \version      6.0.8
-!>  \date         November 90, May 2012, July 2021, 19 May 2022.
+!>  \date         November 90, May 2012, July 2021, 25 May 2022.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
@@ -31,6 +31,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 ! ev for scattering basis functions. 19 October 2021. JLM
 ! printing. 21 October 2021. JLM
 ! psdtitle. 19 May 2022. JLM
+! dated. 25 May 2022. JLM
 
 
   implicit none
@@ -81,7 +82,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 
 ! general variables
 
-  character(len=10)                 ::  dated                            !  date of calculation
+  character(len=9)                  ::  dated                            !  date of calculation
   character(len=5)                  ::  version                          !  program version (should be the same as in atomic program)
 
   character(len=30)                 ::  filekb                           !  name of default tape for writing pseudopotential in KB format
