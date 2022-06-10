@@ -99,6 +99,12 @@ program atom_all
 
   logical                           ::  lint                             !  interactive run
 
+  integer                           ::  iz                               !  atomic number
+
+  character(len=3)                  ::  tbasisin                         !  type of basis in program line
+  character(len=3)                  ::  pccin                            !  type of partial core correction in program line
+  character(len=1)                  ::  xin                              !  switches to expert mode
+
 ! parameters
 
   real(REAL64), parameter    ::  ONE = 1.0_REAL64
@@ -110,7 +116,8 @@ program atom_all
 
 ! interactivity
 !  lint = .TRUE.
-lint = .FALSE.
+
+  lint = .FALSE.
 
 ! only warnings go to default output
 ! iowrite = 6
@@ -152,11 +159,49 @@ lint = .FALSE.
     open(unit=iowrite,file='atom.out',form='FORMATTED',status='UNKNOWN')
   endif
 
+! checks if the program is run with line arguments
+
   narg = command_argument_count()
 
-  if(narg == 1) then
+  tbasisin = '   '
+  pccin = '   '
+  xin = ' '
+
+  if(narg > 0) then
 
     call get_command_argument(1,nameat)
+
+    if(nameat == '-h') then
+
+      write(6,*)
+      write(6,*) '  Run the code without arguments or'
+      write(6,*) '  with a chemical symbol as first argument.'
+      write(6,*)
+      write(6,*) '  Second argument is yes/no for with/without'
+      write(6,*) '  partial core corrections for exchange and correlation.'
+      write(6,*)
+      write(6,*) '  Third argument is SZ/DZ/DZP for choice of basis set.'
+      write(6,*)
+      write(6,*) '  Fourth argument is x for entering expert mode.'
+      write(6,*)
+      write(6,*) '  If the argument does not match, default values are used.'
+      write(6,*)
+
+      stop
+
+    endif
+
+    call atom_p_tbl_charge(nameat,iz)
+
+    if(iz > 150) then
+
+      write(6,*)
+      write(6,*) '  Unknown element, STOPPING'
+      write(6,*)
+
+      stop
+
+    endif
 
     inquire(file=filein, exist = lex)
 
@@ -174,7 +219,39 @@ lint = .FALSE.
     call atom_atm_write_sub(ioread, filein, nameat)
     write(6,*)
 
+!   more then one argument
+
+    if(narg > 1) then
+
+      call get_command_argument(2,pccin)
+
+      if(pccin == 'YES') pccin = 'yes'
+      if(pccin == 'NO ') pccin = 'no '
+      if(iz < 3) pccin = '   '
+
+      if(narg > 2) then
+
+        call get_command_argument(3,tbasisin)
+
+        if(tbasisin == 'sz ') tbasisin = 'SZ '
+        if(tbasisin == 'dz ') tbasisin = 'DZ '
+        if(tbasisin == 'dzp') tbasisin = 'DZP'
+
+        if(narg > 3) then
+
+         call get_command_argument(4,xin)
+
+         if(xin == 'x' .or. xin == 'X') lint = .TRUE.
+
+        endif
+
+      endif
+
+    endif
+
   else
+
+!   no line arguments when the code was run
 
     inquire(file=filein, exist = lex)
 
@@ -191,6 +268,19 @@ lint = .FALSE.
 
       nameat = '  '
       read(5,*) nameat
+
+      call atom_p_tbl_charge(nameat,iz)
+
+      if(iz > 150) then
+
+        write(6,*)
+        write(6,*) '  Unknown element, STOPPING'
+        write(6,*)
+
+        stop
+
+      endif
+
       call atom_atm_write_sub(ioread, filein, nameat)
       write(6,*)
 
@@ -229,6 +319,9 @@ lint = .FALSE.
       ifcore = ifcore_tab
     endif
 
+    if(pccin == 'yes') ifcore = 1
+    if(pccin == 'no ') ifcore = 0
+
   endif
 
 ! constructs the pseudopotential
@@ -248,7 +341,8 @@ lint = .FALSE.
   nql = 4000
   delql = 0.01_REAL64
   tbasis = 'DZP'
-
+  if(tbasisin == 'SZ ') tbasis = 'SZ '
+  if(tbasisin == 'DZ ') tbasis = 'DZ '
 
   call atom_kb_psd_in_parsec_size(ioparsec, fileparsec, lmax_pot, mxdnr)
 
