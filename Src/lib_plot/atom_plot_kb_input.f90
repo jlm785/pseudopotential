@@ -20,6 +20,7 @@ subroutine atom_plot_kb_input (iowrite, ioplot,                          &
 ! printing. New interface. 21 October 2021. JLM
 ! deallocate, 19 May 2022. JLM
 ! initialized px,py. 25 May 2022. JLM
+! labelv, 6 July 2022. JLM
 
 
   implicit none
@@ -157,7 +158,7 @@ subroutine atom_plot_kb_input (iowrite, ioplot,                          &
 
       if(marker(1:3) == 'loc') then
 
-         labelv = 'Local potential'
+         labelv = 'Local pot.  '
          numbv = number-1
          do i = 1,numbv
            vr(i) = absc(i)

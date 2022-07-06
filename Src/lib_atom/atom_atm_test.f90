@@ -64,11 +64,13 @@ subroutine atom_atm_test(iowrite, ioread, filein,                        &
   real(REAL64)                      ::  epsd_ref                         !  pseudopotential reference energy
   real(REAL64)                      ::  ekb_ref                          !  KB projector reference energy
 
-  real(REAL64)                      ::  zui, zdi                         !  amount of ionization
-  real(REAL64)                      ::  zux, zdx                         !  amount of excitation
+  real(REAL64)                      ::  zui, zdi                         !  amount of ionization/excitation
+  real(REAL64)                      ::  zux, zdx                         !  amount of ionization/excitation
 
   real(REAL64)                      ::  ztot                             !  valence charge
+  real(REAL64)                      ::  zz                               !  excitation charge
 
+  integer                           ::  nx                               !  number of excitations calculated
 
   integer, allocatable              ::  ni(:)                            !  valence principal quantum number
   integer, allocatable              ::  li(:)                            !  valence angular quantum number
@@ -82,6 +84,9 @@ subroutine atom_atm_test(iowrite, ioread, filein,                        &
   real(REAL64), allocatable         ::  exct_ae(:)                       !  all-electron excitation
   real(REAL64), allocatable         ::  exct_psd(:)                      !  pseudopotential excitation
   real(REAL64), allocatable         ::  exct_kb(:)                       !  KB projector excitation
+
+  logical, allocatable              ::  lempty(:), lfull(:)              !  indicates mostly empty or full orbital
+  real(REAL64), allocatable         ::  zexct(:), zexct2(:)              !  excitation charge
 
 ! constants
 
@@ -125,6 +130,11 @@ subroutine atom_atm_test(iowrite, ioread, filein,                        &
   allocate(exct_ae(nval*nval))
   allocate(exct_psd(nval*nval))
   allocate(exct_kb(nval*nval))
+  allocate(zexct(nval*nval))
+  allocate(zexct2(nval*nval))
+
+  allocate(lempty(nval))
+  allocate(lfull(nval))
 
 ! calculates the all-electron reference energy
 
@@ -207,68 +217,94 @@ subroutine atom_atm_test(iowrite, ioread, filein,                        &
 
   enddo
 
-! loop over valence states for excitation energies
+! minimum of ionization to make it worth
 
   if(nval > 1) then
 
-    do n = 1,nval-1
+    do n = 1,nval
+      if(zu(n) + zd(n) < ONE/10) then
+        lempty(n) = .TRUE.
+      else
+        lempty(n) = .FALSE.
+      endif
+      if(zu(n) + zd(n) > 2*(2*li(n)+1)*ONE - ONE/10) then
+        lfull(n) = .TRUE.
+      else
+        lfull(n) = .FALSE.
+      endif
+    enddo
 
-      zui = min(zu(n),ONE)
-      zdi = min(zd(n),ONE-zui)
 
-!     minimum of ionization to make it worth
+!   double loop over valence states for excitation energies
 
-      if(zui + zdi > ONE/10) then
+    nx = 0
+    do n = 1,nval
+    do n2 = 1,nval
+
+      if(n2 /= n .and. (.not. lempty(n)) .and. (.not. lfull(n2))) then
+
+        nx = nx + 1
+
+        zz = 2*(2*li(n2)+1)*ONE - zu(n2) - zd(n2)
+        zz = min(zz,zu(n)+zd(n),ONE)
+
+        zui = min(zu(n),zz)
+        zdi = zz - zui
 
         zd(n) = zd(n) - zdi
         zu(n) = zu(n) - zui
 
-        do n2 = n+1,nval
+        if(li(n2) > 2) then
+          zdx = zdi / 2
+          zux = zui / 2
+        else
+          zdx = zdi
+          zux = zui
+        endif
 
-          zdx = min((2*li(n2)+1)*ONE - zd(n2),zdi+zui)
-          zux = zdi + zui - zdx
+        zd(n2) = zd(n2) + zdx
+        zu(n2) = zu(n2) + zux
 
-          zd(n2) = zd(n2) + zdx
-          zu(n2) = zu(n2) + zux
+        ctype = 'ae'
 
-          ctype = 'ae'
+        call atom_atm_scf(etotal,                                    &
+            nameat, ctype, ititle, kerker, icorr, ispp,              &
+            znuc, rmax, aa, bb, ncore, nval, ni, li, zd, zu, evd,    &
+            iowrite, 0, fileae, iopsd, filepsd,                      &
+            mxdnr, mxdorb, mxdl)
 
-          call atom_atm_scf(etotal,                                      &
-              nameat, ctype, ititle, kerker, icorr, ispp,                &
-              znuc, rmax, aa, bb, ncore, nval, ni, li, zd, zu, evd,      &
-              iowrite, 0, fileae, iopsd, filepsd,                        &
-              mxdnr, mxdorb, mxdl)
+        exct_ae((n-1)*nval+n2) = etotal - eae_ref
 
-          exct_ae(n*nval+n2) = etotal - eae_ref
+        ctype = 'pt'
 
-          ctype = 'pt'
+        call atom_atm_scf(etotal,                                    &
+            nameat, ctype, ititle, kerker, icorr, ispp,              &
+            znuc, rmax, aa, bb, ncore, nval, ni, li, zd, zu, evd,    &
+            iowrite, 0, fileae, iopsd, filepsd,                      &
+            mxdnr, mxdorb, mxdl)
 
-          call atom_atm_scf(etotal,                                      &
-              nameat, ctype, ititle, kerker, icorr, ispp,                &
-              znuc, rmax, aa, bb, ncore, nval, ni, li, zd, zu, evd,      &
-              iowrite, 0, fileae, iopsd, filepsd,                        &
-              mxdnr, mxdorb, mxdl)
+        exct_psd((n-1)*nval+n2) = etotal - epsd_ref
 
-          exct_psd(n*nval+n2) = etotal - epsd_ref
+        call atom_kb_test_scf(etotal,                                &
+            nameat, ititle, icorr, ispp,                             &
+            nval, ni, li, zd, zu, evd,                               &
+            iowrite, iopsdkb, filepsdkb,                             &
+            mxdnr, mxdorb, mxdl)
 
-          call atom_kb_test_scf(etotal,                                  &
-              nameat, ititle, icorr, ispp,                               &
-              nval, ni, li, zd, zu, evd,                                 &
-              iowrite, iopsdkb, filepsdkb,                               &
-              mxdnr, mxdorb, mxdl)
+        exct_kb((n-1)*nval+n2) = etotal - ekb_ref
 
-          exct_kb(n*nval+n2) = etotal - ekb_ref
-
-          zd(n2) = zd(n2) - zdx
-          zu(n2) = zu(n2) - zux
-
-        enddo
+        zexct((n-1)*nval+n2) = -zdi - zui
+        zexct2((n-1)*nval+n2) = zdx + zux
 
         zd(n) = zd(n) + zdi
         zu(n) = zu(n) + zui
 
+        zd(n2) = zd(n2) - zdx
+        zu(n2) = zu(n2) - zux
+
       endif
 
+    enddo
     enddo
 
   endif
@@ -314,54 +350,53 @@ subroutine atom_atm_test(iowrite, ioread, filein,                        &
 
   write(6,*)
 
-  if(nval > 1) then
+  if(nx > 0 .and. nval > 1) then
 
     write(6,*)
     write(6,*) '   Comparison of excitation energies (eV)'
     write(6,*)
-    write(6,*) '   nl      nl     all-electron   pseudo      KB-proj'
+    write(6,*) '   nl      nl     all-electron   pseudo      KB-proj      charge'
     write(6,*)
 
     if(iowrite /= 6) then
       write(iowrite,*)
       write(iowrite,*) '   Comparison of excitation energies (eV)'
       write(iowrite,*)
-      write(iowrite,*) '   nl      nl     all-electron   pseudo      KB-proj'
+      write(iowrite,*) '   nl      nl     all-electron   pseudo      KB-proj      charge'
       write(iowrite,*)
     endif
 
 
     do n = 1,nval
+    do n2 = 1,nval
 
-      zui = min(zu(n),ONE)
-      zdi = min(zd(n),ONE-zui)
+      if(n2 /= n .and. (.not. lempty(n)) .and. (.not. lfull(n2))) then
 
-!     minimum of ionization to make it worth
+        write(6,'(3x,i2,a1,5x,i2,a1,3(5x,f8.3),5x,2f6.2)')               &
+            ni(n),                                                       &
+            IL(li(n)), ni(n2), IL(li(n2)),                               &
+            exct_ae((n-1)*nval+n2)*RYDBERG,                              &
+            exct_psd((n-1)*nval+n2)*RYDBERG,                             &
+            exct_kb((n-1)*nval+n2)*RYDBERG,                              &
+            zexct((n-1)*nval+n2),                                        &
+            zexct2((n-1)*nval+n2)
 
-      if(zui + zdi > ONE/10) then
+        if(iowrite /= 6) then
 
-        do n2 = n+1,nval
+          write(iowrite,'(3x,i2,a1,5x,i2,a1,3(5x,f8.3),5x,2f6.2)')       &
+            ni(n),                                                       &
+            IL(li(n)), ni(n2), IL(li(n2)),                               &
+            exct_ae((n-1)*nval+n2)*RYDBERG,                              &
+            exct_psd((n-1)*nval+n2)*RYDBERG,                             &
+            exct_kb((n-1)*nval+n2)*RYDBERG,                              &
+            zexct((n-1)*nval+n2),                                        &
+            zexct2((n-1)*nval+n2)
 
-          write(6,'(3x,i2,a1,5x,i2,a1,3(5x,f8.3))') ni(n),                &
-                IL(li(n)), ni(n2), IL(li(n2)),                            &
-                exct_ae(n*nval+n2)*RYDBERG,                               &
-                exct_psd(n*nval+n2)*RYDBERG,                              &
-                exct_kb(n*nval+n2)*RYDBERG
-
-          if(iowrite /= 6) then
-
-            write(iowrite,'(3x,i2,a1,5x,i2,a1,3(5x,f8.3))') ni(n),        &
-                IL(li(n)), ni(n2), IL(li(n2)),                            &
-                exct_ae(n*nval+n2)*RYDBERG,                               &
-                exct_psd(n*nval+n2)*RYDBERG,                              &
-                exct_kb(n*nval+n2)*RYDBERG
-
-          endif
-
-        enddo
+        endif
 
       endif
 
+    enddo
     enddo
 
   endif
@@ -380,6 +415,11 @@ subroutine atom_atm_test(iowrite, ioread, filein,                        &
   deallocate(exct_ae)
   deallocate(exct_psd)
   deallocate(exct_kb)
+
+  deallocate(lempty)
+  deallocate(lfull)
+  deallocate(zexct)
+  deallocate(zexct2)
 
   return
 
