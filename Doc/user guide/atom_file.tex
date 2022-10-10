@@ -53,10 +53,10 @@
 \hrulefill
 
 {\Large Alberto Garc\'{\i}a \\
- Universidad del Pa\'{\i}s Vasco, Bilbao, SPAIN 
+ Universidad del Pa\'{\i}s Vasco, Bilbao, SPAIN
 
-  wdpgaara@lg.ehu.es\\
-  
+  wdpgaara@lg.ehu.es
+
 Adapted by Jos\'e Lu\'{\i}s Martins, October 2021.
   }
 \vfill
@@ -145,34 +145,26 @@ Also, the book by Richard Martin
 J.M. Soler, E. Artacho, J.D. Gale, A. Garcia, J. Junquera, P. Ordejon,
 D. Sanchez-Portal, ``The SIESTA method for ab initio O(N)
 materials simulation'', Jour. Phys.: Condens. Matter, 14, 2745-2779
-(2002). 
+(2002).
 
 \end{itemize}
 
-\section{COMPILING THE PROGRAM}
-
-Edit {\tt make.inc} in the main source directory {\tt Src}, and modify, if
-needed.
-
-Type {\tt make}. After a short while you will have several executables
-in that same directory. The program should work for any atom
-without recompilation. 
 
 
-\section{USING THE ATOM PROGRAM}
+\section{THE ATOM INPUT FILE}
 
 
 \subsection{All-electron calculations}
 
 Assume we want to find the orbital eigenvalues, total energy, and/or
-charge density of Si in its ground state. You should now go to a ``working'' 
+charge density of Si in its ground state. You should now go to a ``working''
 directory and try the following:  Our
-input file is named {\tt atom.dat} and contains the lines (see 
+input file is named {\tt atom.dat} and contains the lines (see
 Sect.~\ref{sec:inputfile} for more details):
 
 \begin{verbatim}
    ae     Si   ground state all-electron
- n=Si c=ca 
+ n=Si c=ca
       14.0       0.0       0.0     120.0       6.0      80.0
     3    2
     3    0     2.00      0.00
@@ -206,7 +198,7 @@ every other energy in the program):
 \subsection{Pseudopotential generation}
 
 To generate a pseudopotential for Si, using
-the Troullier-Martins scheme repeat the calculation with relativistic 
+the Troullier-Martins scheme repeat the calculation with relativistic
 effects (although they are quite small) and
 use the LDA (Ceperley-Alder flavor). The input file
 contains the lines (see Sect.~\ref{sec:inputfile} for more
@@ -215,7 +207,7 @@ details):
 \begin{verbatim}
    pg     Si     Silicon
         tm2
- n=Si c=car 
+ n=Si c=car
       14.0       0.0       0.0     120.0       6.0      80.0
     3    4
     3    0     2.00      0.00
@@ -224,7 +216,7 @@ details):
     4    3     0.00      0.00
     1.90     1.90     1.90     1.90
    pg      Silicon
-                                     
+
 #23456789012345678901234567890123456789012345678901234567890      Ruler
 \end{verbatim}
 
@@ -232,9 +224,9 @@ Note the two extra lines with respect to an all-electron calculation.
 The pseudopotential core radii for all channels are 1.90 bohrs. Even
 though they are nominally empty in the ground state, we include the
 $3d$ and $4f$ states in order to generate the corresponding
-pseudopotentials. 
+pseudopotentials.
 
-We can run the calculation by typing again 
+We can run the calculation by typing again
 \textit{pathtoexecutables}\texttt{/atom.exe $>$ atom.out}
 
 The {\tt atom.out} file now has the spin-orbit effect and we
@@ -288,7 +280,7 @@ outside a given radius $r_{pc}$, and has the smooth form
 $$
 \rho_{pc}(r) = A r   \sin(b r)
 $$
-inside that radius. A smooth matching is provided with suitable $A$ 
+inside that radius. A smooth matching is provided with suitable $A$
 and $b$ parameters calculated by the program.
 
 A new scheme has been implemented to fix some problems in the generation
@@ -305,7 +297,7 @@ The radius $r_{pc}$ should be  given in the sixth slot in the last
 input line (see above). If it is negative or zero (or blank), the
 radius is then computed using the fifth number in that line ({\tt
 rcore\_flag}, see the example input file above)
-and the following criterion: at $r_{pc}$ the core charge density 
+and the following criterion: at $r_{pc}$ the core charge density
 equals {\tt rcore\_flag}*(valence charge density).
 It is {\it highly recommended} to set an explicit value for the pseudocore
 radius $r_{pc}$, rather than letting the program provide a default.
@@ -334,7 +326,7 @@ Tutorial} directory.
 The file itself is:
 \begin{verbatim}
    ae     Si   ground state all-electron
- n=Si c=ca 
+ n=Si c=ca
        0.0       0.0       0.0       0.0       0.0       0.0
     3    2
     3    0     2.00      0.00
@@ -348,7 +340,7 @@ The file itself is:
 	\begin{itemize}
 	\item The calculation code ({\tt ae} here stands for ``all-electron'').
 	\item A title for the job (here {\tt Si ground state all-electron}).
-	\end{itemize} 
+	\end{itemize}
 	(format 3x,a2,a50)
 
 \item Second line:
@@ -362,11 +354,11 @@ The file itself is:
           of the PBE scheme by Perdew, Burke, and Ernzerhof (PRL 77,
           3865 (1996)).
 	  The exchange-correlation energy and potential
-	  are computed using the Soler-Balb\'as package. 
-   
+	  are computed using the Soler-Balb\'as package.
+
 	\item The character {\tt r} next to {\tt ca} is a flag to perform the
           calculation relativistically, that is, solving the Dirac equation
-          instead of the Schrodinger equation. 
+          instead of the Schrodinger equation.
 	  The full range of options is:
 	    \begin{itemize}
 		\item {\tt s} : Spin-polarized calculation, non-relativistic.
@@ -375,7 +367,7 @@ The file itself is:
            		calculation.
 	    \end{itemize}
 	\end{itemize}
-	
+
 	(format 3x,a2,3x,a2,a1,2x)
 
 \item Third line. Its use is somewhat esoteric and for most
@@ -387,7 +379,7 @@ If it is zero the program will get it from the chemical symbol of the previous l
 The second and third number are there for historical reasons.  Their values are
 never used.  The fourth to sixth numbers specify the integration mesh.
 Again if they are zero the code uses default values.
-The fourth number is the maximum range of the radius values $r_{\rm max}$.  
+The fourth number is the maximum range of the radius values $r_{\rm max}$.
 The sixth number $B$ controls the increment between consecutive grid points.
 $r(n+1) \sim (1+1/B) r(n)$, in other words it takes about $B$ points to increase the
 radius in the mesh by about $e$.  The fifth number $A$ controls the first non-zero
@@ -401,7 +393,7 @@ $a = exp(-A)/Z$, $b = 1/B$, $r(i) = a*(exp(b*(i-1))-1)$, $r(i) < r_{\rm max}$.
 The rest of the file is devoted to the specification of the electronic
 configuration:
 
-\begin{itemize} 
+\begin{itemize}
 
 \item Fourth line:\\
 	 Number of core and valence orbitals. For example, for Si, we
@@ -415,7 +407,7 @@ orbital)
 	\begin{itemize}
 	\item {\tt n} (principal quantum number)
 	\item {\tt l} (angular momentum quantum number)
-	\item Occupation of the orbital in electrons. 
+	\item Occupation of the orbital in electrons.
 	\end{itemize}
 
 	(format 2i5,3f10.3)
@@ -428,7 +420,7 @@ orbital)
 
 \end{itemize}
 
-	
+
 The different treatment of core and valence orbitals in the input for an
 all-electron calculation is purely cosmetic. The program ``knows'' how
 to fill the internal orbitals in the right order, so it is only
@@ -440,7 +432,7 @@ For compatibility with the old code, the file should end
 with an empty line.  The new code doesn't care about it.
 
 For a {\bf pseudopotential test calculation}, the format is exactly
-the same, except that the job code is {\tt pt} instead of {\tt ae}. 
+the same, except that the job code is {\tt pt} instead of {\tt ae}.
 
 
 For a {\bf pseudopotential generation run}, in addition to the
@@ -451,7 +443,7 @@ radii $r_c$ for the construction of the pseudowavefunction. Here is an
 example for Si using the Troullier-Martins scheme:
 
 \begin{verbatim}
-# 
+#
    pg Si Pseudopotencial
         tm2     2.00
    Si   ca
@@ -470,10 +462,10 @@ Apart from the {\tt pg} (pseudopotential generation) job code in the
 first line, there are two extra lines:
 
 \begin{itemize}
-\item Second line: 
+\item Second line:
 
 Flavor and radius at which to compute logarithmic
-derivatives for test purposes. 
+derivatives for test purposes.
 
 The flavor can be one of :
 \begin{tabular}{ll}
@@ -493,7 +485,7 @@ $p$, $d$, and $f$ orbitals (it is a good practice to input the valence
 orbitals in the order of increasing angular momentum, so that there is
 no possible confusion).
 
-(format 4f10.5)  
+(format 4f10.5)
 
 \item Two extra fields (2f10.5) which are relevant only if non-local
 core corrections are used (see Sect~\ref{sec:cc}).
@@ -506,7 +498,7 @@ in the $s$ and $p$ channels for our pseudopotential, and use the Kerker
 scheme:
 
 \begin{verbatim}
-# 
+#
    pg Si Kerker generation
         ker     2.00
    Si   ca
@@ -521,8 +513,7 @@ scheme:
 
 
 This completes the discussion of the more common features of the input
-file. See the Appendix~\ref{sec:directives} for more advanced options.
-
+file.
 %\addcontentsline{toc}{section}{Index}
 %\printindex
 

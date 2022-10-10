@@ -101,9 +101,9 @@ program atom_all
 
   integer                           ::  iz                               !  atomic number
 
+  character(len=2)                  ::  firstarg                         !  first argument
   character(len=3)                  ::  tbasisin                         !  type of basis in program line
   character(len=3)                  ::  pccin                            !  type of partial core correction in program line
-  character(len=1)                  ::  xin                              !  switches to expert mode
 
 ! parameters
 
@@ -165,83 +165,106 @@ program atom_all
 
   tbasisin = '   '
   pccin = '   '
-  xin = ' '
 
   if(narg > 0) then
 
-    call get_command_argument(1,nameat)
+    call get_command_argument(1,firstarg)
 
-    if(nameat == '-h') then
+    if(firstarg == '-h') then
 
       write(6,*)
       write(6,*) '  Run the code without arguments or'
-      write(6,*) '  with a chemical symbol as first argument.'
+      write(6,*) '  with a chemical symbol as first argument, or'
+      write(6,*) '  with -x  as first argument to enter an interactive mode.'
       write(6,*)
       write(6,*) '  Second argument is yes/no for with/without'
       write(6,*) '  partial core corrections for exchange and correlation.'
       write(6,*)
       write(6,*) '  Third argument is SZ/DZ/DZP for choice of basis set.'
       write(6,*)
-      write(6,*) '  Fourth argument is x for entering expert mode.'
-      write(6,*)
-      write(6,*) '  If the argument does not match, default values are used.'
+      write(6,*) '  If the arguments do not match, or are not present, default values are used.'
       write(6,*)
 
       stop
 
     endif
 
-    call atom_p_tbl_charge(nameat,iz)
+    if(firstarg == '-x') then
 
-    if(iz > 150) then
+      lint = .TRUE.
 
       write(6,*)
-      write(6,*) '  Unknown element, STOPPING'
+      write(6,*)
+      write(6,*) '  Enter chemical symbol'
       write(6,*)
 
-      stop
+      nameat = '  '
+      read(5,*) nameat
 
-    endif
+      call atom_p_tbl_charge(nameat,iz)
 
-    inquire(file=filein, exist = lex)
+      if(iz > 150) then
 
-    if(lex) then
+        write(6,*)
+        write(6,*) '  Unknown element, STOPPING'
+        write(6,*)
+
+        stop
+
+      endif
+
+      call atom_atm_write_sub(ioread, filein, nameat)
       write(6,*)
-      write(6,*) '  Cannot overwrite ',filein
-      write(6,*) '  rm ',filein
-      write(6,*) '  before re-running the code'
+
+    else
+
+      nameat = firstarg
+
+      call atom_p_tbl_charge(nameat,iz)
+
+      if(iz > 150) then
+
+        write(6,*)
+        write(6,*) '  Unknown element, STOPPING'
+        write(6,*)
+
+        stop
+
+      endif
+
+      inquire(file=filein, exist = lex)
+
+      if(lex) then
+        write(6,*)
+        write(6,*) '  Cannot overwrite ',filein
+        write(6,*) '  rm ',filein
+        write(6,*) '  before re-running the code'
+        write(6,*)
+
+        stop
+
+      endif
+
+      call atom_atm_write_sub(ioread, filein, nameat)
       write(6,*)
 
-      stop
+!     more then one argument
 
-    endif
+      if(narg > 1) then
 
-    call atom_atm_write_sub(ioread, filein, nameat)
-    write(6,*)
+        call get_command_argument(2,pccin)
 
-!   more then one argument
+        if(pccin == 'YES') pccin = 'yes'
+        if(pccin == 'NO ') pccin = 'no '
+        if(iz < 3) pccin = '   '
 
-    if(narg > 1) then
+        if(narg > 2) then
 
-      call get_command_argument(2,pccin)
+          call get_command_argument(3,tbasisin)
 
-      if(pccin == 'YES') pccin = 'yes'
-      if(pccin == 'NO ') pccin = 'no '
-      if(iz < 3) pccin = '   '
-
-      if(narg > 2) then
-
-        call get_command_argument(3,tbasisin)
-
-        if(tbasisin == 'sz ') tbasisin = 'SZ '
-        if(tbasisin == 'dz ') tbasisin = 'DZ '
-        if(tbasisin == 'dzp') tbasisin = 'DZP'
-
-        if(narg > 3) then
-
-         call get_command_argument(4,xin)
-
-         if(xin == 'x' .or. xin == 'X') lint = .TRUE.
+          if(tbasisin == 'sz ') tbasisin = 'SZ '
+          if(tbasisin == 'dz ') tbasisin = 'DZ '
+          if(tbasisin == 'dzp') tbasisin = 'DZP'
 
         endif
 

@@ -18,7 +18,7 @@ again in Debian based distros.
 
 Run doxygen in the doxy directory
 
-Doc/doxy$ doxygen Doxyfile  
+Doc/doxy$ doxygen Doxyfile
 
 Then just link html/index.html to here
 
@@ -26,3 +26,15 @@ Doc$ ln -s html/index.html documentation.html
 
 If the documentation is already present just refresh the link.
 
+
+
+If you have LaTeX installed go to the userguide directory and run it (twice) on
+the two TeX files,
+
+Doc/user guide$ pdflatex atom_file
+Doc/user guide$ pdflatex atom_file
+Doc/user guide$ pdflatex user_guide
+Doc/user guide$ pdflatex user_guide
+
+to have a description of the atom.dat file adapted from the SIESTA documentation and a user
+guide on how to compile and run the present code.
