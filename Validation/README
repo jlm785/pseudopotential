@@ -11,5 +11,4 @@ files that you can use in other codes.
 
 The file "ptb.out" will contain a summary of the code execution.  If everything
 went normal you should see a few lines with comparison of ionization energies and
-excitation energies.  As of 6.0.8 version, the tests for some rare-earths and actinides
-may not complete.
+excitation energies.

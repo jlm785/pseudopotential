@@ -67,9 +67,9 @@ ifeq ($(F77),ifort)
    # PROF=-g
 
    ifeq ($(DEBUG),false)
-      FCOPTS=-xHost -O3 $(PROF)
+      FCOPTS=-xHost -O3 $(PROF) -diag-disable=10448
    else
-      FCOPTS=-check all -warn all,nodec,interfaces,noexternal -gen-interfaces -traceback -fpe0 -fp-stack-check -g
+      FCOPTS=-check all -warn all,nodec,interfaces,noexternal -gen-interfaces -traceback -fpe0 -fp-stack-check -g -O0 -diag-disable=10448
    endif
 
 endif
@@ -95,7 +95,7 @@ ifeq ($(F77),gfortran)
 
    else
 
-      FCOPTS=-g -Wall -fbounds-check -pedantic-errors -ffpe-trap=zero,invalid,overflow,underflow
+      FCOPTS=-g -Wall -fbounds-check -pedantic-errors -ffpe-trap=zero,invalid,overflow
 
    endif
 

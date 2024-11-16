@@ -2,7 +2,7 @@
 !>  See L.Kleinman and D.M.Bylander, Phys.Rev.Lett. 48, 1425 (1982).
 !>
 !>  \author       Norm troullier, J.L.Martins
-!>  \version      6.0.3
+!>  \version      6.0.9
 !>  \date         early 90s, May 2012, 18 September 2021.
 !>  \copyright    GNU Public License v2
 
@@ -16,6 +16,7 @@ subroutine atom_kb_projector(npot, lo, nr, r, drdi, irel, llocal,        &
 ! The projector is |vkb Ylm>(inorm)<Ylm vkb| with inorm =-1,0,1
 ! bug in inorm(l=0,j=1) corrected 25/5/2014
 ! mxdl, mxdnr, iowrite, 20 September 2021. JLM
+! Initialize output to zero (not needed). 16 November 2024. JLM
 
   implicit none
 
@@ -68,6 +69,9 @@ subroutine atom_kb_projector(npot, lo, nr, r, drdi, irel, llocal,        &
   write(iowrite,*)
 
   allocate(w(nr))
+
+  inorm(:,:) = 0
+  vkbproj(:,:,:) = ZERO
 
   jmax=0
   if(irel == 'rel') jmax = 1

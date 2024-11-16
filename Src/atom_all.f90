@@ -39,7 +39,7 @@ program atom_all
   character(len=12)                  ::  sfilekb                         !  suffix for default tape for writing pseudopotential in KB format
 
   integer                           ::  ioupf                            !  default tape for pseudopotential in UPF format
-  character(len=7)                  ::  sfileupf                         !  suffix for default tape for writing pseudopotential in UPF format
+  character(len=6)                  ::  sfileupf                         !  suffix for default tape for writing pseudopotential in UPF format
 
   integer                           ::  iopsdkb                          !  default tape for KB pseudopotential in real space
   character(len=15)                 ::  filepsdkb                        !  name of default tape for writeing KB pseudopotential in real space
@@ -142,7 +142,7 @@ program atom_all
   sfilekb = '_POTKB_F.DAT'
 
   ioupf = 9
-  sfileupf = '_TM.UPF'
+  sfileupf = 'TM.UPF'
 
   iopsdkb = 10
   filepsdkb = 'pseudokb.dat   '
