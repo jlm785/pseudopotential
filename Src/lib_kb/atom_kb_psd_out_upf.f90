@@ -2,7 +2,7 @@
 !>
 !>  \author       J.L.Martins
 !>  \version      6.0.9
-!>  \date         October 2018. 16 November 2024.
+!>  \date         October 2018. 17 November 2024.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_psd_out_upf(iotape, fname,                            &
@@ -62,7 +62,6 @@ subroutine atom_kb_psd_out_upf(iotape, fname,                            &
   real(REAL64)            ::  xmin
   real(REAL64)            ::  rmax, a, b
 
-  character(len=2)        ::  nl
   real(REAL64)            ::  occup, rc
 
   integer                 ::  nproj, nchi
@@ -105,41 +104,6 @@ subroutine atom_kb_psd_out_upf(iotape, fname,                            &
   integer       ::   i, j, l, np, is
 
 
-! recover information from psdtitle
-
-  allocate(n_conf(0:lmax_pot))
-  allocate(l_skip(0:lmax_pot))
-  allocate(o_conf(0:lmax_pot,2))
-  allocate(r_core(0:lmax_pot))
-
-  do l = 0,lmax_pot
-    n_conf(l) = 0
-    o_conf(l,1) = ZERO
-    o_conf(l,2) = ZERO
-    r_core(l) = ZERO
-    ctemp = psdtitle(l*2+1)
-    nl = '  '
-    read(ctemp(1:2),'(a2)',iostat=ierr) nl
-    if(nl == '  ' .or. ierr /= 0) then
-      l_skip(l) = .TRUE.
-    else
-      l_skip(l) = .FALSE.
-      read(ctemp(1:1),'(i1)',iostat=ierr) n_conf(l)
-      if(ctemp(2:2) /= IL(l)) then
-        write(6,*) '   inconsitent psdtitle, l, IL, n_conf',l,IL(l),ctemp(2:2)
-      endif
-      read(ctemp(4:9),*,iostat=ierr) o_conf(l,1)
-      ctemp = psdtitle(l*2+2)
-      if(ctemp(1:1) == ' ' .or. ctemp(1:1) == 'r') then
-        read(ctemp(6:10),*,iostat=ierr) r_core(l)
-      else
-        read(ctemp(1:4),*,iostat=ierr) o_conf(l,2)
-        read(ctemp(7:10),*,iostat=ierr) r_core(l)
-      endif
-
-    endif
-  enddo
-
   if(iotape == 0) return
 
   lso = .FALSE.
@@ -165,7 +129,6 @@ subroutine atom_kb_psd_out_upf(iotape, fname,                            &
     rabupf(j) = rupf(j)*b
   enddo
 
-
 ! interpolates on the upf mesh the local potential and non-local pseudopotentials,
 ! the wavefunctions and charge densities (core and valence)
 
@@ -180,101 +143,25 @@ subroutine atom_kb_psd_out_upf(iotape, fname,                            &
       vlocupf, vnlupf, chi, cdvupf, cdcupf,                              &
       mxdl, mxdnr)
 
-! attributes of projector
+! gets the configuration as UPF needs
 
-  if(lso) then
+  allocate(n_conf(0:lmax_pot))
+  allocate(l_skip(0:lmax_pot))
+  allocate(o_conf(0:lmax_pot,2))
+  allocate(r_core(0:lmax_pot))
 
-    if(llocal < 0) then
-      nproj = 2*lmax_pot+1
-    elseif(llocal == 0) then
-      nproj = 2*lmax_pot
-    else
-      nproj = 2*lmax_pot-1
-      if(nproj < 0) nproj = 0
-    endif
+  allocate(l_vnl(2*lmax_pot+1))
+  allocate(is_vnl(2*lmax_pot+1))
 
-    np = 0
-    if(inorm(0, 1) /= 0) then
-      np = np+1
-    endif
+  allocate(l_chi(2*lmax_pot+1))
+  allocate(is_chi(2*lmax_pot+1))
 
-    if(lmax_pot > 0) then
-      do l = 1,lmax_pot
-        if(inorm(l,-1) /= 0) then
-          np = np + 1
-        endif
-        if(inorm(l, 1) /= 0) then
-          np = np + 1
-        endif
+  call atom_kb_psd_out_upf_config(lmax_pot, psdtitle, lso,               &
+      llocal, inorm,                                                     &
+      n_conf, l_skip, o_conf, r_core,                                    &
+      nproj, l_vnl, is_vnl, nchi, l_chi, is_chi,                         &
+      mxdl)
 
-      enddo
-    endif
-
-  else
-
-    if(llocal < 0) then
-      nproj = lmax_pot+1
-    else
-      nproj = lmax_pot
-    endif
-
-    np = 0
-    do l = 0,lmax_pot
-      if(inorm(l,0) /= 0) then
-        np = np + 1
-      endif
-    enddo
-
-  endif
-
-  if(np /= nproj) then
-    write(6,*) '  stopped in kb_psd_out_upf'
-    write(6,*) '  inconsistent number of projectors',np,nproj
-
-    STOP
-
-  endif
-
-  allocate(l_vnl(nproj))
-  allocate(is_vnl(nproj))
-
-  if(lso) then
-
-    np = 0
-    if(inorm(0, 1) /= 0) then
-      np = np+1
-      l_vnl(np) = 0
-      is_vnl(np) = 1
-    endif
-
-    if(lmax_pot > 0) then
-      do l = 1,lmax_pot
-        if(inorm(l,-1) /= 0) then
-          np = np + 1
-          l_vnl(np) = l
-          is_vnl(np) =-1
-        endif
-        if(inorm(l, 1) /= 0) then
-          np = np + 1
-          l_vnl(np) = l
-          is_vnl(np) = 1
-        endif
-
-      enddo
-    endif
-
-  else
-
-    np = 0
-    do l = 0,lmax_pot
-      if(inorm(l,0) /= 0) then
-        np = np + 1
-        l_vnl(np) = l
-        is_vnl(np) = 0
-      endif
-    enddo
-
-  endif
 
 ! The coding of inorm
 
@@ -289,38 +176,6 @@ subroutine atom_kb_psd_out_upf(iotape, fname,                            &
     dij(np,np) = UM * inorm(l_vnl(np),is_vnl(np))
   enddo
 
-! attributes of the wave-functions
-
-  if(lso) then
-    nchi = 2*lmax_pot+1
-  else
-    nchi = lmax_pot+1
-  endif
-
-  allocate(l_chi(nchi))
-  allocate(is_chi(nchi))
-
-  if(lso) then
-
-    l_chi(1) = 0
-    is_chi(1) = 1
-    if(lmax_pot > 0) then
-      do l = 1,lmax_pot
-        l_chi(2*l  ) = l
-        l_chi(2*l+1) = l
-        is_chi(2*l  ) = -1
-        is_chi(2*l+1) =  1
-      enddo
-    endif
-
-  else
-
-    do l = 0,lmax_pot
-      l_chi(l+1) = l
-      is_chi(l+1) = 0
-    enddo
-
-  endif
 
 ! Writes the file
 
