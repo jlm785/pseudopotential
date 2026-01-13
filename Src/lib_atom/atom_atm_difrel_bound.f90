@@ -92,7 +92,7 @@ subroutine atom_atm_difrel_bound(nr, r, drdi, v, ar, br,                 &
   real(REAL64), parameter    ::  ONE = 1.0_REAL64, ZERO = 0.0_REAL64
   real(REAL64), parameter    ::  ETOL = 1.0E-7_REAL64
 
-  real(REAL64), parameter    ::  AI = 137.0359991_REAL64
+  real(REAL64), parameter    ::  AI = 137.035999177_REAL64
   real(REAL64), parameter    ::  AI2 = 4*AI*AI
 
 !------Machine dependent parameter-

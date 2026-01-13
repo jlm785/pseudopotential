@@ -59,7 +59,8 @@ subroutine atom_atm_zero_extr(ispp, ar, br, nr, r,                       &
 ! constants
 
   real(REAL64), parameter   ::  ZERO = 0.0_REAL64
-  real(REAL64), parameter   ::  AI = 2*137.0359991_REAL64
+  real(REAL64), parameter   ::  AI = 137.035999177_REAL64
+  real(REAL64), parameter   ::  AI2 = 4*AI*AI
 
 ! counters
 
@@ -78,7 +79,7 @@ subroutine atom_atm_zero_extr(ispp, ar, br, nr, r,                       &
   arp = br(2)
   if (ispp == 'r') then
     arp = ka*ar(2)/r(2) + (ev - vionic(2)/r(2)                           &
-         - vhxc(2) + AI*AI) * br(2) / AI
+         - vhxc(2) + AI2) * br(2) / (AI*2)
   endif
 
   do i = 3,nr
@@ -94,8 +95,8 @@ subroutine atom_atm_zero_extr(ispp, ar, br, nr, r,                       &
     arpm = arp
     arp = br(i)
     if (ispp == 'r') then
-        arp = ka*ar(i)/r(i) + (ev - vionic(i)/r(i) - vhxc(i) + AI*AI)    &
-                  *br(i) / AI
+        arp = ka*ar(i)/r(i) + (ev - vionic(i)/r(i) - vhxc(i) + AI2)      &
+                  *br(i) / (AI*2)
     endif
 
     if (arp*arpm <= ZERO) then

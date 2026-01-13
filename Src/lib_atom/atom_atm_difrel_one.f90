@@ -71,7 +71,7 @@ subroutine atom_atm_difrel_one(nr, r, drdi, v, ar, br,                   &
   real(REAL64), parameter    ::  ONE = 1.0_REAL64, ZERO = 0.0_REAL64
   real(REAL64), parameter    ::  BIG = 0.01*HUGE(ONE)
 
-  real(REAL64), parameter    ::  AI = 137.0359991_REAL64
+  real(REAL64), parameter    ::  AI = 137.035999177_REAL64
   real(REAL64), parameter    ::  AI2 = 4*AI*AI
 
 ! counters

@@ -20,7 +20,8 @@ CPU=Intel
 #   Suggestions for compilers.  Feel free to override the suggestions.
 
 ifeq ($(CPU),Intel)
-   F77=ifort
+   F77=ifx
+   # F77=ifort
    # F77=gfortran
    # F77=pgfortran
 else
@@ -53,6 +54,25 @@ SUFFIX:=_$(F77)
 
 ifeq ($(DEBUG),true)
    SUFFIX:=$(SUFFIX)_debug
+endif
+
+
+
+#  For Intel ifx compiler:
+
+ifeq ($(F77),ifx)
+
+   #   profiling option (-g,empty).  Use it for tunning the code.
+
+   PROF=
+   # PROF=-g
+
+   ifeq ($(DEBUG),false)
+      FCOPTS=-xHost -O3 $(PROF)
+   else
+      FCOPTS=-check all -warn all,nodec,interfaces,noexternal -gen-interfaces -traceback -fpe0 -g -O0
+   endif
+
 endif
 
 

@@ -66,7 +66,7 @@ subroutine atom_psd_mrpp_atrc(ispp, jrc, r, arjrc, brjrc, ar2jrc, br2jrc,   &
 ! constants
 
   real(REAL64), parameter    ::  ZERO = 0.0_REAL64
-  real(REAL64), parameter    ::  AI = 137.0359991_REAL64
+  real(REAL64), parameter    ::  AI = 137.035999177_REAL64
 
 ! counter
 

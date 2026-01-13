@@ -28,7 +28,7 @@ subroutine atom_plot_gnuplot(iotmp, sfname, task)
   if(trim(task) == 'run') then
 
     open(unit=iotmp, file='tmp_mmga_x', status='unknown', form='formatted')
-    write(iotmp,'("gnuplot -bg white ",a16," 1> /dev/null 2>&1 &")') fname
+    write(iotmp,'("gnuplot white ",a16," 1> /dev/null 2>&1 &")') fname
     close(iotmp)
 
     call system ('chmod +x ./tmp_mmga_x')
