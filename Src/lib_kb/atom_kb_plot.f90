@@ -7,9 +7,9 @@
 
 subroutine atom_kb_plot(itplot, filename, irel, nr, r, vlocal,           &
                     rpsi_ps, rpsi_b, nqbas, delqbas, ektot,              &
-                    npot, lo, norbas, lo_b,                              &
+                    npot, lo, n_bsets, norbas, lo_b,                     &
                     inorm, vkbproj, nqnl, delql, vkbprft,                &
-                    mxdnr, nqmax, mxdl, mxdbas)
+                    mxdnr, nqmax, mxdl, mxdbas, mxdset)
 
 !   njtj  ***  plotting routines ***
 !   potrw is called to save a usefull number of points
@@ -35,6 +35,7 @@ subroutine atom_kb_plot(itplot, filename, irel, nr, r, vlocal,           &
   integer, intent(in)               ::  mxdl                             !<  dimension of angular momentum
   integer, intent(in)               ::  nqmax                            !<  dimension of fourier grid points for potential
   integer, intent(in)               ::  mxdbas                           !<  maximum number of basis functions
+  integer, intent(in)               ::  mxdset                           !<  dimension for number of atomic basis sets
 
   integer, intent(in)               ::  itplot                           !<  default plot file
   character(len=*)                  ::  filename                         !<  name of plot file
@@ -47,7 +48,7 @@ subroutine atom_kb_plot(itplot, filename, irel, nr, r, vlocal,           &
   real(REAL64), intent(in)          ::  vlocal(mxdnr)                    !<  r*local pseudopotential
 
   real(REAL64), intent(in)          ::  rpsi_ps(mxdnr,0:mxdl)            !<  r*pseudo-wave-function
-  real(REAL64), intent(in)          ::  rpsi_b(mxdnr,mxdbas)             !<  r*basis-function
+  real(REAL64), intent(in)          ::  rpsi_b(mxdnr,mxdbas,mxdset)      !<  r*basis-function
 
   integer, intent(in)               ::  nqbas                            !<  number of points in the fourier grid for basis
   real(REAL64), intent(in)          ::  delqbas                          !<  spacing of the fourier grid for basis
@@ -55,8 +56,10 @@ subroutine atom_kb_plot(itplot, filename, irel, nr, r, vlocal,           &
 
   integer, intent(in)               ::  npot(-1:1)                       !<  number of orbitals to be calculated
   integer, intent(in)               ::  lo(mxdl+1,-1:1)                  !<  angular momentum of orbital
-  integer, intent(in)               ::  norbas                           !<  number of basis functions
-  integer, intent(in)               ::  lo_b(mxdbas)                     !<  angular momentum of basis function
+
+  integer, intent(in)               ::  n_bsets                          !<  number of atomic basis sets
+  integer, intent(in)               ::  norbas(mxdset)                   !<  number of basis functions
+  integer, intent(in)               ::  lo_b(mxdbas,mxdset)              !<  angular momentum of basis function
 
   integer, intent(in)               ::  inorm(0:mxdl,-1:1)               !<  sign of denominator of KB operator
   real(REAL64), intent(in)          ::  vkbproj(mxdnr,0:mxdl,-1:1)       !<  kb-projector
@@ -87,7 +90,7 @@ subroutine atom_kb_plot(itplot, filename, irel, nr, r, vlocal,           &
 
 ! counter
 
-  integer     ::  i, j
+  integer     ::  i, j, nb
 
 
   open(unit=itplot, file=trim(filename), form='FORMATTED', status='UNKNOWN')
@@ -120,12 +123,14 @@ subroutine atom_kb_plot(itplot, filename, irel, nr, r, vlocal,           &
 
   enddo
 
-  do i = 1,norbas
+  do nb = 1,n_bsets
+    do i = 1,norbas(nb)
 
-    l = lo_b(i)
-    call atom_plot_one(1, nrplot, r, rpsi_b(:,i), RSTEP, l, 1,           &
+    l = lo_b(i,nb)
+    call atom_plot_one(1, nrplot, r, rpsi_b(:,i,nb), RSTEP, l, 1,           &
            'bas ','    ', .TRUE., itplot, mxdnr)
 
+    enddo
   enddo
 
 ! plot kinetic energy convergence

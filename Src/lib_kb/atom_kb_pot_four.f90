@@ -8,8 +8,8 @@
 subroutine atom_kb_pot_four(npot, lo, irel, nicore, nr, r, drdi, zion,   &
      nql, nqnl, delql, nqbas, delqbas, vlocal, inorm, vkbproj,           &
      cdc, cdv, vlocft, vql0, vkbprft, cdcft, cdvft, basft,               &
-     norbas, lo_b, rpsi,                                                 &
-     mxdl, mxdnr, nqmax, nqmaxbas, mxdbas)
+     n_bsets, norbas, lo_b, rpsi,                                        &
+     mxdl, mxdnr, nqmax, nqmaxbas, mxdbas, mxdset)
 
 ! adapted from the old program jlm 11/6/2012
 ! mxdl, etc... 18 September 2021. JLM
@@ -28,6 +28,7 @@ subroutine atom_kb_pot_four(npot, lo, irel, nicore, nr, r, drdi, zion,   &
   integer, intent(in)               ::  nqmax                            !<  dimension of fourier grid points for potential
   integer, intent(in)               ::  nqmaxbas                         !<  dimension of fourier grid points for basis
   integer, intent(in)               ::  mxdbas                           !<  dimension of basis functions
+  integer, intent(in)               ::  mxdset                           !<  dimension for number of atomic basis sets
 
   integer, intent(in)               ::  npot(-1:1)                       !<  number of orbitals to be calculated
   integer, intent(in)               ::  lo(mxdl+1,-1:1)                  !<  angular momentum of orbital
@@ -52,9 +53,10 @@ subroutine atom_kb_pot_four(npot, lo, irel, nicore, nr, r, drdi, zion,   &
   real(REAL64), intent(in)          ::  cdc(mxdnr)                       !<  4*pi*r**2 charge density of core
   real(REAL64), intent(in)          ::  cdv(mxdnr)                       !<  4*pi*r**2 charge density of valence.  kb_conv is not spin polarized...
 
-  integer, intent(in)               ::  norbas                           !<  number of basis functions
-  integer, intent(in)               ::  lo_b(mxdbas)                     !<  angular momentum of basis function
-  real(REAL64), intent(in)          ::  rpsi(mxdnr,mxdbas)               !<  wavefunctions (r(i),l,2j-2l).
+  integer, intent(in)               ::  n_bsets                          !<  number of atomic basis sets
+  integer, intent(in)               ::  norbas(mxdset)                   !<  number of basis functions
+  integer, intent(in)               ::  lo_b(mxdbas,mxdset)              !<  angular momentum of basis function
+  real(REAL64), intent(in)          ::  rpsi(mxdnr,mxdbas,mxdset)        !<  wavefunctions (r(i),l,2j-2l).
 
 ! output
 
@@ -63,7 +65,7 @@ subroutine atom_kb_pot_four(npot, lo, irel, nicore, nr, r, drdi, zion,   &
   real(REAL64), intent(out)         ::  vkbprft(0:nqmax,0:mxdl,-1:1)     !<  Fourier transform of kb-projector
   real(REAL64), intent(out)         ::  cdcft (0:nqmax)                  !<  Fourier transform of 4*pi*r**2 charge density of core
   real(REAL64), intent(out)         ::  cdvft(0:nqmax)                   !<  Fourier transform of 4*pi*r**2 charge density of valence.  kb_conv is not spin polarized...
-  real(REAL64), intent(out)         ::  basft(0:nqmaxbas,mxdbas)         !< Fourier (Bessel) transform of the radial wavefunction
+  real(REAL64), intent(out)         ::  basft(0:nqmaxbas,mxdbas,mxdset)  !< Fourier (Bessel) transform of the radial wavefunction
 
 ! allocatable arrays
 
@@ -84,7 +86,7 @@ subroutine atom_kb_pot_four(npot, lo, irel, nicore, nr, r, drdi, zion,   &
 
 ! counters
 
-  integer                  :: i, j, k
+  integer                  :: i, j, k, nb
 
   allocate(fin(mxdnr))
   allocate(fout(0:nqmax),yp(0:nqmax))
@@ -156,24 +158,29 @@ subroutine atom_kb_pot_four(npot, lo, irel, nicore, nr, r, drdi, zion,   &
 
 ! fourier transforms of wave functions
 
-  do j = 0,nqbas
-    ypwf(j) = j*delqbas
-  enddo
+  basft(:,:,:) = ZERO
 
-  basft = ZERO
-  do i = 1,norbas
-    l = lo_b(i)
-    do k = 1,nr
-      fin(k) = rpsi(k,i)
+  do nb = 1,n_bsets
+
+    do j = 0,nqbas
+      ypwf(j) = j*delqbas
     enddo
 
-    call ft_radial(nr-1, nqbas, r, drdi, ypwf, fin, fout, l)
+    do i = 1,norbas(nb)
 
-    crnorm = sqrt((2*l+1)/PI4)
-    do k = 0,nqbas
-      basft(k,i) = fout(k)*crnorm
+      l = lo_b(i,nb)
+      do k = 1,nr
+        fin(k) = rpsi(k,i,nb)
+      enddo
+
+      call ft_radial(nr-1, nqbas, r, drdi, ypwf, fin, fout, l)
+
+      crnorm = sqrt((2*l+1)/PI4)
+      do k = 0,nqbas
+        basft(k,i,nb) = fout(k)*crnorm
+      enddo
+
     enddo
-
 
   enddo
 

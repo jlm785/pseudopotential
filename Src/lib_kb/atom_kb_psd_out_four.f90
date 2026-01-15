@@ -10,8 +10,8 @@ subroutine atom_kb_psd_out_four(iotape, fname,                           &
       nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,     &
       nql, nqnl, delql, nqbas, delqbas, zion, vql0,                      &
       npot, lo, ev, inorm, vkbprft, vlocft, cdcft, cdvft,                &
-      norbas, lo_b, basft,                                               &
-      mxdl, nqmax, nqmaxbas, mxdbas)
+      n_bsets, norbas, lo_b, basft,                                      &
+      mxdl, nqmax, nqmaxbas, mxdbas, mxdset)
 
 ! modified by JLMartins 24/4/2012 and 12/6/2012
 ! wv -> bas.  18 September 2021. JLM
@@ -27,6 +27,7 @@ subroutine atom_kb_psd_out_four(iotape, fname,                           &
   integer, intent(in)               ::  nqmax                            !<  dimension of fourier grid points for potential
   integer, intent(in)               ::  nqmaxbas                         !<  dimension of fourier grid points.
   integer, intent(in)               ::  mxdbas                           !<  dimension of basis functions
+  integer, intent(in)               ::  mxdset                           !<  dimension for number of atomic basis sets
 
   integer, intent(in)               ::  iotape                           !<  io tape number
   character(len=*), intent(in)      ::  fname                            !<  file name of the output of the atomic program, parsec style
@@ -59,9 +60,10 @@ subroutine atom_kb_psd_out_four(iotape, fname,                           &
   real(REAL64), intent(in)          ::  cdcft(0:nqmax)                   !<  Fourier transform of 4*pi*r**2 charge density of core
   real(REAL64), intent(in)          ::  cdvft (0:nqmax)                  !<  Fourier transform of 4*pi*r**2 charge density of valence.  kb_conv is not spin polarized...
 
-  integer, intent(in)               ::  norbas                           !<  number of basis functions
-  integer, intent(in)               ::  lo_b(mxdbas)                     !<  angular momentum of basis function
-  real(REAL64), intent(in)          ::  basft(0:nqmaxbas,mxdbas)          !< Fourier (Bessel) transform of the radial wavefunction
+  integer, intent(in)               ::  n_bsets                          !<  number of atomic basis sets
+  integer, intent(in)               ::  norbas(mxdset)                   !<  number of basis functions
+  integer, intent(in)               ::  lo_b(mxdbas,mxdset)              !<  angular momentum of basis function
+  real(REAL64), intent(in)          ::  basft(0:nqmaxbas,mxdbas,mxdset)  !< Fourier (Bessel) transform of the radial wavefunction
 
 ! local variables
 
@@ -73,7 +75,7 @@ subroutine atom_kb_psd_out_four(iotape, fname,                           &
 
 ! counters
 
-  integer                        :: i, k
+  integer                        :: i, k, nb
 
 
   if(iotape == 0) RETURN
@@ -136,12 +138,14 @@ subroutine atom_kb_psd_out_four(iotape, fname,                           &
   enddo
 
 
-  write(iotape,*) nqbas+1,delqbas,norbas
-  do i = 1,norbas
-    l = lo_b(i)
-    write(iotape,*) l, ev(l,0)/2
-    do k = 0,nqbas
-      write(iotape,*) basft(k,i)
+  write(iotape,*) nqbas+1,delqbas,norbas(1),n_bsets
+  do nb = 1,n_bsets
+    do i = 1,norbas(nb)
+      l = lo_b(i,nb)
+      write(iotape,*) l, ev(l,0)/2, nb
+      do k = 0,nqbas
+        write(iotape,*) basft(k,i,nb)
+      enddo
     enddo
   enddo
 

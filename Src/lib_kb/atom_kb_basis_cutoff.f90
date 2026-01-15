@@ -6,9 +6,10 @@
 !>  \date         30 August 2021, 19 May 2022.
 !>  \copyright    GNU Public License v2
 
-subroutine atom_kb_basis_cutoff(tbasis, llocal, lmax_pot,                &
+subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
          lmax_bas, n_bas, r_bas, nz_bas, r_siesta, r_99,                 &
-         iowrite, ioparsec, fileparsec, mxdl)
+         iowrite, ioparsec, fileparsec,                                  &
+         mxdl, mxdset, mxdnr)
 
 ! nrmax -> mxdnr.  17 September 2021. JLM
 ! jhard. 21 december 2021. JLM
@@ -21,34 +22,32 @@ subroutine atom_kb_basis_cutoff(tbasis, llocal, lmax_pot,                &
 ! input
 
   integer, intent(in)               ::  mxdl                             !<  array dimension for basis angular momentum
+  integer, intent(in)               ::  mxdnr                            !<  dimension of radial grid points.
+  integer, intent(in)               ::  mxdset                           !<  dimension for number of atomic basis sets
 
   integer, intent(in)               ::  iowrite                          !<  default output tape
 
   integer, intent(in)               ::  ioparsec                         !<  default tape for pseudopotential in parsec format
   character(len=*), intent(in)      ::  fileparsec                       !<  name of default tape for reading pseudopotential in parsec format
 
-  character(len=3), intent(in)      ::  tbasis                           !<  type of basis
+  integer, intent(in)               ::  n_bsets                          !<  number of atomic basis sets
+  character(len=3), intent(in)      ::  tbasis(mxdset)                   !<  type of basis
+
+  integer,intent(in)                ::  lmax_pot                         !<  maximum angular momentum for potential
 
 ! output
 
-  integer,intent(out)               ::  llocal                           !<  angular momentum for local potential (negative: maximum of l-dependent)
+  character(len=2),intent(out)      ::  nameat                           !<  chemical symbol of the element
 
-  integer,intent(out)               ::  lmax_pot                         !<  maximum angular momentum for potential
-
-  integer,intent(out)               ::  lmax_bas                         !<  maximum angular momentum in basis
-  integer,intent(out)               ::  n_bas(0:mxdl)                    !<  basis functions for angular momentum l
-  real(REAL64), intent(out)         ::  r_bas(3,0:mxdl)                  !<  cutoff for the basis (up to triple zeta and l = 4)
-  integer, intent(out)              ::  nz_bas(3,0:mxdl)                 !<  number of non-trivial zeroes in basis function
+  integer,intent(out)               ::  lmax_bas(mxdset)                 !<  maximum angular momentum in basis
+  integer,intent(out)               ::  n_bas(0:mxdl,mxdset)             !<  basis functions for angular momentum l
+  real(REAL64), intent(out)         ::  r_bas(3,0:mxdl,mxdset)           !<  cutoff for the basis (up to triple zeta and l = 4)
+  integer, intent(out)              ::  nz_bas(3,0:mxdl,mxdset)          !<  number of non-trivial zeroes in basis function
   real(REAL64), intent(out)         ::  r_siesta(0:mxdl)                 !<  cutoff using the SIESTA recipe
   real(REAL64), intent(out)         ::  r_99(0:mxdl)                     !<  radius with 99% of charge
 
-! Size of arrays
-
-  integer                           ::  mxdnr                            !  dimension of radial grid points.
-
 ! variables from the output file of psd_gen
 
-  character(len=2)                  ::  nameat                           !  chemical symbol of the element
   character(len=2)                  ::  icorr                            !  correlation used in the calculation
                                                                          !      ca -> Ceperley-Alder LDA parametrized by Perdew-Zunger
                                                                          !      pw -> Ceperley-Alder LDA parametrized by Perdew-Wang 92
@@ -110,7 +109,7 @@ subroutine atom_kb_basis_cutoff(tbasis, llocal, lmax_pot,                &
 
   real(REAL64)                      ::  factor
   integer                           ::  ll
-  integer                           ::  jhard                            !  flag for accuracy/speed compromise
+  character(len=3)                  ::  ch_temp, ch_temp2
 
 ! constants
 
@@ -121,21 +120,9 @@ subroutine atom_kb_basis_cutoff(tbasis, llocal, lmax_pot,                &
   integer                           ::  i, j, l
 
 
-! initialize
+  INTEGER   ::  LMAX
 
-  do l = 0,mxdl
-    r_siesta(l) = ZERO
-    r_99(l) = ZERO
-    n_bas(l) = 0
-    r_bas(1,l) = ZERO
-    r_bas(2,l) = ZERO
-    r_bas(3,l) = ZERO
-    nz_bas(1,l) = 0
-    nz_bas(2,l) = 0
-    nz_bas(3,l) = 0
-  enddo
-
-  call atom_kb_psd_in_parsec_size(ioparsec, fileparsec, lmax_pot, mxdnr)
+! paranoid check
 
   if(lmax_pot > mxdl) then
     write(6,*)
@@ -145,6 +132,59 @@ subroutine atom_kb_basis_cutoff(tbasis, llocal, lmax_pot,                &
     STOP
 
   endif
+
+! check consistency of tbasis
+
+  if(n_bsets > 1) then
+    do i = 1,n_bsets-1
+    do j = 2,n_bsets
+      ch_temp = tbasis(i)
+      ch_temp2 = tbasis(j)
+      call chrcap(ch_temp,3)
+      call chrcap(ch_temp2,3)
+      if(ch_temp == ch_temp2) then
+        write(6,*) '   STOPPED in atom_kb_basis_cutoff'
+        write(6,*) '   Duplicate kind of atomic basis set', i, j
+        write(6,*) tbasis(i), tbasis(j)
+
+        stop
+
+      endif
+    enddo
+    enddo
+  endif
+
+! check known type of basis
+
+  do i = 1,n_bsets
+    ch_temp = tbasis(i)
+    call chrcap(ch_temp,3)
+    if(ch_temp(1:2) /= 'SZ' .and. ch_temp(1:2) /= 'DZ') then
+        write(6,*) '   STOPPED in atom_kb_basis_cutoff'
+        write(6,*) '   Unrecognized type of atomic basis set', ch_temp
+
+        stop
+
+    endif
+  enddo
+
+! initialize
+
+  do l = 0,mxdl
+    r_siesta(l) = ZERO
+    r_99(l) = ZERO
+    do i = 1,mxdset
+      n_bas(l,i) = 0
+      r_bas(1,l,i) = ZERO
+      r_bas(2,l,i) = ZERO
+      r_bas(3,l,i) = ZERO
+      nz_bas(1,l,i) = 0
+      nz_bas(2,l,i) = 0
+      nz_bas(3,l,i) = 0
+    enddo
+  enddo
+
+! allocations
 
   allocate(r(mxdnr))
   allocate(lo(mxdl+1,-1:1))
@@ -171,14 +211,7 @@ subroutine atom_kb_basis_cutoff(tbasis, llocal, lmax_pot,                &
          nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,  &
          npot, nr, a, b, r, zion, lo, vionic, cdc, cdv,                  &
          zo, rc, rpsi(:,:,0),                                            &
-         lmax_pot, mxdnr, mxdl)
-
-! llocal from table
-
-  jhard = 0
-  call atom_p_tbl_kb_local(nameat, llocal, jhard)
-
-  if(llocal > lmax_pot) llocal = lmax_pot
+         lmax, mxdnr, mxdl)
 
   allocate(drdi(mxdnr))
   allocate(d2rodr(mxdnr))
@@ -200,14 +233,14 @@ subroutine atom_kb_basis_cutoff(tbasis, llocal, lmax_pot,                &
   enddo
 
   allocate(vscreen(mxdnr))
-  
+
   ifcore = 0
   if(nicore == 'fcec'.or.nicore == 'pcec') ifcore = 1
   if(nicore == 'fche'.or.nicore == 'pche') ifcore = 2
-  
+
   call atom_kb_screen(nr, r, drdi, cdv, cdc, icorr, ifcore, totvel, vscreen,   &
          iowrite, mxdnr)
-  
+
   call atom_kb_wvfct(npot, lo, irel, nr, r, drdi, d2rodr,                &
          vionic, vscreen, ev, rpsi,                                      &
          iowrite, mxdl, mxdnr)
@@ -224,17 +257,17 @@ subroutine atom_kb_basis_cutoff(tbasis, llocal, lmax_pot,                &
   allocate(drpsibdr(mxdnr))
 
 
-  lmax_bas = 0
+  lmax_bas(:) = 0
   do l = lmax_pot,0,-1
     if( ev(l,0) < -SMALL .and. zo(l) > SMALL) then
-      lmax_bas = l
+      lmax_bas(:) = l
 
       exit
 
     endif
   enddo
 
-  do l = 0,lmax_bas
+  do l = 0,lmax_bas(1)
 
     factor = ZERO
     ll = 4
@@ -275,45 +308,54 @@ subroutine atom_kb_basis_cutoff(tbasis, llocal, lmax_pot,                &
 
   enddo
 
-  if(tbasis(1:2) == 'SZ' .or. tbasis(1:2) == 'sz') then
+! loop over atomic basis sets
 
-    do l = 0,lmax_bas
-      n_bas(l) = 1
-      r_bas(1,l) = 1.1*r_siesta(l)
-    enddo
+  do i = 1,n_bsets
 
-  elseif(tbasis(1:2) == 'DZ' .or. tbasis(1:2) == 'dz') then
+    ch_temp = tbasis(i)
+    call chrcap(ch_temp,3)
 
-    do l = 0,lmax_bas
-      if(l > 1 .and. abs(zo(l) - 2*(2*l+1)) < 0.01) then
-        n_bas(l) = 2
-        r_bas(1,l) = 1.1*r_siesta(l)
-        r_bas(2,l) = max(1.2*r_siesta(l),r_siesta(1),r_siesta(0))
-        nz_bas(2,l) = 1
-      else
-        n_bas(l) = 2
-        r_bas(1,l) = 1.0*r_siesta(l)
-        r_bas(2,l) = 1.2*r_bas(1,l)
-      endif
-    enddo
+    if(ch_temp(1:2) == 'SZ') then
 
-  endif
+      do l = 0,lmax_bas(i)
+        n_bas(l,i) = 1
+        r_bas(1,l,i) = 1.1*r_siesta(l)
+      enddo
 
-  if(tbasis(3:3) == 'P' .or. tbasis(3:3) == 'p') then
+    elseif(ch_temp(1:2) == 'DZ') then
 
-    lmax_bas = lmax_bas+1
-    l = lmax_bas
-    if(tbasis(1:2) == 'SZ' .or. tbasis(1:2) == 'sz') then
-      n_bas(l) = 1
-      r_bas(1,l) = max(1.1*r_siesta(1),1.1*r_siesta(0))
-    elseif(tbasis(1:2) == 'DZ' .or. tbasis(1:2) == 'dz') then
-      n_bas(l) = 2
-      r_bas(1,l) = max(1.0*r_siesta(1),1.0*r_siesta(0))
-      r_bas(2,l) = 1.2*r_bas(1,l)
-      nz_bas(2,l) = 1
+      do l = 0,lmax_bas(i)
+        if(l > 1 .and. abs(zo(l) - 2*(2*l+1)) < 0.01) then
+          n_bas(l,i) = 2
+          r_bas(1,l,i) = 1.1*r_siesta(l)
+          r_bas(2,l,i) = max(1.2*r_siesta(l),r_siesta(1),r_siesta(0))
+          nz_bas(2,l,i) = 1
+        else
+          n_bas(l,i) = 2
+          r_bas(1,l,i) = 1.0*r_siesta(l)
+          r_bas(2,l,i) = 1.2*r_bas(1,l,i)
+        endif
+      enddo
+
     endif
 
-  endif
+    if(ch_temp(3:3) == 'P') then
+
+      lmax_bas(i) = lmax_bas(i) + 1
+      l = lmax_bas(i)
+      if(ch_temp(1:2) == 'SZ') then
+        n_bas(l,i) = 1
+        r_bas(1,l,i) = max(1.1*r_siesta(1),1.1*r_siesta(0))
+      elseif(ch_temp(1:2) == 'DZ') then
+        n_bas(l,i) = 2
+        r_bas(1,l,i) = max(1.0*r_siesta(1),1.0*r_siesta(0))
+        r_bas(2,l,i) = 1.2*r_bas(1,l,i)
+        nz_bas(2,l,i) = 1
+      endif
+
+    endif
+
+  enddo
 
   deallocate(r)
   deallocate(lo)

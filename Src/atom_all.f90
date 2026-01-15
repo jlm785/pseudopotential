@@ -68,16 +68,22 @@ program atom_all
   integer                           ::  nql                              !  number of points for the Fourier grid of local potential and densities
   real(REAL64)                      ::  delql                            !  spacing of points in Fourier grid
 
-  character(len=3)                  ::  tbasis                           !  type of basis
-  integer                           ::  lmax_bas                         !  maximum angular momentum in basis
   integer                           ::  lmax_pot                         !  maximum angular momentum in potential
 
   integer                           ::  mxdl                             !  dimension for angular momentum
   integer                           ::  mxdnr                            !  dimension for radial grid
+  integer                           ::  mxdset                           !  dimension for number of atomic basis sets
 
-  integer, allocatable              ::  n_bas(:)                         !  basis functions for angular momentum l
-  real(REAL64), allocatable         ::  r_bas(:,:)                       !  cutoff for the basis (up to triple zeta and l = 4)
-  integer, allocatable              ::  nz_bas(:,:)                      !  number of non-trivial zeroes in basis function
+  integer                           ::  jhard                            !  flag for accuracy/speed compromise
+
+  integer                           ::  n_bsets                          !  number of atomic basis sets
+
+  character(len=3), allocatable     ::  tbasis(:)                        !  type of basis
+  integer, allocatable              ::  lmax_bas(:)                      !  maximum angular momentum in basis
+
+  integer, allocatable              ::  n_bas(:,:)                       !  basis functions for angular momentum l
+  real(REAL64), allocatable         ::  r_bas(:,:,:)                     !  cutoff for the basis (up to triple zeta and l = 4)
+  integer, allocatable              ::  nz_bas(:,:,:)                    !  number of non-trivial zeroes in basis function
   real(REAL64), allocatable         ::  r_siesta(:)                      !  cutoff using the SIESTA recipe
   real(REAL64), allocatable         ::  r_99(:)                          !  radius with 99% of charge
 
@@ -363,9 +369,27 @@ program atom_all
   llocal = -1
   nql = 4000
   delql = 0.01_REAL64
-  tbasis = 'DZP'
-  if(tbasisin == 'SZ ') tbasis = 'SZ '
-  if(tbasisin == 'DZ ') tbasis = 'DZ '
+
+! default basis sets
+
+  if(tbasisin(2:2) == 'Z') then
+    n_bsets = 1
+  else
+    n_bsets = 2
+  endif
+
+  mxdset = n_bsets + 2
+
+  allocate(tbasis(n_bsets))
+  allocate(lmax_bas(n_bsets))
+
+  if(tbasisin(2:2) == 'Z') then
+    tbasis(1) = tbasisin
+  else
+    tbasis(1) = 'DZP'
+    tbasis(2) = 'SZ'
+  endif
+
 
   call atom_kb_psd_in_parsec_size(ioparsec, fileparsec, lmax_pot, mxdnr)
 
@@ -373,23 +397,40 @@ program atom_all
 
   mxdl = lmax_pot + 2
 
-  allocate(n_bas(0:mxdl), r_bas(3,0:mxdl), nz_bas(3,0:mxdl))
-  allocate(r_siesta(0:mxdl), r_99(0:mxdl))
+  allocate(n_bas(0:mxdl,mxdset))
+  allocate(r_bas(3,0:mxdl,mxdset))
+  allocate(nz_bas(3,0:mxdl,mxdset))
+  allocate(r_siesta(0:mxdl))
+  allocate(r_99(0:mxdl))
 
-  call atom_kb_basis_cutoff(tbasis, llocal, lmax_pot,                    &
+  call atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,           &
       lmax_bas, n_bas, r_bas, nz_bas, r_siesta, r_99,                    &
-      iowrite, ioparsec, fileparsec, mxdl)
+      iowrite, ioparsec, fileparsec,                                     &
+      mxdl, mxdset, mxdnr)
+
+! llocal from table
+
+  jhard = 0
+  call atom_p_tbl_kb_local(nameat, llocal, jhard)
+
+  if(llocal > lmax_pot) llocal = lmax_pot
 
   if(lint) then
-    call atom_kb_setup(tbasis, llocal, lmax_pot, nql, delql,             &
+
+    call atom_kb_setup_pseudo(llocal, lmax_pot, nql, delql)
+
+    call atom_kb_setup_basis(n_bsets, tbasis,                            &
         lmax_bas, n_bas, r_bas, nz_bas, r_siesta, r_99,                  &
-        mxdl)
+        mxdl, mxdset)
+
   endif
 
+
   call atom_kb_sub(llocal, nql, delql, nql, delql,                       &
-      lmax_bas, n_bas, r_bas, nz_bas,                                    &
+      n_bsets, lmax_bas, n_bas, r_bas, nz_bas,                           &
       iowrite, ioparsec, fileparsec, iokb, sfilekb, ioupf, sfileupf,     &
-      iopsdkb, filepsdkb, ioplotkb, fileplotkb, mxdnr, mxdl)
+      iopsdkb, filepsdkb, ioplotkb, fileplotkb,                          &
+      mxdnr, mxdl, mxdset)
 
 ! plots with KB projectors
 
@@ -431,6 +472,8 @@ program atom_all
 
   deallocate(n_bas, r_bas, nz_bas)
   deallocate(r_siesta, r_99)
+  deallocate(tbasis)
+  deallocate(lmax_bas)
 
   stop
 
