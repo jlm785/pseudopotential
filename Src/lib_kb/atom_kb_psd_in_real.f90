@@ -1,11 +1,11 @@
 !>  reads an output file that is compatible with the parsec and siesta codes
 !>
 !>  \author       J.L.Martins
-!>  \version      6.0.8
+!>  \version      6.1.0
 !>  \date         25 May 2012, 19 May 2022.
 !>  \copyright    GNU Public License v2
 
-subroutine atom_kb_psd_in_parsec(iotape, fname,                          &
+subroutine atom_kb_psd_in_real(iotape, fname,                          &
     nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,       &
     npot, nr, a, b, r, zion, lo, vionic, cdc, cdv, zo, rc, rpsi_ps,      &
     lmax, mxdnr, mxdl)
@@ -14,6 +14,7 @@ subroutine atom_kb_psd_in_parsec(iotape, fname,                          &
 !  it is based on FDP modifications in parsec's fork of the code.
 !  mxdl, mxdnr, 17 Sepember 2021. JLM
 !  psdtitle, 19 May 2022. JLM
+!  in_parsec -> in_real in name. 26 January 2026. JLM
 
   implicit none
 
@@ -25,7 +26,7 @@ subroutine atom_kb_psd_in_parsec(iotape, fname,                          &
   integer, intent(in)               ::  mxdl                             !<  dimension of angular momentum
 
   integer, intent(in)               ::  iotape                           !<  io tape number
-  character(len=*), intent(in)      ::  fname                            !<  file name of the output of the atomic program, parsec style
+  character(len=*), intent(in)      ::  fname                            !<  file name of the output of the atomic program, in real (parsec) style
 
 ! output:
 
@@ -72,7 +73,7 @@ subroutine atom_kb_psd_in_parsec(iotape, fname,                          &
   integer                       ::  l
   integer                       ::  ios
   integer                       ::  nrm
-  
+
 
 
 ! parameters
@@ -100,7 +101,7 @@ subroutine atom_kb_psd_in_parsec(iotape, fname,                          &
     read(iotape,'(1x,2a10,4a10,/,1x,20a10)') irvers, irdate, irayps,     &
          (psdtitle(i),i=1,7)
   endif
- 
+
   ifcore = 1
   read(iotape,'(1x,2i3,i5,5g20.12)',iostat=ios)                          &
                    npot(1), npot(-1), nrm, a, b, zion, cfac, rcfac
@@ -213,4 +214,4 @@ subroutine atom_kb_psd_in_parsec(iotape, fname,                          &
 
   return
 
-end subroutine atom_kb_psd_in_parsec
+end subroutine atom_kb_psd_in_real

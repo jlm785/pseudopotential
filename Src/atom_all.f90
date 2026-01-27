@@ -1,14 +1,15 @@
 !>  Calls the whole atomic pseudo-potential test plot chain
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.0.8
-!>  \date         21 October 2021. 25 May 2022.
+!>  \version      6.1.0
+!>  \date         21 October 2021. 26 January 2026.
 !>  \copyright    GNU Public License v2
 
 program atom_all
 
 
 ! Initializes lkb. 25 May 2022. JLM
+! Several real space pseudopotential formats, 26 January 2026. JLM
 
   implicit none
 
@@ -20,23 +21,26 @@ program atom_all
 
   integer                           ::  iowrite                          !  default output tape
 
-  integer                           ::  ioread                           !  default tape for reading
-  character(len=8)                  ::  filein                           !  name of default tape for reading
+  integer                           ::  ioread                           !  default tape for reading configuration file
+  character(len=8)                  ::  filein                           !  name of default tape for reading configuration file
 
-  integer                           ::  ioae                             !  default tape for writing
+  integer                           ::  ioae                             !  default tape for writing all-electron results
   character(len=12)                 ::  fileae                           !  name of default tape for all-electron results
 
   integer                           ::  iopsd                            !  default tape for pseudopotential in old format
   character(len=10)                 ::  filepsd                          !  name of default tape for reading pseudopotential in old format
 
-  integer                           ::  ioparsec                         !  default tape for pseudopotential in parsec format
-  character(len=7)                  ::  fileparsec                       !  name of default tape for reading pseudopotential in parsec format
+  integer                           ::  ioreal                           !  default tape for pseudopotential in real space (parsec) format
+  character(len=7)                  ::  filereal                         !  name of default tape for reading/writing pseudopotential in real space (parsec) format
+  character(len=10)                 ::  sfileparsec                      !  suffix of default tape for writing pseudopotential in parsec format
+  character(len=4)                  ::  sfilesiesta                      !  suffix of default tape for writing pseudopotential in siesta format
+
 
   integer                           ::  ioplot                           !  default tape for plot file
   character(len=8)                  ::  fileplot                         !  name of default tape for plot file
 
   integer                           ::  iokb                             !  default tape for pseudopotential in KB format
-  character(len=12)                  ::  sfilekb                         !  suffix for default tape for writing pseudopotential in KB format
+  character(len=12)                 ::  sfilekb                          !  suffix for default tape for writing pseudopotential in KB format
 
   integer                           ::  ioupf                            !  default tape for pseudopotential in UPF format
   character(len=6)                  ::  sfileupf                         !  suffix for default tape for writing pseudopotential in UPF format
@@ -138,8 +142,10 @@ program atom_all
   ioae = 7
   fileae = 'datafile.dat'
 
-  ioparsec = 4
-  fileparsec = 'psd.pot'
+  ioreal = 4
+  filereal = 'psd.pot'
+  sfileparsec = '_POTRE.DAT'
+  sfilesiesta = '.psf'
 
   ioplot = 8
   fileplot = 'plot.dat'
@@ -357,7 +363,8 @@ program atom_all
 
   call atom_psd_sub(rc, ifcore, cfac, rcfac, .FALSE.,                    &
          iowrite, ioae, fileae,                                          &
-         iopsd, filepsd, ioparsec, fileparsec, ioplot, fileplot)
+         iopsd, filepsd, ioreal, filereal, sfileparsec, sfilesiesta,     &
+         ioplot, fileplot)
 
 ! plots all-electron pseudo comparison
 
@@ -391,7 +398,7 @@ program atom_all
   endif
 
 
-  call atom_kb_psd_in_parsec_size(ioparsec, fileparsec, lmax_pot, mxdnr)
+  call atom_kb_psd_in_real_size(ioreal, filereal, lmax_pot, mxdnr)
 
 ! give enough headroom for larger basis sets, increase if needed
 
@@ -405,7 +412,7 @@ program atom_all
 
   call atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,           &
       lmax_bas, n_bas, r_bas, nz_bas, r_siesta, r_99,                    &
-      iowrite, ioparsec, fileparsec,                                     &
+      iowrite, ioreal, filereal,                                     &
       mxdl, mxdset, mxdnr)
 
 ! llocal from table
@@ -428,7 +435,7 @@ program atom_all
 
   call atom_kb_sub(llocal, nql, delql, nql, delql,                       &
       n_bsets, lmax_bas, n_bas, r_bas, nz_bas,                           &
-      iowrite, ioparsec, fileparsec, iokb, sfilekb, ioupf, sfileupf,     &
+      iowrite, ioreal, filereal, iokb, sfilekb, ioupf, sfileupf,     &
       iopsdkb, filepsdkb, ioplotkb, fileplotkb,                          &
       mxdnr, mxdl, mxdset)
 

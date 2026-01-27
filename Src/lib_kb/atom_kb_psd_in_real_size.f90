@@ -1,13 +1,14 @@
 !<  Finds the size of the arrays from the parsec output of the atomic program
 !>
 !>  \author       J.L.Martins
-!>  \version      6.0.3
+!>  \version      6.1.0
 !>  \date         25 May 2012, 17 September 2021.
 !>  \copyright    GNU Public License v2
 
-subroutine atom_kb_psd_in_parsec_size(iotape, fname, lmax, nrmax)
+subroutine atom_kb_psd_in_real_size(iotape, fname, lmax, nrmax)
 
 ! nrmax->mxdnr. 17 September 2021. JLM
+! parsec_size -> real_size in name. 26 January 2026. JLM
 
 
   implicit none
@@ -66,4 +67,4 @@ subroutine atom_kb_psd_in_parsec_size(iotape, fname, lmax, nrmax)
 
   return
 
-end subroutine atom_kb_psd_in_parsec_size
+end subroutine atom_kb_psd_in_real_size

@@ -1,17 +1,18 @@
 !>  prepares the titles for the output files
 !>
 !>  \author       Norm Troullier, Jose Luis Martins
-!>  \version      6.0.3
-!>  \date         1980s, 29 June 2021, 15 September 2021.
+!>  \version      6.1.0
+!>  \date         1980s, 29 June 2021, 26 January 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_titles(typ, vers, indv, no, zo,                      &
        ispp, ifcore, rc, cfac, zratio, ncore, norb,                      &
-       iray, psdtitle, nicore, irel, npot,                               &
+       iray, psdtitle, siestatitle, nicore, irel, npot,                  &
        mxdorb)
 
 ! extracted from pseud2 code. JLM
 ! indv. 15 September 2021. JLM
+! siestatitle. 26 January 2026. JLM
 
   implicit none
 
@@ -45,15 +46,19 @@ subroutine atom_psd_titles(typ, vers, indv, no, zo,                      &
 
   character(len=10), intent(out)    ::  iray(6)                          !<  first title
   character(len=10), intent(out)    ::  psdtitle(20)                     !<  second title
+  character(len=70), intent(out)    ::  siestatitle                      !<  second title in new siesta format
   character(len=4), intent(out)     ::  nicore                           !<  type of core correction
   character(len=3), intent(out)     ::  irel                             !<  relativistic (or not)
   integer, intent(out)              ::  npot(-1:1)                       !<  number of potentials
 
 ! local variables
 
-  integer        ::  ifull
-  real(REAL64)   ::  zelt, zelu, zeld
-  integer        ::  noi, ncp
+  integer            ::  ifull
+  real(REAL64)       ::  zelt, zelu, zeld
+  integer            ::  noi, ncp
+  integer            ::  itext
+  character(len=2)   ::  orb
+  integer            ::  lmax
 
 ! constants
 
@@ -88,6 +93,27 @@ subroutine atom_psd_titles(typ, vers, indv, no, zo,                      &
     psdtitle(i) = '          '
   enddo
 
+  do i = 1,70
+    siestatitle(i:i) = ' '
+  enddo
+
+  lmax = 0
+  do l = 0,lc
+    do i = ncp,norb
+      if(ispp == ' ') then
+        if(indv(l, 0) == i) then
+          if(l > lmax) lmax =l
+        endif
+      else
+        if(indv(l, 1) == i .or. indv(l,-1) == i) then
+          if(l > lmax) lmax =l
+        endif
+      endif
+    enddo
+  enddo
+
+  if(lmax > 4) lmax = 4                                                  !  in case lc is increased...
+
 ! paranoid check for future changes
 
   if(2*lc + 2 > 20) then
@@ -102,17 +128,31 @@ subroutine atom_psd_titles(typ, vers, indv, no, zo,                      &
   if(ispp == ' ') then
 
     do l = 0,lc
+
       noi = 0
+      orb = '  '
+
       do i = ncp,norb
         if(indv(l, 0) == i) then
           noi = no(i)
           zelt = zo(i)
+          write(orb,'(i1,a1)') noi,IL(l)
         endif
       enddo
+
       if(noi /= 0) then
         write(psdtitle(2*l+1),'(i1,a1,"(",f6.2,")")') noi,IL(l), zelt
         write(psdtitle(2*l+2),'(a1," rc=",f5.2)') ispp, rc(l)
       endif
+
+!     second line for siesta
+
+      if(l < lmax+1) then
+        itext=l*17
+        write(siestatitle(itext+1:),'(a2,f5.2,"  r=",f5.2,"/")')             &
+             orb, zelt, rc(l)
+      endif
+
     enddo
 
   elseif(ispp == 'r') then
@@ -120,46 +160,74 @@ subroutine atom_psd_titles(typ, vers, indv, no, zo,                      &
     do l = 0,lc
       noi = 0
       zelt = ZERO
+      orb = '  '
+
       do i = ncp,norb
         if(indv(l, 1) == i) then
           noi = no(i)
           zelt = zelt + zo(i)
+          write(orb,'(i1,a1)') noi,IL(l)
         endif
         if(indv(l,-1) == i) then
           noi = no(i)
           zelt = zelt + zo(i)
+          write(orb,'(i1,a1)') noi,IL(l)
         endif
       enddo
+
       if(noi /= 0) then
         write(psdtitle(2*l+1),'(i1,a1,"(",f6.2,")")') noi,IL(l), zelt
         write(psdtitle(2*l+2),'(a1," rc=",f5.2)') ispp, rc(l)
       endif
-    enddo
+
+!     second line for siesta
+
+      if(l < lmax+1) then
+        itext=l*17
+        write(siestatitle(itext+1:),'(a2,f5.2,"  r=",f5.2,"/")')             &
+             orb, zelt, rc(l)
+      endif
+
+   enddo
 
   elseif(ispp == 's') then
 
     do l = 0,lc
+
       noi = 0
+      orb = '  '
       zelu = ZERO
       zeld = ZERO
+
       do i = ncp,norb
         if(indv(l, 1) == i) then
           noi = no(i)
           zeld = zo(i)
+          write(orb,'(i1,a1)') noi,IL(l)
         endif
         if(indv(l,-1) == i) then
           noi = no(i)
           zelu = zo(i)
+          write(orb,'(i1,a1)') noi,IL(l)
         endif
       enddo
+
       if(noi /= 0) then
         write(psdtitle(2*l+1),'(i1,a1,"(",f6.2,")")') noi,IL(l), zelu
         write(psdtitle(2*l+2),'(f4.2,")",a1,f4.2)') zeld ,ispp, rc(l)
       endif
+
+!     second line for siesta (is zdown zup reversed?)
+
+      if(l < lmax+1) then
+        itext=l*17
+        write(siestatitle(itext+1:),'(a2,f4.2,1x,f4.2,1x,f4.2,"/")')     &
+             orb, zeld, zelu, rc(l)
+      endif
+
     enddo
 
   endif
-
 
 ! Determine the number of  potentials.
 

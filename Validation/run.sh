@@ -2,7 +2,7 @@
 
 # path to executable you want to test
 
-executable="../Src/atom_all_ifort.exe"
+executable="../Src/atom_all_ifx.exe"
 
 # list of all named list_elements
 

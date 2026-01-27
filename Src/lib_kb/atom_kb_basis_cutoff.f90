@@ -2,18 +2,19 @@
 !>  based on the SIESTA recipes
 !>
 !>  \author       J.L.Martins
-!>  \version      6.0.8
-!>  \date         30 August 2021, 19 May 2022.
+!>  \version      6.1.0
+!>  \date         30 August 2021, 19 May 2022, 26 January 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
          lmax_bas, n_bas, r_bas, nz_bas, r_siesta, r_99,                 &
-         iowrite, ioparsec, fileparsec,                                  &
+         iowrite, ioreal, filereal,                                      &
          mxdl, mxdset, mxdnr)
 
 ! nrmax -> mxdnr.  17 September 2021. JLM
 ! jhard. 21 december 2021. JLM
 ! psdtitle, ifcore. 19 May 2022. JLM
+! fileparsec -> filereal. 26 January 2026. JLM
 
   implicit none
 
@@ -27,8 +28,8 @@ subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
 
   integer, intent(in)               ::  iowrite                          !<  default output tape
 
-  integer, intent(in)               ::  ioparsec                         !<  default tape for pseudopotential in parsec format
-  character(len=*), intent(in)      ::  fileparsec                       !<  name of default tape for reading pseudopotential in parsec format
+  integer, intent(in)               ::  ioreal                           !<  default tape for pseudopotential in real space (parse)c format
+  character(len=*), intent(in)      ::  filereal                         !<  name of default tape for reading pseudopotential in real space (parsec) format
 
   integer, intent(in)               ::  n_bsets                          !<  number of atomic basis sets
   character(len=3), intent(in)      ::  tbasis(mxdset)                   !<  type of basis
@@ -207,7 +208,7 @@ subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
 
 ! reads the pseudopotential data file
 
-  call atom_kb_psd_in_parsec(ioparsec, fileparsec,                       &
+  call atom_kb_psd_in_real(ioreal, filereal,                             &
          nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,  &
          npot, nr, a, b, r, zion, lo, vionic, cdc, cdv,                  &
          zo, rc, rpsi(:,:,0),                                            &

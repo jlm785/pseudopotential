@@ -7,7 +7,7 @@
 
 subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
          n_bsets, lmax_bas, n_bas, r_bas, nz_bas,                        &
-         iowrite, ioparsec, fileparsec, iokb, sfilekb, ioupf, sfileupf,  &
+         iowrite, ioreal, filereal, iokb, sfilekb, ioupf, sfileupf,      &
          iopsdkb, filepsdkb, ioplot, fileplot,                           &
          mxdnr, mxdl, mxdset)
 
@@ -34,6 +34,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 ! psdtitle. 19 May 2022. JLM
 ! dated. 25 May 2022. JLM
 ! more than one atomic basis set. 14 January 2026. JLM
+! fileparsec -> filereal, 26 January 2026. JLM
 
 
   implicit none
@@ -48,8 +49,8 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 
   integer, intent(in)               ::  iowrite                          !<  default output tape
 
-  integer, intent(in)               ::  ioparsec                         !<  default tape for pseudopotential in parsec format
-  character(len=*), intent(in)      ::  fileparsec                       !<  name of default tape for reading pseudopotential in parsec format
+  integer, intent(in)               ::  ioreal                           !<  default tape for pseudopotential in real space (parsec) format
+  character(len=*), intent(in)      ::  filereal                       !<  name of default tape for reading pseudopotential in real space (parsec) format
 
   integer, intent(in)               ::  iokb                             !<  default tape for pseudopotential in KB format
   character(len=*), intent(in)      ::  sfilekb                          !<  suffix for default tape for writing pseudopotential in KB format
@@ -206,7 +207,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   write(iowrite,'("   Run on ",a10)') dated
   write(iowrite,*)
 
-  call atom_kb_psd_in_parsec_size(ioparsec, fileparsec, lmax_pot, nrmax)
+  call atom_kb_psd_in_real_size(ioreal, filereal, lmax_pot, nrmax)
 
   write(iowrite,'("   Size of arrays:   lmax = ",i5,"    mxdnr = ",i8)')  &
                lmax_pot, mxdnr
@@ -263,7 +264,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 ! reads the pseudopotential data file
 
 
-  call atom_kb_psd_in_parsec(ioparsec, fileparsec,                       &
+  call atom_kb_psd_in_real(ioreal, filereal,                             &
          nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,  &
          npot, nr, a, b, r, zion, lo, vionic, cdc, cdv,                  &
          zo, rc, rpsi(:,:,0),                                            &

@@ -5,8 +5,8 @@
 !>  \date         200s?, May 2018. 18 May 2022. JLM
 !>  \copyright    GNU Public License v2
 
-subroutine atom_psd_out_parsec(itpars, filename, nameat,                 &
-      icorr, irel, nicore, iray, psdtitle,                               &
+subroutine atom_psd_out(itpars, filename, nameat, cftype,                &
+      icorr, irel, nicore, iray, psdtitle, siestatitle,                  &
       npot, nr, a, b, r, zion, indv, ifcore,                             &
       vpsd, cdc, cdpsd,                                                  &
       cfac, rcfac, ncp, norb, lo, rc, zo, rpsi_ps,                       &
@@ -35,7 +35,9 @@ subroutine atom_psd_out_parsec(itpars, filename, nameat,                 &
   integer, intent(in)               ::  mxdnw                            !<  dimension of number of wave-functions same l
 
   integer, intent(in)               ::  itpars                           !<  tape number
-  character(len=7)                  ::  filename                         !<  file name for writing pseudopotential
+  character(len=*), intent(in)      ::  filename                         !<  file name for writing pseudopotential
+
+  character(len=2), intent(in)      ::  cftype                           !<  indicates output for parsec (PA), siesta (SI) or internal (any other)
 
   character(len=2), intent(in)      ::  nameat                           !<  chemical symbot of the atom
 
@@ -45,6 +47,7 @@ subroutine atom_psd_out_parsec(itpars, filename, nameat,                 &
 
   character(len=10), intent(in)     ::  iray(6)                          !<  code version, date, type of pseudopotential
   character(len=10), intent(in)     ::  psdtitle(20)                     !<  configuration, code details
+  character(len=70), intent(in)     ::  siestatitle                      !<  second title in new siesta format
 
   integer, intent(in)               ::  npot(-1:1)                       !<  number of pseudopotentials
 
@@ -128,14 +131,25 @@ subroutine atom_psd_out_parsec(itpars, filename, nameat,                 &
   open(unit = itpars, file = filename, status = 'unknown', form = 'formatted')
 
   write(itpars,'(1x,a2,1x,a2,1x,a3,1x,a4)') nameat, icorr, irel, nicore
-  write(itpars,'(1x,6a10,/,1x,20a10)') (iray(j),j=1,6), (psdtitle(j),j=1,20)
-
-  if (ifcore == 0) then
-    write(itpars,'(1x,2i3,i5,3g20.12,a20)') npot(id), npot(-1), nrm,     &
-         a, b, zion,' nl nls nr a b zion '
+  write(itpars,'(1x,6a10)') (iray(j),j=1,6)
+  if(cftype == 'SI') then
+    write(itpars,'(1x,a70)') siestatitle
+  elseif(cftype == 'PA') then
+    write(itpars,'(1x,7a10)') (psdtitle(j),j=1,7)
   else
-    write(itpars,'(1x,2i3,i5,5g20.12,a29)') npot(id), npot(-1), nrm,     &
-         a, b, zion, cfac, rcfac,' nl nls nr a b zion cfac rcfac'
+    write(itpars,'(1x,20a10)') (psdtitle(j),j=1,20)
+  endif
+
+  if(cftype == 'SI') then
+    write(itpars,'(1x,2i3,i5,3g20.12)') npot(id), npot(-1), nrm, a, b, zion
+  else
+    if (ifcore == 0) then
+      write(itpars,'(1x,2i3,i5,3g20.12,a20)') npot(id), npot(-1), nrm,     &
+           a, b, zion,' nl nls nr a b zion '
+    else
+      write(itpars,'(1x,2i3,i5,5g20.12,a29)') npot(id), npot(-1), nrm,     &
+           a, b, zion, cfac, rcfac,' nl nls nr a b zion cfac rcfac'
+    endif
   endif
 
   write(itpars,'(" Radial grid follows")')
@@ -214,4 +228,4 @@ subroutine atom_psd_out_parsec(itpars, filename, nameat,                 &
 
   return
 
-end subroutine atom_psd_out_parsec
+end subroutine atom_psd_out

@@ -1,11 +1,13 @@
 !>  Manages the pseudopotential generation toolchain
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.0.6
-!>  \date         22 June 2021, 30 August 2021
+!>  \version      6.1.0
+!>  \date         22 June 2021, 26 January 2026.
 !>  \copyright    GNU Public License v2
 
 program psd_gen
+
+! names files, bit rot of files. 26 January 2026. JLM
 
   implicit none
 
@@ -24,10 +26,12 @@ program psd_gen
   character(len=12)                 ::  fileae                           !  name of default tape for all-electron results
 
   integer                           ::  iopsd                            !  default tape for pseudopotential in old format
-  character(len=10)                 ::  filepsd                          !  name of default tape for reading pseudopotential in old format
+  character(len=10)                 ::  filepsd                          !  name of default tape for writing pseudopotential in old format
 
-  integer                           ::  ioparsec                         !  default tape for pseudopotential in parsec format
-  character(len=7)                  ::  fileparsec                       !  name of default tape for reading pseudopotential in parsec format
+  integer                           ::  ioreal                           !  default tape for pseudopotential in real space (parsec) format
+  character(len=7)                  ::  filereal                         !  name of default tape for reading pseudopotential in real space (parsec) format
+  character(len=4)                  ::  sfilesiesta                      !<  suffix of default tape for writing pseudopotential in siesta format
+  character(len=10)                 ::  sfileparsec                      !<  suffix of default tape for writing pseudopotential in parsec format
 
   integer                           ::  ioplot                           !  default tape for plot file
   character(len=8)                  ::  fileplot                         !  name of default tape for plot file
@@ -65,8 +69,10 @@ program psd_gen
   ioae = 7
   fileae = 'datafile.dat'
 
-  ioparsec = 4
-  fileparsec = 'psd.pot'
+  ioreal = 4
+  filereal = 'psd.pot'
+  sfileparsec = '_POTRE.DAT'
+  sfilesiesta = '.psf'
 
   ioplot = 8
   fileplot = 'plot.dat'
@@ -105,7 +111,8 @@ program psd_gen
 
   call atom_psd_sub(rc, ifcore, cfac, rcfac, .FALSE.,                    &
          iowrite, ioae, fileae,                                          &
-         iopsd, filepsd, ioparsec, fileparsec, ioplot, fileplot)
+         iopsd, filepsd, ioreal, filereal, sfileparsec, sfilesiesta,     &
+         ioplot, fileplot)
 
 
   stop

@@ -1,4 +1,14 @@
+!>  Constructs the Kleinman-Bylander format pseudopotential
+!>
+!>  \author       Jose Luis Martins
+!>  \version      6.1.0
+!>  \date         June 2021. 26 January 2026.
+!>  \copyright    GNU Public License v2
+
+
 program kb_conv
+
+! name of input file, 26 January 2026. JLM
 
   implicit none
 
@@ -7,11 +17,11 @@ program kb_conv
 
   integer                           ::  iowrite                          !  default output tape
 
-  integer                           ::  ioparsec                         !  default tape for pseudopotential in parsec format
-  character(len=7)                  ::  fileparsec                       !  name of default tape for reading pseudopotential in parsec format
+  integer                           ::  ioreal                           !  default tape for pseudopotential in real space (parsec) format
+  character(len=7)                  ::  filereal                         !  name of default tape for reading pseudopotential in real space (parsec) format
 
   integer                           ::  iokb                             !  default tape for pseudopotential in KB format
-  character(len=12)                  ::  sfilekb                         !  suffix for default tape for writing pseudopotential in KB format
+  character(len=12)                 ::  sfilekb                          !  suffix for default tape for writing pseudopotential in KB format
 
   integer                           ::  ioupf                            !  default tape for pseudopotential in UPF format
   character(len=6)                  ::  sfileupf                         !  suffix for default tape for writing pseudopotential in UPF format
@@ -53,8 +63,8 @@ program kb_conv
 
   iowrite = 6
 
-  ioparsec = 7
-  fileparsec = 'psd.pot'
+  ioreal = 7
+  filereal = 'psd.pot'
 
   iokb = 9
   sfilekb = '_POTKB_F.DAT'
@@ -84,7 +94,7 @@ program kb_conv
   tbasis(2) = 'SZ'
 
 
-  call atom_kb_psd_in_parsec_size(ioparsec, fileparsec, lmax_pot, mxdnr)
+  call atom_kb_psd_in_real_size(ioreal, filereal, lmax_pot, mxdnr)
 
 ! give enough headroom for larger basis sets, increase if needed
 
@@ -98,7 +108,7 @@ program kb_conv
 
   call atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,           &
       lmax_bas, n_bas, r_bas, nz_bas, r_siesta, r_99,                    &
-      iowrite, ioparsec, fileparsec,                                     &
+      iowrite, ioreal, filereal,                                         &
       mxdl, mxdset, mxdnr)
 
 ! llocal from table
@@ -120,7 +130,7 @@ program kb_conv
 
   call atom_kb_sub(llocal, nql, delql, nql, delql,                       &
       n_bsets, lmax_bas, n_bas, r_bas, nz_bas,                           &
-      iowrite, ioparsec, fileparsec, iokb, sfilekb, ioupf, sfileupf,     &
+      iowrite, ioreal, filereal, iokb, sfilekb, ioupf, sfileupf,         &
       iopsdkb, filepsdkb, ioplotkb, fileplotkb,                          &
       mxdnr, mxdl, mxdset)
 

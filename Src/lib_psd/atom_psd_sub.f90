@@ -1,13 +1,14 @@
 !>  main subroutine to generate a pseudopotential
 !>
 !>  \author       Norm Troullier, Jose Luis Martins
-!>  \version      6.0.8
-!>  \date         April 1990, 30 June 2021, 18 May 2022.
+!>  \version      6.1.0
+!>  \date         April 1990, 26 January 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
          iowrite, ioae, fileae,                                          &
-         iopsd, filepsd, ioparsec, fileparsec, ioplot, fileplot)
+         iopsd, filepsd, ioreal, filereal, sfileparsec, sfilesiesta,     &
+         ioplot, fileplot)
 
 
 ! Written 12 April 2018
@@ -17,6 +18,7 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
 ! indx, rpsi, 3 November 2021. JLM
 ! lrci, 4 November 2021. JLM
 ! psdtitle, 18 may 2022. JLM
+! more output files. 26 January 2026. JLM
 
 
   implicit none
@@ -34,10 +36,12 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
   character(len=*), intent(in)      ::  fileae                           !<  name of default tape for all-electron results
 
   integer, intent(in)               ::  iopsd                            !<  default tape for pseudopotential in old format
-  character(len=*), intent(in)      ::  filepsd                          !<  name of default tape for reading pseudopotential in old format
+  character(len=*), intent(in)      ::  filepsd                          !<  name of default tape for writing pseudopotential in old format
 
-  integer, intent(in)               ::  ioparsec                         !<  default tape for pseudopotential in parsec format
-  character(len=*)                  ::  fileparsec                       !<  name of default tape for reading pseudopotential in parsec format
+  integer, intent(in)               ::  ioreal                           !<  default tape for pseudopotential in real space (parsec) format
+  character(len=*)                  ::  filereal                         !<  name of default tape for reading pseudopotential in real space (parsec) format
+  character(len=*), intent(in)      ::  sfilesiesta                      !<  suffix of default tape for writing pseudopotential in siesta format
+  character(len=*), intent(in)      ::  sfileparsec                      !<  suffix of default tape for writing pseudopotential in parsec format
 
   integer, intent(in)               ::  ioplot                           !<  default tape for plot file
   character(len=*), intent(in)      ::  fileplot                         !<  name of default tape for plot file
@@ -77,14 +81,16 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
   real(REAL64)                      ::  znuc                             !  nuclear charge
   real(REAL64)                      ::  zel                              !  electron charge
 
-   real(REAL64)                      ::  zion, zratio
+  real(REAL64)                      ::  zion, zratio
   character(len = 5)                ::  vers
 
   integer              ::  npot(-1:1)
 
   character(len=3)     ::  irel
   character(len=4)     ::  nicore
-  character(len=10)    ::  iray(6), psdtitle(20)
+  character(len=10)    ::  iray(6)                                       !  first title
+  character(len=10)    ::  psdtitle(20)                                  !  second title
+  character(len=70)    ::  siestatitle                                   !  second title in new siesta format
 
   integer              ::  isplot
 
@@ -338,7 +344,7 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
 
   call atom_psd_titles('tm2', vers, indv, no, zo,                        &
       ispp, ifcore, rc, cfac, zratio, ncore, norb,                       &
-      iray, psdtitle, nicore, irel, npot,                                &
+      iray, psdtitle, siestatitle, nicore, irel, npot,                   &
       mxdorb)
 
   call atom_psd_out_unfmt(iopsd, filepsd, nameat,                        &
@@ -347,8 +353,27 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
       vpsd, cdc, cdpsd,                                                  &
       mxdnr)
 
-  call atom_psd_out_parsec(ioparsec, fileparsec, nameat,                 &
-      icorr, irel, nicore, iray, psdtitle,                               &
+! these formats are almost identical but with time extra incompatible information
+! incompatible information was added in diverse codes.
+
+  call atom_psd_out(ioreal, filereal, nameat, 'AT',                      &
+      icorr, irel, nicore, iray, psdtitle, siestatitle,                  &
+      npot, nr, a, b, r, zion, indv, ifcore,                             &
+      vpsd, cdc, cdpsd,                                                  &
+      cfac, rcfac, ncore+1, norb, lo, rc, zo, rpsi_ps,                   &
+      mxdnr, mxdorb, mxdlc, mxdnw)
+
+  call atom_psd_out(ioreal, adjustl(trim(nameat))//sfileparsec,          &
+      nameat, 'PA',                                                      &
+      icorr, irel, nicore, iray, psdtitle, siestatitle,                  &
+      npot, nr, a, b, r, zion, indv, ifcore,                             &
+      vpsd, cdc, cdpsd,                                                  &
+      cfac, rcfac, ncore+1, norb, lo, rc, zo, rpsi_ps,                   &
+      mxdnr, mxdorb, mxdlc, mxdnw)
+
+  call atom_psd_out(ioreal, adjustl(trim(nameat))//sfilesiesta,          &
+      nameat, 'SI',                                                      &
+      icorr, irel, nicore, iray, psdtitle, siestatitle,                  &
       npot, nr, a, b, r, zion, indv, ifcore,                             &
       vpsd, cdc, cdpsd,                                                  &
       cfac, rcfac, ncore+1, norb, lo, rc, zo, rpsi_ps,                   &
