@@ -2,12 +2,13 @@
 !>
 !>  \author       Norm Troullier, J.L.Martins
 !>  \version      6.1.0
-!>  \date         November 90, May 2012, July 2021, 14 January 2026.
+!>  \date         November 90, May 2012, July 2021, 2 February 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
          n_bsets, lmax_bas, n_bas, r_bas, nz_bas,                        &
-         iowrite, ioreal, filereal, iokb, sfilekb, ioupf, sfileupf,      &
+         iowrite, ioreal, filereal, iokb, sfilekb,                       &
+         ioupf, sfileupf, sfilepsp8,                                     &
          iopsdkb, filepsdkb, ioplot, fileplot,                           &
          mxdnr, mxdl, mxdset)
 
@@ -50,13 +51,14 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   integer, intent(in)               ::  iowrite                          !<  default output tape
 
   integer, intent(in)               ::  ioreal                           !<  default tape for pseudopotential in real space (parsec) format
-  character(len=*), intent(in)      ::  filereal                       !<  name of default tape for reading pseudopotential in real space (parsec) format
+  character(len=*), intent(in)      ::  filereal                         !<  name of default tape for reading pseudopotential in real space (parsec) format
 
   integer, intent(in)               ::  iokb                             !<  default tape for pseudopotential in KB format
   character(len=*), intent(in)      ::  sfilekb                          !<  suffix for default tape for writing pseudopotential in KB format
 
   integer, intent(in)               ::  ioupf                            !<  default tape for pseudopotential in UPF format
   character(len=*), intent(in)      ::  sfileupf                         !<  suffix for default tape for writing pseudopotential in UPF format
+  character(len=*), intent(in)      ::  sfilepsp8                        !<  suffix for default tape for writing pseudopotential in psp8 abinit format
 
   integer , intent(in)              ::  iopsdkb                          !<  default tape for KB pseudopotential in real space
   character(len=15), intent(in)     ::  filepsdkb                        !<  name of default tape for writeing KB pseudopotential in real space
@@ -90,7 +92,8 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   character(len=5)                  ::  version                          !  program version (should be the same as in atomic program)
 
   character(len=30)                 ::  filekb                           !  name of default tape for writing pseudopotential in KB format
-  character(len=30)                 ::  fileupf                           !  name of default tape for writing pseudopotential in upf format
+  character(len=30)                 ::  fileupf                          !  name of default tape for writing pseudopotential in upf format
+  character(len=30)                 ::  filepsp8                         !  name of default tape for writing pseudopotential in psp8 format
 
 ! variables from the output file of psd_gen
 
@@ -531,12 +534,15 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   if(nameat(1:1) == ' ') then
     filekb = nameat(2:2)//sfilekb
     fileupf = nameat(2:2)//scorr//sfileupf
+    filepsp8 = nameat(2:2)//sfilepsp8
   elseif(nameat(2:2) == ' ') then
     filekb = nameat(1:1)//sfilekb
     fileupf = nameat(1:1)//scorr//sfileupf
+    filepsp8 = nameat(1:1)//sfilepsp8
   else
     filekb = nameat//sfilekb
     fileupf = nameat//scorr//sfileupf
+    filepsp8 = nameat//sfilepsp8
   endif
 
   call atom_kb_psd_out_four(iokb, filekb,                                &
@@ -548,6 +554,12 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 
   call atom_kb_psd_out_upf(ioupf, fileupf,                               &
          nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,  &
+         nr, r,  zion, vlocal, cdc, cdv,                                 &
+         llocal, lmax_pot, vkbproj, inorm, lmax_pot, rpsi,               &
+         mxdl, mxdnr)
+
+  call atom_kb_psd_out_psp8(ioupf, filepsp8,                             &
+         nameat, icorr, irel, nicore, irvers, psdtitle,                  &
          nr, r,  zion, vlocal, cdc, cdv,                                 &
          llocal, lmax_pot, vkbproj, inorm, lmax_pot, rpsi,               &
          mxdl, mxdnr)

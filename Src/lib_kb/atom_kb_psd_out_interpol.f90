@@ -1,13 +1,14 @@
-!>  Interpolates from the atom code grid to the UPF grid,
+!>  Interpolates from the atom code grid to another grid,
 !>  the local and non-local pseudopotentials, the wavefunctions
-!>  and charge densities (core and valence)
+!>  and charge densities (core and valence).
+!>  Used for the UPF and psp8 formats
 !>
 !>  \author       J.L.Martins
 !>  \version      6.0.9
 !>  \date         15 November 2024.
 !>  \copyright    GNU Public License v2
 
-subroutine atom_kb_psd_out_upf_interp(nr, r, nrupf, rupf, lso,           &
+subroutine atom_kb_psd_out_interp(nr, r, nrupf, rupf, lso,               &
       vlocal, lmax_pot, vkbproj, lmax_psi, rpsi, cdv, cdc,               &
       vlocupf, vnlupf, chi, cdvupf, cdcupf,                              &
       mxdl, mxdnr)
@@ -59,12 +60,15 @@ subroutine atom_kb_psd_out_upf_interp(nr, r, nrupf, rupf, lso,           &
 ! other variables
 
   integer                          ::  ierr
-  integer                          ::  jmin, jmax
+  integer                          ::  jmin, jmax, imin
+  integer                          ::  nrange, nrange_upf                !  maximum range of projectors in original and interpolated grids
+  logical                          ::  lexit
 
 ! constants
 
   real(REAL64), parameter    ::  ZERO = 0.0_REAL64
   real(REAL64), parameter    ::  PI4 = 16*atan(1.0_REAL64)
+  real(REAL64), parameter    ::  EPS = epsilon(ZERO)
 
 ! counters
 
@@ -79,7 +83,7 @@ subroutine atom_kb_psd_out_upf_interp(nr, r, nrupf, rupf, lso,           &
   call splift (r, vlocal, yp, ypp, nr, wlu, ierr, 0, ZERO,ZERO,ZERO,ZERO)
 
   if(ierr /= 1) then
-    write(6,*) '   STOPPED in atom_kb_psd_out_upf_interp'
+    write(6,*) '   STOPPED in atom_kb_psd_out_interp'
     write(6,*) '   error in splift vlocal'
     stop
   endif
@@ -87,17 +91,82 @@ subroutine atom_kb_psd_out_upf_interp(nr, r, nrupf, rupf, lso,           &
   call splint (r, vlocal, ypp, nr, rupf, vlocupf, ypi, yppi, nrupf, ierr)
 
   if(ierr /= 1) then
-    write(6,*) '   STOPPED in atom_kb_psd_out_upf_interp'
+    write(6,*) '   STOPPED in atom_kb_psd_out_interp'
     write(6,*) '   error in splint vlocal'
     stop
   endif
 
-  do i = 1,nrupf
+  imin = 1
+  if(abs(rupf(1)) < EPS) then
+    imin = 2
+    vlocupf(1) = vlocupf(2)/rupf(2)
+  endif
+  do i = imin,nrupf
     vlocupf(i) = vlocupf(i)/rupf(i)
   enddo
 
-
 ! interpolates KB projectors
+
+! first finds range
+
+  nrange = nr
+  lexit = .FALSE.
+  do i = nr,1,-1
+    do l = 0,lmax_pot
+
+      if(lso) then
+        jmin = -1
+        jmax = 1
+        if(l == 0) jmin = 0
+      else
+        jmin = 0
+        jmax = 0
+      endif
+
+      do j = jmin,jmax
+        if(abs(vkbproj(i,l,j)) > EPS/100) then
+          lexit = .TRUE.
+
+          exit
+
+        endif
+      enddo
+
+      if(lexit) exit
+
+    enddo
+
+    if(lexit) exit
+
+    nrange = i
+
+  enddo
+
+  nrange_upf = nrupf
+  do i = nrupf,1,-1
+
+    if(rupf(i) < r(nrange)) exit
+
+    nrange_upf = i
+  enddo
+
+! now makes sure it is an interpolation...
+
+  nrange = nr
+  do i = nr,1,-1
+
+    if(r(i) < rupf(nrange_upf)) exit
+
+    nrange = i
+  enddo
+
+  if(nrange == nr) then
+    write(6,*) '   STOPPED in atom_kb_psd_out_interp'
+    write(6,*) '   new grid is larger than old  ', r(nr), rupf(nrupf)
+    stop
+  endif
+
+  vnlupf(:,:,:) = ZERO
 
   do l = 0,lmax_pot
 
@@ -112,18 +181,20 @@ subroutine atom_kb_psd_out_upf_interp(nr, r, nrupf, rupf, lso,           &
 
     do j = jmin,jmax
 
-      call splift (r, vkbproj(:,l,j), yp, ypp, nr, wlu, ierr, 1, ZERO,ZERO,ZERO,ZERO)
+      call splift (r, vkbproj(:,l,j), yp, ypp, nr, wlu, ierr, 1,         &
+                   ZERO,ZERO,ZERO,ZERO)
 
       if(ierr /= 1) then
-        write(6,*) '   STOPPED in atom_kb_psd_out_upf_interp'
+        write(6,*) '   STOPPED in atom_kb_psd_out_interp'
         write(6,*) '   error in splift vkbproj  ', l
         stop
       endif
 
-      call splint (r, vkbproj(:,l,j), ypp, nr, rupf, vnlupf(1,l,j), ypi, yppi, nrupf, ierr)
+      call splint (r, vkbproj(:,l,j), ypp, nr, rupf, vnlupf(:,l,j),      &
+                   ypi, yppi, nrange_upf, ierr)
 
       if(ierr /= 1) then
-        write(6,*) '   STOPPED in atom_kb_psd_out_upf_interp'
+        write(6,*) '   STOPPED in atom_kb_psd_out_interp'
         write(6,*) '   error in splint vkbproj  ', l
         stop
       endif
@@ -154,7 +225,7 @@ subroutine atom_kb_psd_out_upf_interp(nr, r, nrupf, rupf, lso,           &
       call splift (r, rpsi(:,l,j), yp, ypp, nr, wlu, ierr, 1, ZERO,ZERO,ZERO,ZERO)
 
       if(ierr /= 1) then
-        write(6,*) '   STOPPED in atom_kb_psd_out_upf_interp'
+        write(6,*) '   STOPPED in atom_kb_psd_out_interp'
         write(6,*) '   error in splift rpi', l
         stop
       endif
@@ -162,7 +233,7 @@ subroutine atom_kb_psd_out_upf_interp(nr, r, nrupf, rupf, lso,           &
       call splint (r, rpsi(:,l,j), ypp, nr, rupf, chi(:,l,j), ypi, yppi, nrupf, ierr)
 
       if(ierr /= 1) then
-        write(6,*) '   STOPPED in atom_kb_psd_out_upf_interp'
+        write(6,*) '   STOPPED in atom_kb_psd_out_interp'
         write(6,*) '   error in splint rpsi  ', l
         stop
       endif
@@ -176,7 +247,7 @@ subroutine atom_kb_psd_out_upf_interp(nr, r, nrupf, rupf, lso,           &
   call splift (r, cdv, yp, ypp, nr, wlu, ierr, 1, ZERO,ZERO,ZERO,ZERO)
 
   if(ierr /= 1) then
-    write(6,*) '   STOPPED in atom_kb_psd_out_upf_interp'
+    write(6,*) '   STOPPED in atom_kb_psd_out_interp'
     write(6,*) '   error in splift valence charge'
     stop
   endif
@@ -184,7 +255,7 @@ subroutine atom_kb_psd_out_upf_interp(nr, r, nrupf, rupf, lso,           &
   call splint (r, cdv, ypp, nr, rupf, cdvupf, ypi, yppi, nrupf, ierr)
 
   if(ierr /= 1) then
-    write(6,*) '   STOPPED in atom_kb_psd_out_upf_interp'
+    write(6,*) '   STOPPED in atom_kb_psd_out_interp'
     write(6,*) '   error in splint valence charge'
     stop
   endif
@@ -193,7 +264,7 @@ subroutine atom_kb_psd_out_upf_interp(nr, r, nrupf, rupf, lso,           &
   call splift (r, cdc, yp, ypp, nr, wlu, ierr, 1, ZERO,ZERO,ZERO,ZERO)
 
   if(ierr /= 1) then
-    write(6,*) '   STOPPED in atom_kb_psd_out_upf_interp'
+    write(6,*) '   STOPPED in atom_kb_psd_out_interp'
     write(6,*) '   error in splift core charge'
     stop
   endif
@@ -201,17 +272,22 @@ subroutine atom_kb_psd_out_upf_interp(nr, r, nrupf, rupf, lso,           &
   call splint (r, cdc, ypp, nr, rupf, cdcupf, ypi, yppi, nrupf, ierr)
 
   if(ierr /= 1) then
-    write(6,*) '   STOPPED in atom_kb_psd_out_upf_interp'
+    write(6,*) '   STOPPED in atom_kb_psd_out_interp'
     write(6,*) '   error in splint core charge'
     stop
   endif
 
-  do i = 1,nrupf
+  imin = 1
+  if(abs(rupf(1)) < EPS) then
+    imin = 2
+    cdcupf(1) = cdcupf(2) / (PI4*rupf(2)*rupf(2))
+  endif
+  do i = imin,nrupf
     cdcupf(i) = cdcupf(i) / (PI4*rupf(i)*rupf(i))
   enddo
 
 
   return
 
-end subroutine atom_kb_psd_out_upf_interp
+end subroutine atom_kb_psd_out_interp
 

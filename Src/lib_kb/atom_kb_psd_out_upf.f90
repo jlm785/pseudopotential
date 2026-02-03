@@ -1,8 +1,8 @@
 !>  writes the KB pseudopotential in the Quantum Espresso UPF format
 !>
 !>  \author       J.L.Martins
-!>  \version      6.0.9
-!>  \date         October 2018. 17 November 2024.
+!>  \version      6.1.0
+!>  \date         October 2018. 31 January 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_psd_out_upf(iotape, fname,                            &
@@ -15,6 +15,7 @@ subroutine atom_kb_psd_out_upf(iotape, fname,                            &
 ! Converted to new style. 25 January 2022. JLM
 ! psdtitle, bug/feature reported by Raymond Atta-Fynn, 19 May 2022. JLM
 ! Valid now for pseudopotentials wit spin-orbit. 16 November 2024.
+! Renamed atom_kb_psd_out_interp. 31 January 2026. JLM
 
   implicit none
 
@@ -138,7 +139,7 @@ subroutine atom_kb_psd_out_upf(iotape, fname,                            &
   allocate(cdcupf(nrupf))
   allocate(cdvupf(nrupf))
 
-  call atom_kb_psd_out_upf_interp(nr, r, nrupf, rupf, lso,               &
+  call atom_kb_psd_out_interp(nr, r, nrupf, rupf, lso,                   &
       vlocal, lmax_pot, vkbproj, lmax_psi, rpsi, cdv, cdc,               &
       vlocupf, vnlupf, chi, cdvupf, cdcupf,                              &
       mxdl, mxdnr)
@@ -187,7 +188,7 @@ subroutine atom_kb_psd_out_upf(iotape, fname,                            &
 
     open (unit = iotape, file = trim(fname), form = 'formatted', status = 'unknown')
 
-    write(iotape,'(a21)') "<UPF version='2.0.1'>"
+    write(iotape,'(a21)') '<UPF version="2.0.1">'
       write(iotape,*)
 
 

@@ -41,6 +41,7 @@ program atom_all
 
   integer                           ::  iokb                             !  default tape for pseudopotential in KB format
   character(len=12)                 ::  sfilekb                          !  suffix for default tape for writing pseudopotential in KB format
+  character(len=5)                  ::  sfilepsp8                        !  suffix for default tape for writing pseudopotential in psp8 abinit format
 
   integer                           ::  ioupf                            !  default tape for pseudopotential in UPF format
   character(len=6)                  ::  sfileupf                         !  suffix for default tape for writing pseudopotential in UPF format
@@ -155,6 +156,7 @@ program atom_all
 
   ioupf = 9
   sfileupf = 'TM.UPF'
+  sfilepsp8 = '.psp8'
 
   iopsdkb = 10
   filepsdkb = 'pseudokb.dat   '
@@ -435,7 +437,8 @@ program atom_all
 
   call atom_kb_sub(llocal, nql, delql, nql, delql,                       &
       n_bsets, lmax_bas, n_bas, r_bas, nz_bas,                           &
-      iowrite, ioreal, filereal, iokb, sfilekb, ioupf, sfileupf,     &
+      iowrite, ioreal, filereal, iokb, sfilekb,                          &
+      ioupf, sfileupf, sfilepsp8,                                        &
       iopsdkb, filepsdkb, ioplotkb, fileplotkb,                          &
       mxdnr, mxdl, mxdset)
 
