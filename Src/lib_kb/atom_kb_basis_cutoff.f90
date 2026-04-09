@@ -74,6 +74,7 @@ subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
   real(REAL64), allocatable         ::  vionic(:,:,:)                    !  r*pseudopotential. -1:  j=l-1/2.  0:  average.  1:  j=l+1/2
   real(REAL64), allocatable         ::  cdc(:)                           !  4*pi*r**2 charge density of core
   real(REAL64), allocatable         ::  cdv(:)                           !  4*pi*r**2 charge density of valence.  kb_conv is not spin polarized...
+  real(REAL64), allocatable         ::  tauc_total(:)                    !  core kinetic energy density
 
 ! variables for KB-pseudopotential
 
@@ -191,6 +192,7 @@ subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
   allocate(lo(mxdl+1,-1:1))
   allocate(vionic(mxdnr,0:mxdl,-1:1))
   allocate(cdc(mxdnr),cdv(mxdnr))
+  allocate(tauc_total(mxdnr))
 
   allocate(ev(0:mxdl,-1:1))
   allocate(rpsi(mxdnr,0:mxdl,-1:1))
@@ -210,7 +212,7 @@ subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
 
   call atom_kb_psd_in_real(ioreal, filereal,                             &
          nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,  &
-         npot, nr, a, b, r, zion, lo, vionic, cdc, cdv,                  &
+         npot, nr, a, b, r, zion, lo, vionic, cdc, cdv, tauc_total,      &
          zo, rc, rpsi(:,:,0),                                            &
          lmax, mxdnr, mxdl)
 

@@ -7,7 +7,8 @@
 
 subroutine atom_kb_pot_four(npot, lo, irel, nicore, nr, r, drdi, zion,   &
      nql, nqnl, delql, nqbas, delqbas, vlocal, inorm, vkbproj,           &
-     cdc, cdv, vlocft, vql0, vkbprft, cdcft, cdvft, basft,               &
+     cdc, cdv, tauc,                                                     &
+     vlocft, vql0, vkbprft, cdcft, cdvft, taucft, basft,                 &
      n_bsets, norbas, lo_b, rpsi,                                        &
      mxdl, mxdnr, nqmax, nqmaxbas, mxdbas, mxdset)
 
@@ -52,7 +53,7 @@ subroutine atom_kb_pot_four(npot, lo, irel, nicore, nr, r, drdi, zion,   &
   real(REAL64), intent(in)          ::  vkbproj(mxdnr,0:mxdl,-1:1)       !<  kb-projector
   real(REAL64), intent(in)          ::  cdc(mxdnr)                       !<  4*pi*r**2 charge density of core
   real(REAL64), intent(in)          ::  cdv(mxdnr)                       !<  4*pi*r**2 charge density of valence.  kb_conv is not spin polarized...
-
+  real(REAL64), intent(in)          ::  tauc(mxdnr)                      !<  core kinetic energy density
   integer, intent(in)               ::  n_bsets                          !<  number of atomic basis sets
   integer, intent(in)               ::  norbas(mxdset)                   !<  number of basis functions
   integer, intent(in)               ::  lo_b(mxdbas,mxdset)              !<  angular momentum of basis function
@@ -65,6 +66,7 @@ subroutine atom_kb_pot_four(npot, lo, irel, nicore, nr, r, drdi, zion,   &
   real(REAL64), intent(out)         ::  vkbprft(0:nqmax,0:mxdl,-1:1)     !<  Fourier transform of kb-projector
   real(REAL64), intent(out)         ::  cdcft (0:nqmax)                  !<  Fourier transform of 4*pi*r**2 charge density of core
   real(REAL64), intent(out)         ::  cdvft(0:nqmax)                   !<  Fourier transform of 4*pi*r**2 charge density of valence.  kb_conv is not spin polarized...
+  real(REAL64), intent(out)         ::  taucft (0:nqmax)                 !<  Fourier transform of 4*pi*r**2 kinetic energy density of core.
   real(REAL64), intent(out)         ::  basft(0:nqmaxbas,mxdbas,mxdset)  !< Fourier (Bessel) transform of the radial wavefunction
 
 ! allocatable arrays
@@ -81,6 +83,7 @@ subroutine atom_kb_pot_four(npot, lo, irel, nicore, nr, r, drdi, zion,   &
 ! parameters
 
   real(REAL64), parameter    ::  ZERO = 0.0_REAL64
+  real(REAL64), parameter    ::  UM = 1.0_REAL64
   real(REAL64), parameter    ::  TINYR = 1.0E-12_REAL64
   real(REAL64), parameter    ::  PI4 = 16*atan(1.0_REAL64)
 
@@ -155,6 +158,16 @@ subroutine atom_kb_pot_four(npot, lo, irel, nicore, nr, r, drdi, zion,   &
 
   cdvft(0) = zion
 
+! Fourier transform the kinetic energy density.
+
+  taucft = ZERO
+!  call ft_radial(nr-1, nql, r, drdi, yp, tauc, taucft, 0)
+  call ft_charge(nr-1, nql, r, drdi, yp, tauc, taucft)
+
+
+! extrapolates to zero
+
+  taucft(0) = (4*taucft(1) - taucft(2)) / (3*UM)
 
 ! fourier transforms of wave functions
 

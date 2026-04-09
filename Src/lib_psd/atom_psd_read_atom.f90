@@ -1,17 +1,21 @@
 !>  Reads the pseudopotential core radii
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.014
-!>  \date         27 August 2021
+!>  \version      6.1.0
+!>  \date         27 August 2021, 25 March 2026.
 !>  \copyright    GNU Public License v2
 
-subroutine atom_psd_read_atom(ioread, filein, nameat, rc, cfac, rcfac, lres)
+subroutine atom_psd_read_atom(ioread, filein, nameat, rc,                &
+      cfac, rcfac, cfactau, lres)
+
+! written 27 August 2021 from previous code. JLM
+! cfactau, 25 March 2026. JLM
 
   implicit none
 
   integer, parameter          :: REAL64 = selected_real_kind(12)
 
-  integer, parameter                ::  lc = 4                           !  maximum valence angular momentum
+  integer, parameter                ::  mxdlc = 4                        !  maximum valence angular momentum
 
 ! input
 
@@ -22,19 +26,23 @@ subroutine atom_psd_read_atom(ioread, filein, nameat, rc, cfac, rcfac, lres)
 
 ! output
 
-  real(REAL64), intent(out)         ::  rc(0:lc)                         !<  core radius r_c(l)
+  real(REAL64), intent(out)         ::  rc(0:mxdlc)                      !<  core radius r_c(l)
   real(REAL64), intent(out)         ::  cfac                             !<  criteria for pseudo-core charge
   real(REAL64), intent(out)         ::  rcfac                            !<  pseudo-core radius
+  real(REAL64), intent(out)         ::  cfactau                          !<  core correction factor for kinetic energy density
 
   logical, intent(out)              ::  lres                             !<  lecture seems successful
 
 ! local variables
 
-  character(len=2)  ::  ctype                                            !  type of calculation flag
-  integer           ::  nc, nv
+  character(len=2)     ::  ctype                                         !  type of calculation flag
+  integer              ::  nc, nv
 
-  integer           ::  ioerror
-  character(len=2)  ::  name                                             !  element on the atom.dat file
+  integer              ::  ioerror
+  character(len=2)     ::  name                                          !  element on the atom.dat file
+
+  character(len=128)   ::  cline
+  real(REAL64)         ::  rctmp(0:mxdlc)
 
 ! constants
 
@@ -47,11 +55,12 @@ subroutine atom_psd_read_atom(ioread, filein, nameat, rc, cfac, rcfac, lres)
 
 ! default values
 
-  do l = 0,4
+  do l = 0,mxdlc
     rc(l) = ZERO
   enddo
   cfac = ONE
   rcfac = ZERO
+  cfactau = ONE
 
 ! read rc(s),rc(p),rc(d),rc(f),rc(g),cfac,rcfac
 
@@ -91,15 +100,37 @@ subroutine atom_psd_read_atom(ioread, filein, nameat, rc, cfac, rcfac, lres)
   do i = 1,nv
     read(ioread,*)
   enddo
-  read(ioread,'(7f10.5)', iostat = ioerror) (rc(l),l=0,4), cfac, rcfac
+
+! uses cline to be able to keep back-compatibility
+
+  do i = 1,128
+    cline(i:i) = ' '
+  enddo
+
+  read(ioread,'(a128)')  cline
 
   close(unit=ioread)
 
-  if (cfac == ZERO) cfac = ONE
+! note that mxdlc is hard coded here, but it is the old format...
+
+  read(cline,'(5f10.5)') rc(0)
+  do l = 1,4
+    read(cline,'(5f10.5)',iostat = ioerror) (rctmp(i),i=0,l-1),rc(l)
+    if(ioerror /= 0) exit
+  enddo
+
+  read(cline(51:128),*,iostat = ioerror) cfac, rcfac
 
   lres = .TRUE.
   if(ioerror /= 0) lres = .FALSE.
-  if(abs(rc(1)) < 0.001) lres = .FALSE.
+  if(abs(rc(0)) < 0.001) lres = .FALSE.
+
+  if(ioerror == 0) then
+    read(cline(51:128),*,iostat = ioerror) rctmp(1), rctmp(2), cfactau
+  endif
+
+  if(cfac == ZERO) cfac = ONE
+  if(cfactau == ZERO) cfactau = ONE
 
   return
 

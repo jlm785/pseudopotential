@@ -2,20 +2,21 @@
 !>  to file fname
 !>
 !>  \author       N. Troullier, J.L.Martins
-!>  \version      6.0.8
-!>  \date         November 1990, April-June 2012, 19 May 2022.
+!>  \version      6.1.0
+!>  \date         November 1990, April-June 2012, 5 February 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_psd_out_four(iotape, fname,                           &
       nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,     &
       nql, nqnl, delql, nqbas, delqbas, zion, vql0,                      &
-      npot, lo, ev, inorm, vkbprft, vlocft, cdcft, cdvft,                &
+      npot, lo, ev, inorm, vkbprft, vlocft, cdcft, cdvft, taucft,        &
       n_bsets, norbas, lo_b, basft,                                      &
       mxdl, nqmax, nqmaxbas, mxdbas, mxdset)
 
 ! modified by JLMartins 24/4/2012 and 12/6/2012
 ! wv -> bas.  18 September 2021. JLM
 ! psdtitle. 19 May 2022. JLM
+! taucft, 5 February 2026. JLM
 
 ! WARNING     NOT THE FINAL VERSION
 
@@ -61,6 +62,7 @@ subroutine atom_kb_psd_out_four(iotape, fname,                           &
   real(REAL64), intent(in)          ::  vkbprft(0:nqmax,0:mxdl,-1:1)     !<  Fourier transform of kb-projector
   real(REAL64), intent(in)          ::  cdcft(0:nqmax)                   !<  Fourier transform of 4*pi*r**2 charge density of core
   real(REAL64), intent(in)          ::  cdvft (0:nqmax)                  !<  Fourier transform of 4*pi*r**2 charge density of valence.  kb_conv is not spin polarized...
+  real(REAL64), intent(in)          ::  taucft (0:nqmax)                 !<  Fourier transform of 4*pi*r**2 kinetic energy density of core.
 
   integer, intent(in)               ::  n_bsets                          !<  number of atomic basis sets
   integer, intent(in)               ::  norbas(mxdset)                   !<  number of basis functions
@@ -150,6 +152,12 @@ subroutine atom_kb_psd_out_four(iotape, fname,                           &
         write(iotape,*) basft(k,i,nb)
       enddo
     enddo
+  enddo
+
+  write(iotape,*) taucft(0), '     start of tau'
+
+  do k = 1,nql
+    write(iotape,*) taucft(k)
   enddo
 
   close(unit=iotape)

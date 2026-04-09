@@ -6,21 +6,23 @@
 !>  is used as initial guess, and it must therefore be reasonably
 !>  accurate.
 !>
-!>  \author       Sverre Froyen, Jose Luis Martins
-!>  \version      6.0.3
-!>  \date         1980s, 12 September 2021
+!>  \author       Sverre Froyen, Jose Luis Martins, Emmi Gareis
+!>  \version      6.1.0
+!>  \date         1980s, 6 January 2026.
 !>  \copyright    GNU Public License v2
 
   subroutine atom_atm_dsolv2(iter, iconv, ispp, ifcore,                  &
        nr, r, drdi, d2rodr,                                              &
        norb, ncore, no, lo, iso, zo, znuc,                               &
-       cdv, cdc, vionic, vhxc_orb, ev, ek, ep, evi,                      &
+       cdv, cdc, vionic, vhxc_orb, ev, ek, ep, tau, evi,                 &
        iowrite, mxdnr, mxdorb, mxdl)
 
 ! converted to fortran 90, March 1st 2018
 ! cleanup and new interface, July 2019. JLM
 ! exit bug. 22 June 2021. JLM
 ! so->iso, vionic, single orbital in orban, cdv, 12 September 2021. JLM
+! Bug in the calculation of core charge for relativistic calculation squashed by Emmi Gareis. 2025.
+! calculation of tau implemented by Emmi Gareis moved to a separete subroutine, 6 January 2026. JLM
 
   implicit none
 
@@ -71,6 +73,7 @@
 
   real(REAL64), intent(out)         ::  ek(mxdorb)                       !<  orbital kinetic energy
   real(REAL64), intent(out)         ::  ep(mxdorb)                       !<  orbital potential energy
+  real(REAL64), intent(out)         ::  tau(mxdnr,mxdorb)                !<  core kinetic energy density matrix (gradient version)
 
 ! input and output
 
@@ -201,7 +204,7 @@
 
       endif
 
-!     Add to the charge density.
+!     Add to the charge density. Valence charge:
 
       if (ispp == 'r') then
 
@@ -219,12 +222,25 @@
 
       endif
 
+!     Add to the charge density. Core charge:
+
       if (ifcore == 0 .and. i <= ncore) then
 
-        do j = 1,nr
-          denr = zo(i) * ar(j) * ar(j)
-          cdc(j) = cdc(j) + denr
-        enddo
+        if (ispp == 'r') then
+
+          do j = 1,nr
+            denr = zo(i) *(br(j) * br(j) + ar(j) * ar(j))
+            cdc(j) = cdc(j) + denr
+          enddo
+
+        else
+
+          do j = 1,nr
+            denr = zo(i) * ar(j) * ar(j)
+            cdc(j) = cdc(j) + denr
+          enddo
+
+        endif
 
       endif
 
@@ -237,7 +253,17 @@
             vionic(:,lo(i),iso(i)), vhxc_orb(:,i),  ev(i), ek(i), ep(i), &
             iowrite, mxdnr, mxdl)
 
+        call atom_atm_tau(ispp, ar, br, nr, r,                           &
+            lo(i), iso(i), ev(i), v, tau(:,i),                           &
+            mxdnr)
+
       endif
+
+!       if (i > ncore) then
+!         do j=1,nr
+!           tau(j,i) = ZERO
+!         end do
+!       end if
 
     endif
 

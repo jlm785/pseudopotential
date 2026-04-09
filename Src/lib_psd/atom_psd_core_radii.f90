@@ -1,14 +1,16 @@
 !>  Finds the core radii and sets xc partial core correction
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.0.6
-!>  \date         27 August 2021. 2 November 2021.
+!>  \version      6.1.0
+!>  \date         27 August 2021. 24 March 2026.
 !>  \copyright    GNU Public License v2
 
-subroutine atom_psd_core_radii(rc, cfac, rcfac, rc_tab, rz, rx, lpmax,   &
+subroutine atom_psd_core_radii(rc, cfac, rcfac, cfactau, rc_tab,         &
+         rz, rx, lpmax,                                                  &
          iowrite, ioae, ioread, filein, fileae)
 
 ! mxdlc in atom_psd_max_zero.  2 November 2021. JLM
+! sets cfactau, 24 March 2026. JLM
 
 
   implicit none
@@ -32,6 +34,7 @@ subroutine atom_psd_core_radii(rc, cfac, rcfac, rc_tab, rz, rx, lpmax,   &
   real(REAL64), intent(out)         ::  rc(0:mxdlc)                      !<  core radius r_c(l)
   real(REAL64), intent(out)         ::  cfac                             !<  criteria for pseudo-core charge
   real(REAL64), intent(out)         ::  rcfac                            !<  pseudo-core radius
+  real(REAL64), intent(out)         ::  cfactau                          !<  core correction factor for kinetic energy density
 
   real(REAL64), intent(out)         ::  rc_tab(0:mxdlc)                  !<  tabulated core radii
   real(REAL64), intent(out)         ::  rz(0:mxdlc), rx(0:mxdlc)         !<  avearge zero and extrma for l
@@ -58,18 +61,27 @@ subroutine atom_psd_core_radii(rc, cfac, rcfac, rc_tab, rz, rx, lpmax,   &
 
   call atom_p_tbl_psd_tm2(nameat, rc_tab, status)
 
-! reads core radii fromatom.dat
+! reads core radii from atom.dat
 
   inquire(file=filein, exist = lex)
 
   lres = .FALSE.
   if(lex) then
-    call atom_psd_read_atom(ioread, filein, nameat, rc, cfac, rcfac, lres)
+    call atom_psd_read_atom(ioread, filein, nameat, rc,                  &
+         cfac, rcfac, cfactau, lres)
+  endif
+
+! to keep back compatibility cfactau is set here.
+
+  if(lex) then
+  else
+    cfactau = ONE
   endif
 
   if(.not. lres .or. .not. lex) then
     cfac = ONE
     rcfac = ZERO
+    cfactau = ONE
 
     do l = 0,mxdlc
       rc(l) = rc_tab(l)

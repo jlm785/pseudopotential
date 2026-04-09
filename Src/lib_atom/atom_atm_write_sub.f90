@@ -4,14 +4,15 @@
 !>  User may edit that file to have the other cases.
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.0.8
-!>  \date         22 June 2021, 21 April 2022.
+!>  \version      6.1.0
+!>  \date         22 June 2021, 27 March 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_atm_write_sub(ioread, filein, nameat)
 
 ! nval2, jhard. 21 December 2021. JLM
 ! default mesh. 21 April 2022. JLM
+! correct format of core radii and cfactau. 27 March 2026. JLM
 
   implicit none
 
@@ -43,7 +44,10 @@ subroutine atom_atm_write_sub(ioread, filein, nameat)
   integer                           ::  no(5), lo(5)                     !  configuration
   real(REAL64)                      ::  zo(5)                            !  occupation
   real(REAL64)                      ::  rc(5)                            !  core radii
-  character(len=30)                 ::  status                           !  quality of
+  character(len=30)                 ::  status                           !  quality of pseudopotential in table
+
+  character(len=80)                 ::  cline                            !  better way to code the last line (read subroutine goes up to 128)
+
 ! constants
 
   real(REAL64), parameter    ::  ONE = 1.0_REAL64, ZERO = 0.0_REAL64
@@ -92,7 +96,16 @@ subroutine atom_atm_write_sub(ioread, filein, nameat)
     write(ioread,'(1x,i4,1x,i4,1x,f8.2,2x,f8.2)') no(n), lo(n), zo(n), ZERO
   enddo
 
-  write(ioread,'(1x,5(f7.2,2x))') (rc(n),n=1,nval)
+  do n = 1,80
+    cline(n:n) = ' '
+  enddo
+
+  write(cline,'(5f10.5)') (rc(n),n=1,nval)
+  write(cline(51:80),'(3f10.5)') ONE, ZERO, ONE
+  write(ioread,'(a80)') cline
+
+! for back-compatibility you need to finish with an empty line
+
   write(ioread,'(50x)')
 
   close(unit=ioread)

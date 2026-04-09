@@ -6,10 +6,11 @@
 !>  \date         May 1, 1991, 22 June 2021, 12 September 2021.
 !>  \copyright    GNU Public License v2
 
-subroutine atom_atm_datout(ioae, fileae, itype, icorr, ispp,             &
+subroutine atom_atm_datout(iotape, fileae, filetau,                      &
+         itype, icorr, ispp,                                             &
          nr, a, b, r, drdi,                                              &
          nameat, norb, ncore, no, lo, iso, zo, znuc, zel,                &
-         cdc, vionic, vhxc, ev,                                          &
+         cdc, vionic, vhxc, ev, ek, tauc_total, tauc,                    &
          mxdnr, mxdorb, mxdl)
 
 !  ***********************************************************
@@ -35,8 +36,9 @@ subroutine atom_atm_datout(ioae, fileae, itype, icorr, ispp,             &
 
 ! input
 
-  integer, intent(in)               ::  ioae                             !<  default tape for writing
+  integer, intent(in)               ::  iotape                           !<  default tape for writing
   character(len=*), intent(in)      ::  fileae                           !<  name of default tape for all-electron results
+  character(len=*), intent(in)      ::  filetau                          !<  name of default tape for core kinetic energy density file
 
   integer, intent(in)               ::  mxdorb                           !<  dimension of the number of orbitals
   integer, intent(in)               ::  mxdnr                            !<  dimension of the number of radial points
@@ -75,6 +77,10 @@ subroutine atom_atm_datout(ioae, fileae, itype, icorr, ispp,             &
   real(REAL64), intent(in)          ::  vhxc(mxdnr,-1:1)                 !<  screening potential (Ry)
 
   real(REAL64), intent(in)          ::  ev(mxdorb)                       !<  orbital energy
+  real(REAL64), intent(in)          ::  ek(mxdorb)
+  real(REAL64), intent(in)          ::  tauc_total(mxdnr)                !<
+  real(REAL64), intent(in)          ::  tauc(mxdnr,mxdorb)               !<
+
 
 ! local variables, maybe should be input...
 
@@ -92,10 +98,10 @@ subroutine atom_atm_datout(ioae, fileae, itype, icorr, ispp,             &
 
 ! counter
 
-  integer       ::  i, l
+  integer       ::  i, l, j
 
 
-  if(ioae == 0) RETURN
+  if(iotape == 0) RETURN
 
   if(ispp == ' ') then
     id = 0
@@ -115,33 +121,76 @@ subroutine atom_atm_datout(ioae, fileae, itype, icorr, ispp,             &
 
 ! Open and write out data to file datafile.dat.
 
-  open (unit=ioae, file=trim(fileae), status='unknown', form='unformatted')
+  open (unit=iotape, file=adjustl(trim(fileae)), status='unknown', form='unformatted')
 
-  write(ioae) itype, icorr, ispp, nr, a, b, bdate, vers
-  write(ioae) (r(i),i=1,nr)
-  write(ioae) (drdi(i),i=1,nr)
+  write(iotape) itype, icorr, ispp, nr, a, b, bdate, vers
+  write(iotape) (r(i),i=1,nr)
+  write(iotape) (drdi(i),i=1,nr)
 ! convention is lmax+1
-  write(ioae) lmax+1, nameat, norb, ncore
+  write(iotape) lmax+1, nameat, norb, ncore
 
-  write(ioae) (no(i),i=1,norb)
-  write(ioae) (lo(i),i=1,norb)
-  write(ioae) (iso(i)*PFIVE,i=1,norb)
-  write(ioae) (zo(i),i=1,norb)
-  write(ioae) znuc, zel
-  write(ioae) (cdc(i),i=1,nr)
+  write(iotape) (no(i),i=1,norb)
+  write(iotape) (lo(i),i=1,norb)
+  write(iotape) (iso(i)*PFIVE,i=1,norb)
+  write(iotape) (zo(i),i=1,norb)
+  write(iotape) znuc, zel
+  write(iotape) (cdc(i),i=1,nr)
 
   do l = 0,lmax
-    write(ioae) (vionic(i,l,id),i=1,nr)
+    write(iotape) (vionic(i,l,id),i=1,nr)
   enddo
   do l = 0,lmax
-    write(ioae) (vionic(i,l,-1),i=1,nr)
+    write(iotape) (vionic(i,l,-1),i=1,nr)
   enddo
 
-  write(ioae) (vhxc(i,id),i=1,nr)
-  write(ioae) (vhxc(i,-1),i=1,nr)
-  write(ioae) (ev(i),i=1,norb)
+  write(iotape) (vhxc(i,id),i=1,nr)
+  write(iotape) (vhxc(i,-1),i=1,nr)
+  write(iotape) (ev(i),i=1,norb)
+  write(iotape) (tauc_total(i),i=1,nr)
 
-  close (unit=ioae)
+  close (unit=iotape)
+
+
+! Open and write out core kinetic energy density in PARSEC-pseudopotential format to tauc.dat
+
+  open(unit = iotape, file = adjustl(trim(filetau)) // ".dat",           &
+       status = 'unknown', form = 'formatted')
+
+  write(iotape,'(" #Radial grid follows")')
+  write(iotape,'(4(g20.12))') (r(j),j=2,nr)
+
+  ! Write the core kinetic energy density
+  write(iotape,'(" #Core kinetic energy density follows")')
+  write(iotape,'(4(g20.12))') (tauc_total(i),i=2,nr)
+
+  close(unit = iotape)
+
+! Open and write out eigenvalues ek and core kinetic energy density per orbital in tauc_orbitals.dat
+
+  open(unit = iotape, file = adjustl(trim(filetau)) // "_orbitals.dat",  &
+       status = 'unknown', form = 'formatted')
+
+  if (ispp == "r") then
+    write(iotape,*) "#", (ek(i), i=1, norb)
+    do i = 2,nr
+      write (iotape,"(g20.12)", advance="no") r(i)
+      do j = 1, norb
+        write(iotape,"(g20.12)", advance="no") tauc(i, j)
+      enddo
+      write(iotape, *) ""
+    enddo
+  else
+    write(iotape,*) "#", (ek(i), i=1, norb)
+    do i = 2,nr
+      write (iotape,"(g20.12)", advance="no") r(i)
+      do j = 1, norb
+        write(iotape,"(g20.12)", advance="no") (zo(j)/(2*lo(j)+1))*tauc(i,j)
+      enddo
+      write(iotape, *) ""
+    enddo
+  endif
+
+  close(unit = iotape)
 
   return
 

@@ -10,7 +10,7 @@
 subroutine atom_psd_dat_in(ioae, fileae, itype, icorr, ispp, lmax,       &
      & nr, a, b, r, drdi, d2rodr,                                        &
      & nameat, norb, ncore, no, lo, iso, zo, znuc, zel,                  &
-     & cdc, vionic, vhxc, ev,                                            &
+     & cdc, vionic, vhxc, ev, tauc_total,                                &
      & mxdnr, mxdorb, mxdl)
 
 ! converted to f90, April 2018
@@ -62,6 +62,8 @@ subroutine atom_psd_dat_in(ioae, fileae, itype, icorr, ispp, lmax,       &
   real(REAL64), intent(out)         ::  zel                              !<  electron charge
 
   real(REAL64), intent(out)         ::  cdc(mxdnr)                       !<  core charge density (total)
+
+  real(REAL64), intent(out)         ::  tauc_total(mxdnr)                !<  core kinetic energy density
 
   real(REAL64), intent(out)         ::  vionic(mxdnr,0:mxdl,-1:1)        !<  r*ionic potential in Rydberg (down or total)
 
@@ -190,6 +192,7 @@ subroutine atom_psd_dat_in(ioae, fileae, itype, icorr, ispp, lmax,       &
   read(ioae) (vhxc(i,id),i=1,nr)
   read(ioae) (vhxc(i,-1),i=1,nr)
   read(ioae) (ev(i),i=1,norb)
+  read(ioae) (tauc_total(i),i=1,nr)
 
   close (unit=ioae)
 

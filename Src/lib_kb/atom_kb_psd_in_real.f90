@@ -2,19 +2,22 @@
 !>
 !>  \author       J.L.Martins
 !>  \version      6.1.0
-!>  \date         25 May 2012, 19 May 2022.
+!>  \date         25 May 2012, 19 May 2022. 5 february 2026.
 !>  \copyright    GNU Public License v2
 
-subroutine atom_kb_psd_in_real(iotape, fname,                          &
+subroutine atom_kb_psd_in_real(iotape, fname,                            &
     nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,       &
-    npot, nr, a, b, r, zion, lo, vionic, cdc, cdv, zo, rc, rpsi_ps,      &
+    npot, nr, a, b, r, zion, lo, vionic, cdc, cdv, tauc_partial,         &
+    zo, rc, rpsi_ps,                                                     &
     lmax, mxdnr, mxdl)
 
-!  Written JLMartins
-!  it is based on FDP modifications in parsec's fork of the code.
-!  mxdl, mxdnr, 17 Sepember 2021. JLM
-!  psdtitle, 19 May 2022. JLM
-!  in_parsec -> in_real in name. 26 January 2026. JLM
+! Written JLMartins
+! it is based on FDP modifications in parsec's fork of the code.
+! mxdl, mxdnr, 17 Sepember 2021. JLM
+! psdtitle, 19 May 2022. JLM
+! tauc, 7 January 2026. JLM
+! in_parsec -> in_real in name. 26 January 2026. JLM
+! tauc, 5 february 2026. JLM
 
   implicit none
 
@@ -48,7 +51,7 @@ subroutine atom_kb_psd_in_real(iotape, fname,                          &
   character(len=10), intent(out)    ::  irayps(4)                        !<  type of pseudopotential
   character(len=10), intent(out)    ::  psdtitle(20)                     !<  pseudopotential parameters
 
-  integer, intent(out)              :: npot(-1:1)                        !<  number of orbitals (s,p,d,...).  -1:  j=l-1/2.  0:  average.  1:  j=l+1/2
+  integer, intent(out)              ::  npot(-1:1)                       !<  number of orbitals (s,p,d,...).  -1:  j=l-1/2.  0:  average.  1:  j=l+1/2
                                                                          !<  meaning it depends on irel
   integer, intent(out)              ::  nr                               !<  number of points in the radial grid
   real(REAL64), intent(out)         ::  a,b                              !<  constants used to generate the radial grid
@@ -59,6 +62,7 @@ subroutine atom_kb_psd_in_real(iotape, fname,                          &
   real(REAL64), intent(out)         ::  vionic(mxdnr,0:mxdl,-1:1)        !<  r*pseudopotential.  -1:  j=l-1/2.  0:  average.  1:  j=l+1/2
   real(REAL64), intent(out)         ::  cdc(mxdnr)                       !<  4*pi*r**2 charge density of core
   real(REAL64), intent(out)         ::  cdv(mxdnr)                       !<  4*pi*r**2 charge density of valence.
+  real(REAL64), intent(out)         ::  tauc_partial(mxdnr)              !<  core kinetic energy density
 
   real(REAL64), intent(out)         ::  zo(0:mxdl)                       !<  orbital occupation (negative if not present!)
   real(REAL64), intent(out)         ::  rc(0:mxdl)                       !<  orbital occupation
@@ -208,6 +212,12 @@ subroutine atom_kb_psd_in_real(iotape, fname,                          &
     read(iotape,'(4(g20.12))') (rpsi_ps(j,l),j=2,nr)
     rpsi_ps(1,l) = ZERO
   enddo
+
+! reads the core kinetic energy
+
+  read(iotape,*)                             !Core kinetic energy density follows
+  read(iotape,'(4(g20.12))') (tauc_partial(i),i=2,nr)
+  tauc_partial(1) = ZERO
 
 
   close(unit=iotape)

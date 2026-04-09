@@ -1,14 +1,15 @@
 !>  Finds largest zero and maximum of all electron radial wave-functions
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.0.7
-!>  \date         28 August 2021, 26 January 2022.
+!>  \version      6.1.0
+!>  \date         28 August 2021, 7 January 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_max_zero(rz, rx, mxdlc, iowrite, ioae, fileae)
 
 ! new structure indx. 2 November 2021. JLM
 ! nzero = 0. 26 january 2022. JLM
+! tauc. 7 January 2026. JLM
 
 
   implicit none
@@ -81,6 +82,8 @@ subroutine atom_psd_max_zero(rz, rx, mxdlc, iowrite, ioae, fileae)
 
   real(REAL64), allocatable         ::  cdc(:)                           !  core charge density (total)
 
+  real(REAL64), allocatable         ::  tauc_total(:)                    !  core kinetic energy density
+
   real(REAL64), allocatable         ::  vionic(:,:,:)                    !  r*ionic potential in Rydberg
 
   real(REAL64), allocatable         ::  vhxc(:,:)                        !  effective potential in Rydberg
@@ -126,6 +129,9 @@ subroutine atom_psd_max_zero(rz, rx, mxdlc, iowrite, ioae, fileae)
   allocate(zo(mxdorb))
 
   allocate(cdc(mxdnr))
+
+  allocate(tauc_total(mxdnr))
+
   allocate(vionic(mxdnr,0:mxdl,-1:1))
   allocate(vhxc(mxdnr,-1:1))
 
@@ -141,7 +147,7 @@ subroutine atom_psd_max_zero(rz, rx, mxdlc, iowrite, ioae, fileae)
   call atom_psd_dat_in(ioae, fileae, itype, icorr, ispp, lmax,           &
       nr, a, b, r, drdi, d2rodr,                                         &
       nameat, norb, ncore, no, lo, iso, zo, znuc, zel,                   &
-      cdc, vionic, vhxc, ev,                                             &
+      cdc, vionic, vhxc, ev, tauc_total,                                 &
       mxdnr, mxdorb, mxdl)
 
 ! fills indv, indx
@@ -228,6 +234,9 @@ subroutine atom_psd_max_zero(rz, rx, mxdlc, iowrite, ioae, fileae)
   deallocate(zo)
 
   deallocate(cdc)
+
+  deallocate(tauc_total)
+
   deallocate(vionic)
   deallocate(vhxc)
 

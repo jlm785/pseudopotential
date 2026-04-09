@@ -35,6 +35,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 ! psdtitle. 19 May 2022. JLM
 ! dated. 25 May 2022. JLM
 ! more than one atomic basis set. 14 January 2026. JLM
+! tauc, 7 January 2026. JLM
 ! fileparsec -> filereal, 26 January 2026. JLM
 
 
@@ -123,6 +124,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   real(REAL64), allocatable         ::  vionic(:,:,:)                    !  r*pseudopotential. -1:  j=l-1/2.  0:  average.  1:  j=l+1/2
   real(REAL64), allocatable         ::  cdc(:)                           !  4*pi*r**2 charge density of core
   real(REAL64), allocatable         ::  cdv(:)                           !  4*pi*r**2 charge density of valence.  kb_conv is not spin polarized...
+  real(REAL64), allocatable         ::  tauc(:)                          !  core kinetic energy density (4*pi*r^2 total or partial)
 
 ! variables for KB-pseudopotential
 
@@ -130,7 +132,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   real(REAL64), allocatable         ::  drdi(:)                          !  d r(i) / d i
   real(REAL64), allocatable         ::  d2rodr(:)                        !  (d^2 r / d i^2) / (d r / d i)
 
-  integer                           ::  ifcore                            !  derived from nicore
+  integer                           ::  ifcore                           !  derived from nicore
   real(REAL64)                      ::  totvel                           !  total number of valence electrons
   real(REAL64), allocatable         ::  vscreen(:)                       !  screening potential
   real(REAL64), allocatable         ::  vlocal(:)                        !  r*local pseudopotential
@@ -165,9 +167,9 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   real(REAL64), allocatable         ::  vkbprft(:,:,:)                    !  Fourier transform of kb-projector
   real(REAL64), allocatable         ::  cdcft(:)                          !  Fourier transform of 4*pi*r**2 charge density of core
   real(REAL64), allocatable         ::  cdvft(:)                          !  Fourier transform of 4*pi*r**2 charge density of valence.  kb_conv is not spin polarized...
+  real(REAL64), allocatable         ::  taucft(:)                         !  Fourier transform of 4*pi*r**2 kinetic energy density of core.
 
   real(REAL64), allocatable         ::  ektot(:)                          !  Cumulative kineti energy of wave-functions in Fourier space
-
 
 ! other local variables
 
@@ -193,6 +195,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 ! counters
 
   integer                           ::  i, j, n, l, nb
+
 
 
   write(6,*)
@@ -239,7 +242,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 
   if(nrmax > mxdnr) then
     write(6,*)
-    write(6,'("   nrmax = ",i7," is greater than mxdnr = ",i7)')           &
+    write(6,'("   nrmax = ",i7," is greater than mxdnr = ",i7)')         &
                  nrmax, mxdnr
     write(6,*)
 
@@ -251,6 +254,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   allocate(lo(mxdl+1,-1:1))
   allocate(vionic(mxdnr,0:mxdl,-1:1))
   allocate(cdc(mxdnr),cdv(mxdnr))
+  allocate(tauc(mxdnr))
 
   allocate(zo(0:mxdl))
   allocate(rc(0:mxdl))
@@ -269,10 +273,9 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 
   call atom_kb_psd_in_real(ioreal, filereal,                             &
          nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,  &
-         npot, nr, a, b, r, zion, lo, vionic, cdc, cdv,                  &
+         npot, nr, a, b, r, zion, lo, vionic, cdc, cdv, tauc,            &
          zo, rc, rpsi(:,:,0),                                            &
          lmax_pot, mxdnr, mxdl)
-
 
   write(iowrite,*)
   write(iowrite,'("   The semi-local pseudopotential for ",a2,           &
@@ -513,13 +516,17 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   allocate(vkbprft(0:nqmax,0:mxdl,-1:1))
   allocate(cdcft(0:nqmax))
   allocate(cdvft(0:nqmax))
+  allocate(taucft(0:nqmax))
   allocate(basft(0:nqbas,mxdbas,mxdset))
+
 
   call atom_kb_pot_four(npot, lo, irel, nicore, nr, r, drdi, zion,       &
          nql, nqnl, delql, nqbas, delqbas, vlocal, inorm, vkbproj,       &
-         cdc, cdv, vlocft, vql0, vkbprft, cdcft, cdvft, basft,           &
+         cdc, cdv, tauc,                                                 &
+         vlocft, vql0, vkbprft, cdcft, cdvft, taucft, basft,             &
          n_bsets, norbas, lo_b, rpsi_b,                                  &
          mxdl, mxdnr, nqmax, nqbas, mxdbas, mxdset)
+
 
 ! pseudo file names
 
@@ -548,7 +555,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   call atom_kb_psd_out_four(iokb, filekb,                                &
          nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,  &
          nql, nqnl, delql, nqbas, delqbas, zion, vql0,                   &
-         npot, lo, ev, inorm, vkbprft, vlocft, cdcft, cdvft,             &
+         npot, lo, ev, inorm, vkbprft, vlocft, cdcft, cdvft, taucft,     &
          n_bsets, norbas, lo_b, basft,                                   &
          mxdl, nqmax, nqbas, mxdbas, mxdset)
 
@@ -605,6 +612,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   deallocate(vkbprft)
   deallocate(cdcft)
   deallocate(cdvft)
+  deallocate(taucft)
   deallocate(basft)
 
   return

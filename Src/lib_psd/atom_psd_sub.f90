@@ -2,10 +2,10 @@
 !>
 !>  \author       Norm Troullier, Jose Luis Martins
 !>  \version      6.1.0
-!>  \date         April 1990, 26 January 2026.
+!>  \date         April 1990, 24 March 2026.
 !>  \copyright    GNU Public License v2
 
-subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
+subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
          iowrite, ioae, fileae,                                          &
          iopsd, filepsd, ioreal, filereal, sfileparsec, sfilesiesta,     &
          ioplot, fileplot)
@@ -18,7 +18,9 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
 ! indx, rpsi, 3 November 2021. JLM
 ! lrci, 4 November 2021. JLM
 ! psdtitle, 18 may 2022. JLM
+! tauc, 7 January 206. JLM
 ! more output files. 26 January 2026. JLM
+! cfactau, 24 March 2026. JLM
 
 
   implicit none
@@ -50,6 +52,7 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
   integer , intent(in)              ::  ifcore                           !<  0: no partial core correction; 1 : xc partial core correction; 2 : not recommended.
   real(REAL64), intent(in)          ::  cfac                             !<  criteria for pseudo-core charge
   real(REAL64), intent(in)          ::  rcfac                            !<  pseudo-core radius
+  real(REAL64), intent(in)          ::  cfactau                          !<  core correction factor for kinetic energy density
 
   logical, intent(in)               ::  lrci                             !<  uses rverse communication interface
 
@@ -80,6 +83,7 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
 
   real(REAL64)                      ::  znuc                             !  nuclear charge
   real(REAL64)                      ::  zel                              !  electron charge
+  real(REAL64)                      ::  zval                             !  valence electron charge
 
   real(REAL64)                      ::  zion, zratio
   character(len = 5)                ::  vers
@@ -107,7 +111,10 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
   integer, allocatable              ::  iso(:)                           !  2*spin or 2*(j-l)
   real(REAL64), allocatable         ::  zo(:)                            !  orbital occupation
 
-  real(REAL64), allocatable         ::  cdc(:)                           !  core charge density (total)
+  real(REAL64), allocatable         ::  cdc_total(:)                     !  core charge density (total)
+  real(REAL64), allocatable         ::  cdc(:)                           !  core charge density (partial or total)
+  real(REAL64), allocatable         ::  tauc_total(:)                    !  core kinetic energy density (total)
+  real(REAL64), allocatable         ::  tauc(:)                          !  core kinetic energy density (partial or total)
 
   real(REAL64), allocatable         ::  vionic(:,:,:)                    !  r*ionic potential in Rydberg
 
@@ -163,7 +170,10 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
   allocate(iso(mxdorb))
   allocate(zo(mxdorb))
 
+  allocate(cdc_total(mxdnr))
   allocate(cdc(mxdnr))
+  allocate(tauc_total(mxdnr))
+  allocate(tauc(mxdnr))
   allocate(vionic(mxdnr,0:mxdl,-1:1))
   allocate(vhxc(mxdnr,-1:1))
 
@@ -186,14 +196,13 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
   call atom_psd_dat_in(ioae, fileae, itype, icorr, ispp, lmax,           &
       nr, a, b, r, drdi, d2rodr,                                         &
       nameat, norb, ncore, no, lo, iso, zo, znuc, zel,                   &
-      cdc, vionic, vhxc, ev,                                             &
+      cdc_total, vionic, vhxc, ev, tauc_total,                           &
       mxdnr, mxdorb, mxdl)
 
   do j = 1,norb
     ev_ae(j) = ev(j)
     evi(j) = ZERO
   enddo
-
 
 ! fills indv, indx
 
@@ -311,15 +320,21 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
     enddo
   endif
 
+! applies (eventualy) the partial core truncation
+! calculates zratio, zion, zval
+
+  call atom_psd_partial_core(ifcore, ispp, cfac, rcfac, cfactau,         &
+      nr, r, drdi,                                                       &
+      norb, ncore, zo, znuc, zel, zratio, zion, zval,                    &
+      cdpsd, cdc_total, cdc, tauc_total, tauc,                           &
+      iowrite, mxdnr, mxdorb)
 
 ! unscreens pseudopotential
 
   call atom_psd_unscreen(ifcore, icorr, ispp, nr, r, drdi,               &
-      norb, ncore, lo, iso, zo, znuc, zel,                               &
+      norb, ncore, lo, iso, zion, zval,                                  &
       cdpsd, cdc, vscr, vpsd,                                            &
-      cfac, rcfac, zratio, zion,                                         &
       iowrite, mxdnr, mxdorb)
-
 
 ! writes the plotting data file
 
@@ -359,7 +374,7 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
   call atom_psd_out(ioreal, filereal, nameat, 'AT',                      &
       icorr, irel, nicore, iray, psdtitle, siestatitle,                  &
       npot, nr, a, b, r, zion, indv, ifcore,                             &
-      vpsd, cdc, cdpsd,                                                  &
+      vpsd, cdc, cdpsd,  tauc,                                           &
       cfac, rcfac, ncore+1, norb, lo, rc, zo, rpsi_ps,                   &
       mxdnr, mxdorb, mxdlc, mxdnw)
 
@@ -367,7 +382,7 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
       nameat, 'PA',                                                      &
       icorr, irel, nicore, iray, psdtitle, siestatitle,                  &
       npot, nr, a, b, r, zion, indv, ifcore,                             &
-      vpsd, cdc, cdpsd,                                                  &
+      vpsd, cdc, cdpsd, tauc,                                            &
       cfac, rcfac, ncore+1, norb, lo, rc, zo, rpsi_ps,                   &
       mxdnr, mxdorb, mxdlc, mxdnw)
 
@@ -375,7 +390,7 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
       nameat, 'SI',                                                      &
       icorr, irel, nicore, iray, psdtitle, siestatitle,                  &
       npot, nr, a, b, r, zion, indv, ifcore,                             &
-      vpsd, cdc, cdpsd,                                                  &
+      vpsd, cdc, cdpsd, tauc,                                            &
       cfac, rcfac, ncore+1, norb, lo, rc, zo, rpsi_ps,                   &
       mxdnr, mxdorb, mxdlc, mxdnw)
 
@@ -392,7 +407,10 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, lrci,                   &
   deallocate(iso)
   deallocate(zo)
 
+  deallocate(cdc_total)
   deallocate(cdc)
+  deallocate(tauc_total)
+  deallocate(tauc)
   deallocate(vionic)
   deallocate(vhxc)
 

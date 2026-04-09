@@ -4,8 +4,8 @@
 !>  Kleinman-Bylander pseudopotential
 !>
 !>  \author       Norm Troullier, Manuel Maria Alemany, Jose Luis Martins
-!>  \version      6.0.8
-!>  \date         1980s and 1990s, 21 August 2021, 19 May 2022.
+!>  \version      6.1.0
+!>  \date         1980s and 1990s, 21 August 2021, 7 January 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_ln_sub(iowrite, iodata, datafile, iopsd, pseudo,    &
@@ -43,6 +43,7 @@ subroutine atom_plot_ln_sub(iowrite, iodata, datafile, iopsd, pseudo,    &
 
 ! printing. 21 October 2021. JLM
 ! remove iray, ititle, 19 May 2022. JLM
+! tauc_total. 7 January 2026. JLM
 
   implicit none
 
@@ -111,6 +112,7 @@ subroutine atom_plot_ln_sub(iowrite, iodata, datafile, iopsd, pseudo,    &
 
   real(REAL64), allocatable         ::  cdc(:)                           !  4*pi*r**2 charge density of core
   real(REAL64), allocatable         ::  cdv(:,:)                         !  4*pi*r**2 charge density of valence.
+  real(REAL64), allocatable         ::  tauc_total(:)                    !  core kinetic energy density
 
   real(REAL64), allocatable         ::  vlocal(:)                        !  local potentia in KB pseudopotentials
   real(REAL64), allocatable         ::  vkbproj(:,:,:)                   !  kb-projector
@@ -217,6 +219,7 @@ subroutine atom_plot_ln_sub(iowrite, iodata, datafile, iopsd, pseudo,    &
   allocate(vhxc(mxdnr,-1:1))
 
   allocate(cdc(mxdnr), cdv(mxdnr,-1:1))
+  allocate(tauc_total(mxdnr))
 
   allocate(vlocal(mxdnr))
   allocate(vkbproj(mxdnr,0:mxdl,-1:1))
@@ -227,7 +230,7 @@ subroutine atom_plot_ln_sub(iowrite, iodata, datafile, iopsd, pseudo,    &
   call atom_psd_dat_in(iodata, datafile, itype, icorr, ispp, lmax_v,     &
       nr, a, b, r, drdi, d2rodr,                                         &
       nameat, norb, ncore, no_ae, lo_ae, iso_ae, zo_ae, znuc, zel,       &
-      cdc, vionic, vhxc, ev,                                             &
+      cdc, vionic, vhxc, ev, tauc_total,                                 &
       mxdnr, mxdorb, mxdl)
 
   mxdsc = 2*(lmax + 1)

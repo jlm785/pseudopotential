@@ -61,6 +61,7 @@ program atom_all
   real(REAL64)                      ::  rc(0:lc)                         !  core radius r_c(l)
   real(REAL64)                      ::  cfac                             !  criteria for pseudo-core charge
   real(REAL64)                      ::  rcfac                            !  pseudo-core radius
+  real(REAL64)                      ::  cfactau                          !  core correction factor for kinetic energy density
 
   real(REAL64)                      ::  rc_tab(0:lc)                     !  tabulated core radii
   real(REAL64)                      ::  rz(0:lc)                         !  zero radius l
@@ -331,7 +332,8 @@ program atom_all
 
 ! gets default core radii, wave-function zero and extrema
 
-  call atom_psd_core_radii(rc, cfac, rcfac, rc_tab, rz, rx, lpmax,       &
+  call atom_psd_core_radii(rc, cfac, rcfac, cfactau, rc_tab,             &
+         rz, rx, lpmax,                                                  &
          iowrite, ioae, ioread, filein, fileae)
 
   if(lint) then
@@ -361,9 +363,15 @@ program atom_all
 
   endif
 
+  if(lint) then
+
+    call atom_psd_change_cfac(ifcore, cfac, rcfac, cfactau)
+
+  endif
+
 ! constructs the pseudopotential
 
-  call atom_psd_sub(rc, ifcore, cfac, rcfac, .FALSE.,                    &
+  call atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, .FALSE.,           &
          iowrite, ioae, fileae,                                          &
          iopsd, filepsd, ioreal, filereal, sfileparsec, sfilesiesta,     &
          ioplot, fileplot)

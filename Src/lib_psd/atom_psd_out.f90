@@ -8,7 +8,7 @@
 subroutine atom_psd_out(itpars, filename, nameat, cftype,                &
       icorr, irel, nicore, iray, psdtitle, siestatitle,                  &
       npot, nr, a, b, r, zion, indv, ifcore,                             &
-      vpsd, cdc, cdpsd,                                                  &
+      vpsd, cdc, cdpsd, tauc,                                            &
       cfac, rcfac, ncp, norb, lo, rc, zo, rpsi_ps,                       &
       mxdnr, mxdorb, mxdlc, mxdnw)
 
@@ -65,6 +65,7 @@ subroutine atom_psd_out(itpars, filename, nameat, cftype,                &
 
   real(REAL64), intent(in)          ::  cdpsd(mxdnr,-1:1)                !<  valence charge density
   real(REAL64), intent(in)          ::  cdc(mxdnr)                       !<  core charge density
+  real(REAL64), intent(in)          ::  tauc(mxdnr)                      !<  core kinetic energy density
 
   real(REAL64), intent(in)          ::  cfac                             !<  core correction factor
   real(REAL64), intent(in)          ::  rcfac                            !<  core correction radius
@@ -223,6 +224,11 @@ subroutine atom_psd_out(itpars, filename, nameat, cftype,                &
 
     endif
   enddo
+
+  if(cftype == 'AT') then
+    write(itpars,'(" Core kinetic energy density follows")')
+    write(itpars,'(4(g20.12))') (tauc(i),i=2,nr)
+  endif
 
   close(unit = itpars)
 

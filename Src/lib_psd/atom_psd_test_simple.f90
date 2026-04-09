@@ -86,6 +86,8 @@ subroutine atom_psd_test_simple(ifcore, icorr, ispp, rc,                 &
   integer, allocatable              ::  nops(:)
   real(REAL64), allocatable         ::  ek(:), ep(:)
 
+  real(REAL64), allocatable         ::  tau(:,:)                         !  kinetic energy density matrix (unused)
+
 ! local variables
 
   integer            ::  ncp
@@ -99,7 +101,7 @@ subroutine atom_psd_test_simple(ifcore, icorr, ispp, rc,                 &
 
   real(REAL64)       ::  vpsdm, rmind
   real(REAL64)       ::  vps
-  
+
   integer            ::  nlc(0:lc,-1:1)
 
 ! constants
@@ -120,6 +122,8 @@ subroutine atom_psd_test_simple(ifcore, icorr, ispp, rc,                 &
 
   allocate(nops(norb))
   allocate(ek(norb),ep(norb))
+
+  allocate(tau(mxdnr,norb))
 
   ncp = ncore + 1
   zval = ZERO
@@ -196,7 +200,7 @@ subroutine atom_psd_test_simple(ifcore, icorr, ispp, rc,                 &
       nr, r, drdi, d2rodr,                                               &
       norb-ncore, 0, nops(ncp), lo(ncp), iso(ncp), zo(ncp), znuc,        &
       cdpsd, cdc, vpsd, vhxc(:,ncp),                                     &
-      ev(ncp), ek(ncp), ep(ncp), evi(ncp),                               &
+      ev(ncp), ek(ncp), ep(ncp), tau, evi(ncp),                          &
       iowrite, mxdnr, mxdorb-ncore, lc)
 
 ! Printout the pseudo eigenvalues after cutoff.
@@ -283,6 +287,7 @@ subroutine atom_psd_test_simple(ifcore, icorr, ispp, rc,                 &
   deallocate(vhxc)
 
   deallocate(ek,ep)
+  deallocate(tau)
 
   return
 
