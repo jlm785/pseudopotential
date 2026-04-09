@@ -1,8 +1,8 @@
 !>  atomic self-consistent calculation for a given atomic configuration
 !>
-!>  \author       Sverre Froyen, Norm Troullier, Jose Luis Martins
-!>  \version      6.0.8
-!>  \date         22 June 2021, 5 August 2021. 18 May 2022.
+!>  \author       Sverre Froyen, Norm Troullier, Jose Luis Martins, Emmi Gareis
+!>  \version      6.1.0
+!>  \date         22 June 2021, 9 April 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_atm_scf(etotal,                                          &
@@ -16,8 +16,8 @@ subroutine atom_atm_scf(etotal,                                          &
 ! vionic, so->iso, vhxc, 12 September 2021. JLM
 ! vhxc in atom_atm_datout. 18 October 2021. JLM
 ! deallocate vhxc_in. 18 May 2022. JLM
-
-
+! Calculation of tauc_total by Emmi Gareis moved from atom_atm_etotal. 6 January 2026. JLM
+! Absolute value in convergence criteria. 9 April 2026. JLM
 
 
   implicit none
@@ -69,6 +69,10 @@ subroutine atom_atm_scf(etotal,                                          &
   integer, intent(in)               ::  ncore_in                         !<  number of orbitals treated as core
   integer, intent(in)               ::  nval_in                          !<  number of valence orbitals
 
+! "local" file for orbital kinetic energy density output
+
+  CHARACTER(LEN=8)                   ::  FILETAU                          !<  NAME OF DEFAULT TAPE FOR CORE KINETIC ENERGY DENSITY FILE
+
 ! used array dimensions
 
   integer                           ::  norb                             !  number of orbitals
@@ -87,10 +91,12 @@ subroutine atom_atm_scf(etotal,                                          &
   real(REAL64), allocatable         ::  evi(:)                           !  orbital default energy
 
   real(REAL64), allocatable         ::  cdc(:)                           !  4*pi*r**2 * core charge density (not polarized)
+  real(REAL64), allocatable         ::  cdv(:,:)                         !  4*pi*r**2 * valence charge density
+
+  real(REAL64), allocatable         ::  tau(:,:)                         !  kinetic energy density matrix
+  real(REAL64), allocatable         ::  tauc_total(:)                    !  total core kinetic energy density on radial grid
 
   real(REAL64), allocatable         ::  vionic(:,:,:)                    !  r*ionic (pseudo-)potential in Rydberg; -1:  j=l-1/2 or s= -1/2.  0:  average or spinless.  1:  j=l+1/2 or s=1/2
-
-  real(REAL64), allocatable         ::  cdv(:,:)                         !  4*pi*r**2 * valence charge density
 
   real(REAL64), allocatable         ::  vhxc_orb(:,:)                    !  screening potential in input (Ry)
 
@@ -152,7 +158,6 @@ subroutine atom_atm_scf(etotal,                                          &
   real(REAL64), parameter    ::  ONE = 1.0_REAL64, ZERO = 0.0_REAL64
   real(REAL64), parameter    ::  TOL = 1.0E-8_REAL64
 
-
   call zesec(t1)
 
 ! maximum number of iterations
@@ -168,6 +173,7 @@ subroutine atom_atm_scf(etotal,                                          &
   bb = bb_in
   ncore = ncore_in
   nval = nval_in
+
 
 
   allocate(r(mxdnr))
@@ -191,6 +197,8 @@ subroutine atom_atm_scf(etotal,                                          &
   allocate(ev(mxdorb))
   allocate(ek(mxdorb))
   allocate(ep(mxdorb))
+  allocate(tau(mxdnr,mxdorb))
+  allocate(tauc_total(mxdnr))
 
   allocate(vmem(mxdnr,4,-1:1))
 
@@ -297,7 +305,7 @@ subroutine atom_atm_scf(etotal,                                          &
     call atom_atm_dsolv2(iter, iconv, ispp, ifcore,                      &
           nr, r, drdi, d2rodr,                                           &
           norb, ncore, no, lo, iso, zo, znuc,                            &
-          cdv, cdc, vionic, vhxc_orb, ev, ek, ep, evi,                   &
+          cdv, cdc, vionic, vhxc_orb, ev, ek, ep, tau, evi,              &
           iowrite, mxdnr, mxdorb, mxdl)
 
 !   set up output screening potential from charge density
@@ -313,10 +321,12 @@ subroutine atom_atm_scf(etotal,                                          &
     dvmax = ZERO
     do j = -1,1
     do i = 1,nr
-      dv = (vhxc_in(i,j)-vhxc_out(i,j)) / (ONE+vhxc_in(i,j)+vhxc_out(i,j))
+      dv = (vhxc_in(i,j)-vhxc_out(i,j)) /                                &
+                        (ONE+abs(vhxc_in(i,j))+abs(vhxc_out(i,j)))
       if (abs(dv) > dvmax) dvmax = abs(dv)
     enddo
     enddo
+
     icon2 = icon2 + 1
     if (dvmax <= TOL) iconv=1
 
@@ -364,18 +374,53 @@ subroutine atom_atm_scf(etotal,                                          &
 
   etotal = etot(10)
 
+
+! sum over all core orbitals yields total core kinetic energy density on radial grid
+
+  do j=1,nr
+    tauc_total(j) = ZERO
+  end do
+
+  if (ispp == "r") then
+    do j=1,nr
+      do i =1,ncore
+         tauc_total(j) = tauc_total(j) + tau(j,i)
+        !tauc_total(j) = tauc_total(j) + ((zo(i)/2))*tau(j,i)
+        ! zo(i)/2 corresponds to spurious factor (j+1/2) (zo(i) is 2j+1) (not needed!! is already tackled by Unsöld relation)
+        if (j==1) then
+          write(iowrite,*) 'occupation', i, ' is ', zo(i)
+        endif
+      enddo
+    enddo
+  else
+    do j=1,nr
+      do i =1,ncore
+        tauc_total(j) = tauc_total(j) + (zo(i)/(2*lo(i)+1))*tau(j,i)
+        ! zo(i)/(2*lo(i)+1) corresponds to spin occupation without m_l multiplicity
+        if (j==1) then
+          write(iowrite,*) 'occupation', i, ' is ', zo(i)
+        endif
+      enddo
+    enddo
+  endif
+
 ! prints charge density if fifth variable is not zero...
 
 !  call atom_atm_rhoan(nr, r, cdv, 0, mxdnr)
 
-! Writes file for later pseudopotential generation.
+! Writes file for later pseudopotential generation (and in case _tau(..) file that includes core kinetic energy density fo metaGGA
 
   if(ioae /= 0) then
 
-    call atom_atm_datout(ioae, fileae, itype, icorr, ispp,               &
+!   name of core energy density file
+
+    FILETAU = 'TAUC'
+
+    call atom_atm_datout(ioae, fileae, filetau,                          &
+        itype, icorr, ispp,                                              &
         nr, a, b, r, drdi,                                               &
         nameat, norb, ncore, no, lo, iso, zo, znuc, zel,                 &
-        cdc, vionic, vhxc_in, ev,                                        &
+        cdc, vionic, vhxc_in, ev,  ek, tauc_total, tau,                  &
         mxdnr, mxdorb, mxdl)
 
   endif
@@ -409,6 +454,8 @@ subroutine atom_atm_scf(etotal,                                          &
   deallocate(ev)
   deallocate(ek)
   deallocate(ep)
+  deallocate(tau)
+  deallocate(tauc_total)
 
   deallocate(vmem)
 

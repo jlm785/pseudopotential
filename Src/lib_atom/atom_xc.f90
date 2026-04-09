@@ -39,7 +39,7 @@ subroutine atom_xc(functl, author, irel,                                 &
 
 ! converted to f90, April 2018. JLM
 ! cleanup, new interface, July 2019. JLM
-! jlm  version 6.00
+! dvmin, 9 April 2026. JLM
 
 
   implicit none
@@ -104,7 +104,7 @@ subroutine atom_xc(functl, author, irel,                                 &
 
 ! dvmin is added to differential of volume to avoid division by zero
 
-  real(REAL64), parameter   ::  DVMIN = 1.d-12
+  real(REAL64), parameter   ::  DVMIN = 1.0E-12_REAL64
 
 ! counters
 

@@ -47,6 +47,7 @@
 ! converted to f90, July 2018
 ! cleanup and new interface, July 2019. JLM
 ! jlm  version 6.00
+! replaced some powers. 9 April 2026. JLM
 
   implicit none
 
@@ -82,8 +83,8 @@
   real(REAL64), parameter   ::  PI   = 3.14159265358979312_REAL64
   real(REAL64), parameter   ::  THD  = ONE/3,  TWOTHD  = 2*THD
 
-  real(REAL64), parameter   ::  DENMIN = 0.1_REAL64**12             !      lower bounds of density to avoid divisions by zero
-  real(REAL64), parameter   ::  GDMIN = 0.1_REAL64**12              !      lower bounds of density gradient to avoid divisions by zero
+  real(REAL64), parameter   ::  DENMIN = 1.0E-12_REAL64             !      lower bounds of density to avoid divisions by zero
+  real(REAL64), parameter   ::  GDMIN = 1.0E-12_REAL64              !      lower bounds of density gradient to avoid divisions by zero
 
   real(REAL64), parameter   ::  BETA = 0.066725_REAL64
   real(REAL64), parameter   ::  XGAMMA = (ONE - log(2*ONE)) / (PI*PI)
@@ -109,7 +110,7 @@
 
 ! jlm    variables to avoid ifort interface complaints
 
-    real(REAL64)  ::  dsjlm(2),vxjlm(2)
+  real(REAL64)  ::  dsjlm(2),vxjlm(2)
 
 !  jlm
 
@@ -157,7 +158,7 @@
   zeta = min(  ONE-DENMIN, zeta )
   phi = ( (1+zeta)**TWOTHD + (1-zeta)**TWOTHD ) / 2
   t = gdmt / (2 * phi * ks * dt)
-  f1 = ecunif / XGAMMA / phi**3
+  f1 = ecunif / XGAMMA / (phi*phi*phi)
   f2 = exp(-f1)
   a = BETA / XGAMMA / (f2-1)
   f3 = t*t + a * t*t*t*t
@@ -189,7 +190,7 @@
 
     do ix = 1,3
       dtdgd = (t / gdmt) * gdt(ix) / gdmt
-      df3dgd = dtdgd * ( 2 * t + 4 * a * t**3 )
+      df3dgd = dtdgd * ( 2 * t + 4 * a * t*t*t )
       df4dgd = f4 * df3dgd * ( 1/f3 - a/(1+a*f3) )
       dhdgd = XGAMMA * phi*phi*phi * df4dgd / (1+f4)
       dfcdgd(ix,is) = dt * dhdgd
@@ -226,7 +227,7 @@
       gds = 2 * gd(ix,is)
       dsdgd = (s / gdms) * gds / gdms
       df1dgd = 2 * XMU * s * dsdgd / XKAPPA
-      dfdgd = XKAPPA * df1dgd / f1**2
+      dfdgd = XKAPPA * df1dgd / (f1*f1)
       dfxdgd(ix,is) = ds * exunif * dfdgd
     enddo
 
