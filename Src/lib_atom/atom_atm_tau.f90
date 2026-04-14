@@ -2,7 +2,7 @@
 !>
 !>  \author       Emmi Gareis
 !>  \version      6.1.0
-!>  \date         2025, 3 January 2026.
+!>  \date         2025, 3 January 2026. 14 April 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_atm_tau(ispp, ar, br, nr, r,                             &
@@ -11,6 +11,7 @@ subroutine atom_atm_tau(ispp, ar, br, nr, r,                             &
 
 ! Written in atom_atm_orban by Emmi Gareis in collaboration with Ingo Schelter and Stephan Kümmel.
 ! Separated in an autonomous subroutine, 3 January 2025. JLM
+! Bug introduced by JLM (l+1=l) eliminated by EG. 14 April 2026. EG
 
   implicit none
 
@@ -64,7 +65,8 @@ subroutine atom_atm_tau(ispp, ar, br, nr, r,                             &
 
   integer          ::  i
 
-  tauSecondTermValue = (((lo+1)*(lo+1) + lo+1)*(2*lo+3)) / (4*PI)
+  tauSecondTermValue = ((2*lo+1)*(lo+1)*lo) / (4*PI)
+
 
   allocate(arder(mxdnr))
   allocate(brder(mxdnr))
