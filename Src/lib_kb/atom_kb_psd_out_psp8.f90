@@ -248,23 +248,6 @@ subroutine atom_kb_psd_out_psp8(iotape, fname,                           &
 
   call grid_interp(6, 4, nr, r, cdcor2, nrpsp8, rpsp8, dcdcdrpsp8, err_max, ifail, nrpsp8)
 
-!   do j = 0,4
-!   do i = 1,nrpsp8
-!     dcdcdrpsp8(i,j) = 4*PI*dcdcdrpsp8(i,j)
-!   enddo
-!   enddo
-
-  DO I = 1,nrpsp8
-    WRITE(87,'(2E13.5)') rpsp8(i), 4*PI*cdcpsp8(I)
-  ENDDO
-
-  DO I = 1,nrpsp8
-    WRITE(88,'(2E13.5)') rpsp8(i), dcdcdrpsp8(i,0)
-  ENDDO
-
-  DO I = 1,nr
-    WRITE(89,'(2E13.5)') r(i), cdcor2(i)
-  ENDDO
 
 
   if(ifail /= 0) then
@@ -285,7 +268,6 @@ subroutine atom_kb_psd_out_psp8(iotape, fname,                           &
 
   do i = 1,nrpsp8
     write(iotape,'(i6,1p,6d21.13)') i, rpsp8(i), (dcdcdrpsp8(i,j),j=0,4)
-    WRITE(90,*) i
   end do
 
   close(unit = iotape)
