@@ -17,6 +17,8 @@ subroutine atom_kb_psd_out_four(iotape, fname,                           &
 ! wv -> bas.  18 September 2021. JLM
 ! psdtitle. 19 May 2022. JLM
 
+! WARNING     NOT THE FINAL VERSION
+
   implicit none
 
   integer, parameter          :: REAL64 = selected_real_kind(12)
@@ -100,7 +102,7 @@ subroutine atom_kb_psd_out_four(iotape, fname,                           &
     write(iotape,'(i5)') npot(0)
     write(iotape,'(20i5)') (lo(i,0),i=1,npot(0))
     write(iotape,'(20i5)') (inorm(lo(i,0),0),i=1,npot(0))
-    write(iotape,*) (ev(lo(i,0),0)*0.5d0,i=1,npot(0))
+    write(iotape,*) (ev(lo(i,0),0)*HALF,i=1,npot(0))
   endif
 
   do k=1,nql
@@ -142,7 +144,8 @@ subroutine atom_kb_psd_out_four(iotape, fname,                           &
   do nb = 1,n_bsets
     do i = 1,norbas(nb)
       l = lo_b(i,nb)
-      write(iotape,*) l, ev(l,0)/2, nb
+      write(iotape,'(i4,2x,f12.6,2x,2i5,"      wavef:  l, ev(l), norbas, i ")')   &
+              l, ev(l,0)/2, norbas(nb), i
       do k = 0,nqbas
         write(iotape,*) basft(k,i,nb)
       enddo
