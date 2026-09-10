@@ -1,4 +1,5 @@
 !>  Calculates the kinetic energy density for a given orbital
+!>  See Gareis, Schelter, Kummel PRB 114, 165112 (2026)
 !>
 !>  \author       Emmi Gareis
 !>  \version      6.1.0

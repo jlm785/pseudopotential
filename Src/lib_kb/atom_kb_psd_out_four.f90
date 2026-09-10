@@ -18,8 +18,6 @@ subroutine atom_kb_psd_out_four(iotape, fname,                           &
 ! psdtitle. 19 May 2022. JLM
 ! taucft, 5 February 2026. JLM
 
-! WARNING     NOT THE FINAL VERSION
-
   implicit none
 
   integer, parameter          :: REAL64 = selected_real_kind(12)
