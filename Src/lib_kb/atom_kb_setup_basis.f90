@@ -1,6 +1,6 @@
 !>  Modifies the parameters for the atomic basis sets
 !>
-!>  \author       J.L.Martins
+!>  \author       J.L.Martins+claude
 !>  \version      6.1.0
 !>  \date         14 January 2026.
 !>  \copyright    GNU Public License v2
@@ -10,6 +10,7 @@ subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
          mxdl, mxdset)
 
 ! split from atom_kb_setup. 14 January 2026. JLM
+! up to 4 zeta, r_bas = 0 for relaxed energy derivative of previous function. 24 October 2026. JLM
 
   implicit none
 
@@ -30,8 +31,8 @@ subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
   integer,intent(inout)             ::  lmax_bas(mxdset)                 !<  maximum angular momentum in basis
 
   integer,intent(inout)             ::  n_bas(0:mxdl,mxdset)             !<  basis functions for angular momentum l
-  real(REAL64), intent(inout)       ::  r_bas(3,0:mxdl,mxdset)           !<  cutoff for the basis (up to triple zeta and l = 4)
-  integer, intent(inout)            ::  nz_bas(3,0:mxdl,mxdset)          !<  number of non-trivial zeroes in basis function
+  real(REAL64), intent(inout)       ::  r_bas(4,0:mxdl,mxdset)           !<  cutoff for the basis (up to quadruple zeta), 0: energy derivative of previous
+  integer, intent(inout)            ::  nz_bas(4,0:mxdl,mxdset)          !<  number of non-trivial zeroes in basis function
 
 ! local variables
 
@@ -41,9 +42,16 @@ subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
 
   integer                 ::  n_bsets_old
 
+  logical                 ::  lvalid                                     !  valid cutoff radius
+  integer                 ::  ntry
+
 ! constants
 
   real(REAL64), parameter           ::  ZERO = 0.0_REAL64
+  real(REAL64), parameter           ::  SMALL = 1.0E-6_REAL64
+  real(REAL64), parameter           ::  EPS = 1.0E-9_REAL64
+
+  integer, parameter                ::  MXDZETA = 4                      !  maximum number of basis functions for each l
 
 ! counters
 
@@ -105,9 +113,18 @@ subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
       write(6,*) '  l       r_siesta       r_99            r_bas   n_nodes'
       write(6,*)
       do l = 0,lmax_bas(j)
-        write(6,'(i5,2(3x,f10.3),3x,10(3x,f10.3,2x,i2))') l, r_siesta(l),     &
-                  r_99(l), (r_bas(i,l,j),nz_bas(i,l,j),i=1,n_bas(l,j))
+        write(6,'(i5,2(3x,f10.3),3x)', advance='no') l, r_siesta(l), r_99(l)
+        do i = 1,n_bas(l,j)
+          if(r_bas(i,l,j) > EPS) then
+            write(6,'(3x,f10.3,2x,i2)', advance='no') r_bas(i,l,j), nz_bas(i,l,j)
+          else
+            write(6,'(a)', advance='no') '          phi    '
+          endif
+        enddo
+        write(6,*)
       enddo
+      write(6,*)
+      write(6,*) '  phi: relaxed energy derivative of the previous function'
       write(6,*)
 
       write(6,*)
@@ -156,17 +173,18 @@ subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
       do l = 0,lmax_bas(j)
         write(6,*)
         write(6,'("  Enter the number of basis functions for l = ",      &
-            &   i2,"(1,2,3)")') l
+            &   i2," (1,...,",i2,")")') l, MXDZETA
         write(6,*)
 
         read(5,*) n_in
 
-        if(n_in < 1 .or. n_in > 3) then
+        if(n_in < 1 .or. n_in > MXDZETA) then
           write(6,*)
-          write(6,*) '  Enter the number of basis functions (1,2,3) again'
+          write(6,'("  Enter the number of basis functions (1,...,",i2,   &
+              &   ") again")') MXDZETA
           write(6,*)
           read(5,*) n_in
-          if(n_in < 1 .or. n_in > 3) then
+          if(n_in < 1 .or. n_in > MXDZETA) then
             write(6,*)
             write(6,*) '  Wrong value using ',n_bas(l,j),' functions'
             write(6,*)
@@ -177,29 +195,67 @@ subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
           n_bas(l,j) = n_in
         endif
 
+!       a cutoff radius of 0 asks for the relaxed energy derivative (phi)
+!       of the previous function, which must not be itself a derivative.
+!       The recommended double zeta is a cutoff followed by phi.
+
         do i = 1,n_bas(l,j)
-          write(6,*)
-          write(6,'("  Enter the cutoff radius for basis functions l = ",    &
-            &    i2," n = ",i3)') l, i
-          write(6,*)
-          read(5,*) r_in
-          if(r_in < 0) then
+
+          lvalid = .FALSE.
+          do ntry = 1,2
             write(6,*)
-            write(6,*) '  Enter the cutoff radius again (> 0) '
+            write(6,'("  Enter the cutoff radius for basis functions l = ",  &
+              &    i2," n = ",i3)') l, i
+            if(i > 1) then
+              if(r_bas(i-1,l,j) > EPS) then
+                write(6,*) '  (or 0 for the energy derivative of the ',     &
+                           'previous function, recommended)'
+              endif
+            endif
             write(6,*)
             read(5,*) r_in
-            if(r_in < 0) then
-              write(6,*)
-              write(6,*) '  using previous value ', r_bas(i,l,j)
-              write(6,*)
-            else
+
+            if(r_in > SMALL) then
+              lvalid = .TRUE.
               if(r_in < 1.0 .or. r_in > 15.0) write(6,*) '  Strange value...'
-              r_bas(i,l,j) = r_in
+            elseif(abs(r_in) <= SMALL .and. i > 1) then
+              if(r_bas(i-1,l,j) > ZERO) then
+                lvalid = .TRUE.
+                r_in = ZERO
+              endif
             endif
-          else
-            if(r_in < 1.0 .or. r_in > 15.0) write(6,*) '  Strange value...'
+
+            if(lvalid) exit
+
+            write(6,*)
+            if(i == 1) then
+              write(6,*) '  The cutoff radius must be > 0'
+            else
+              write(6,*) '  The cutoff radius must be > 0, or 0 if the ',   &
+                         'previous function is not an energy derivative'
+            endif
+          enddo
+
+          if(lvalid) then
             r_bas(i,l,j) = r_in
+          else
+            if(i == 1) then
+              if(r_bas(i,l,j) <= ZERO) r_bas(i,l,j) = max(r_siesta(l),r_siesta(0))
+            elseif(r_bas(i-1,l,j) > EPS) then
+              r_bas(i,l,j) = ZERO
+            else
+              r_bas(i,l,j) = 1.2*r_bas(i-2,l,j)
+            endif
+            write(6,*)
+            if(r_bas(i,l,j) > EPS) then
+              write(6,*) '  Using the cutoff radius ', r_bas(i,l,j)
+            else
+              write(6,*) '  Using the energy derivative of the previous function'
+            endif
+            write(6,*)
           endif
+
+          if(r_bas(i,l,j) <= EPS) nz_bas(i,l,j) = 0
 
         enddo
       enddo
@@ -214,26 +270,34 @@ subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
 
         do l = 0,lmax_bas(j)
           do i = 1,n_bas(l,j)
-            write(6,*)
-            write(6,*) '  Enter the number of non-trivial nodes for ',   &
-                 'basis function l = ',l,' n = ',i
-            write(6,*)
-            read(5,*) n_in
 
-            if(n_in < 0) then
+!           not used for energy derivatives
+
+            if(r_bas(i,l,j) > EPS) then
+
               write(6,*)
-              write(6,*) '  Wrong value. Will use nz_bas = 0'
-              write(6,*)
-              nz_bas(i,l,j) = 0
-            elseif(n_in - (i-1) > 0) then
-              write(6,*)
-              write(6,*) '  Strange value. Enter it again'
+              write(6,*) '  Enter the number of non-trivial nodes for ',   &
+                   'basis function l = ',l,' n = ',i
               write(6,*)
               read(5,*) n_in
-              nz_bas(i,l,j) = n_in
-            else
-              nz_bas(i,l,j) = n_in
+
+              if(n_in < 0) then
+                write(6,*)
+                write(6,*) '  Wrong value. Will use nz_bas = 0'
+                write(6,*)
+                nz_bas(i,l,j) = 0
+              elseif(n_in - (i-1) > 0) then
+                write(6,*)
+                write(6,*) '  Strange value. Enter it again'
+                write(6,*)
+                read(5,*) n_in
+                nz_bas(i,l,j) = n_in
+              else
+                nz_bas(i,l,j) = n_in
+              endif
+
             endif
+
           enddo
         enddo
       endif

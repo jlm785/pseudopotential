@@ -9,6 +9,8 @@
 program kb_conv
 
 ! name of input file, 26 January 2026. JLM
+! up to quadruple zeta basis, 24 October 2026. JLM
+! tbasis, lmax_bas allocated with mxdset, 24 October 2026. JLM
 
   implicit none
 
@@ -54,7 +56,7 @@ program kb_conv
   character(len=3), allocatable     ::  tbasis(:)                        !  type of basis
 
   integer, allocatable              ::  n_bas(:,:)                       !  basis functions for angular momentum l
-  real(REAL64), allocatable         ::  r_bas(:,:,:)                     !  cutoff for the basis (up to triple zeta and l = 4)
+  real(REAL64), allocatable         ::  r_bas(:,:,:)                     !  cutoff for the basis (up to quadruple zeta), 0: energy derivative of previous
   integer, allocatable              ::  nz_bas(:,:,:)                    !  number of non-trivial zeroes in basis function
   real(REAL64), allocatable         ::  r_siesta(:)                      !  cutoff using the SIESTA recipe
   real(REAL64), allocatable         ::  r_99(:)                          !  radius with 99% of charge
@@ -89,8 +91,11 @@ program kb_conv
   n_bsets = 2
   mxdset = n_bsets + 2
 
-  allocate(tbasis(n_bsets))
-  allocate(lmax_bas(n_bsets))
+  allocate(tbasis(mxdset))
+  allocate(lmax_bas(mxdset))
+
+  tbasis(:) = '   '
+  lmax_bas(:) = 0
 
   tbasis(1) = 'DZP'
   tbasis(2) = 'SZ'
@@ -103,8 +108,8 @@ program kb_conv
   mxdl = lmax_pot + 2
 
   allocate(n_bas(0:mxdl,mxdset))
-  allocate(r_bas(3,0:mxdl,mxdset))
-  allocate(nz_bas(3,0:mxdl,mxdset))
+  allocate(r_bas(4,0:mxdl,mxdset))
+  allocate(nz_bas(4,0:mxdl,mxdset))
   allocate(r_siesta(0:mxdl))
   allocate(r_99(0:mxdl))
 

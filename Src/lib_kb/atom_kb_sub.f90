@@ -37,6 +37,8 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 ! more than one atomic basis set. 14 January 2026. JLM
 ! tauc, 7 January 2026. JLM
 ! fileparsec -> filereal, 26 January 2026. JLM
+! confined orbitals moved to atom_kb_orbitals, up to 4 zeta. 24 October 2026. JLM
+! rpsi(:,:,0) to atom_kb_plot, rpsi initialized. 24 October 2026. JLM
 
 
   implicit none
@@ -78,8 +80,8 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   integer, intent(in)               ::  n_bsets                          !<  number of atomic basis sets
   integer,intent(in)                ::  lmax_bas(mxdset)                 !<  maximum angular momentum in basis
   integer,intent(in)                ::  n_bas(0:mxdl,mxdset)             !<  basis functions for angular momentum l
-  real(REAL64), intent(in)          ::  r_bas(3,0:mxdl,mxdset)           !<  cutoff for the basis (up to triple zeta and l = 4)
-  integer, intent(in)               ::  nz_bas(3,0:mxdl,mxdset)          !<  number of non-trivial zeroes in basis function
+  real(REAL64), intent(in)          ::  r_bas(4,0:mxdl,mxdset)           !<  cutoff for the basis (up to quadruple zeta), 0: energy derivative of previous
+  integer, intent(in)               ::  nz_bas(4,0:mxdl,mxdset)          !<  number of non-trivial zeroes in basis function
 
 ! Size of arrays
 
@@ -151,13 +153,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 
   real(REAL64), allocatable         ::  rpsi_b(:,:,:)                    !  basis wavefunctions (r(i),n).
 
-  real(REAL64), allocatable         ::  drpsidr_b(:)                     !  drpsi_b / dr
-  real(REAL64), allocatable         ::  veff_b(:)                        !  effective potential for basis
   integer, allocatable              ::  lo_b(:,:)                        !  angular momentum of basis function
-  real(REAL64), allocatable         ::  ev_b(:)                          !  variational energy of the orbital
-  integer, allocatable              ::  nrc_b(:)                         !  maximum radius of basis function
-
-  integer                           ::  iflag
 
 ! variables for Fourier transform of wavefunctions and potentials
 
@@ -174,12 +170,6 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 ! other local variables
 
   real(REAL64)                      ::  rtry
-  real(REAL64)                      ::  evl
-  integer                           ::  nn
-
-  real(REAL64)                      ::  revi
-  real(REAL64)                      ::  vsiesta
-
   real(REAL64)                      ::  qb, qa
 
   character(len=5)                  ::  scorr
@@ -190,11 +180,10 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 
   real(REAL64), parameter           ::  ZERO = 0.0_REAL64, ONE = 1.0_REAL64
   real(REAL64), parameter           ::  SMALL = 1.0E-6_REAL64
-  real(REAL64), parameter           ::  TOL = 1.0E-10_REAL64
 
 ! counters
 
-  integer                           ::  i, j, n, l, nb
+  integer                           ::  i, j, l, nb
 
 
 
@@ -265,6 +254,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   r = ZERO
   lo = 0
   vionic = ZERO
+  rpsi = ZERO
   cdc = ZERO
   cdv = ZERO
 
@@ -449,60 +439,13 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 ! finds the confined wavefunctions
 
   allocate(rpsi_b(mxdnr,mxdbas,mxdset))
-
-  allocate(drpsidr_b(mxdnr))
-  allocate(veff_b(mxdnr))
   allocate(lo_b(mxdbas,mxdset))
-  allocate(ev_b(mxdbas))
-  allocate(nrc_b(mxdbas))
 
-  do nb = 1, n_bsets
-
-    n = 0
-
-    do l = 0,lmax_bas(nb)
-    do i = 1,n_bas(l,nb)
-      n = n+1
-      lo_b(n,nb) = l
-
-      evl =  ev(l,0)
-      nn = l+1 + nz_bas(i,l,nb)
-      revi = r_bas(i,l,nb)
-
-!   SIESTA recipe (only used up to revi)
-
-      do j = 2,nr
-        veff_b(j) = (vionic(j,l,0)  + (l*(l+1))/r(j)) / r(j)  + vscreen(j)
-        if(r(j) > 0.9*revi .and. r(j) < revi) then
-          vsiesta = 40*( exp(-0.1*revi/(r(j)-0.9*revi)) / (revi- r(j) + SMALL) )
-          veff_b(j) = veff_b(j) + vsiesta
-        endif
-!       if(r(j) > 0.8*revi .and. r(j) < revi) then
-!         vsiesta = 2.0*(r(j) - 0.8*revi)**3
-!         veff_b(j) = veff_b(j) + vsiesta
-!       endif
-      enddo
-
-      call atom_atm_difnrl_zr(nr, r, drdi, d2rodr,                       &
-          veff_b, rpsi_b(:,n,nb), drpsidr_b,                             &
-          nn, l, evl, iflag, r_bas(i,l,nb), nrc_b(n), TOL,               &
-          iowrite, mxdnr)
-
-
-      if(iflag /= 0) then
-        write(6,*)
-        write(6,*) '  Stopped in atom_kb_sub:'
-        write(6,*) '  Could not get basis functions, iflag = ',iflag
-        write(6,*)
-
-        STOP
-
-      endif
-
-    enddo
-    enddo
-
-  enddo
+  call atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,        &
+         npot, lo,                                                       &
+         n_bsets, lmax_bas, n_bas, r_bas, nz_bas,                        &
+         rpsi_b, lo_b,                                                   &
+         iowrite, mxdnr, mxdl, mxdbas, mxdset)
 
 ! calculates the Fourier transforms
 
@@ -572,7 +515,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
          mxdl, mxdnr)
 
   call atom_kb_plot(ioplot, fileplot, irel, nr, r, vlocal,               &
-      rpsi, rpsi_b, nqbas, delqbas, ektot,                               &
+      rpsi(:,:,0), rpsi_b, nqbas, delqbas, ektot,                               &
       npot, lo, n_bsets, norbas, lo_b,                                   &
       inorm, vkbproj, nqnl, delql, vkbprft,                              &
       mxdnr, nqmax, mxdl, mxdbas, mxdset)
@@ -602,11 +545,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   deallocate(vkbproj)
 
   deallocate(rpsi_b)
-  deallocate(drpsidr_b)
-  deallocate(veff_b)
   deallocate(lo_b)
-  deallocate(ev_b)
-  deallocate(nrc_b)
 
   deallocate(vlocft)
   deallocate(vkbprft)

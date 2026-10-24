@@ -1,7 +1,7 @@
 !>  Chooses the cut-off for the atomic basis functions
 !>  based on the SIESTA recipes
 !>
-!>  \author       J.L.Martins
+!>  \author       J.L.Martins+claude
 !>  \version      6.1.0
 !>  \date         30 August 2021, 19 May 2022, 26 January 2026.
 !>  \copyright    GNU Public License v2
@@ -15,6 +15,8 @@ subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
 ! jhard. 21 december 2021. JLM
 ! psdtitle, ifcore. 19 May 2022. JLM
 ! fileparsec -> filereal. 26 January 2026. JLM
+! highest available l potential instead of l = 0. 24 October 2026. JLM
+! second zeta is the relaxed energy derivative (r_bas = 0), up to 4 zeta. 24 October 2026. JLM
 
   implicit none
 
@@ -42,8 +44,8 @@ subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
 
   integer,intent(out)               ::  lmax_bas(mxdset)                 !<  maximum angular momentum in basis
   integer,intent(out)               ::  n_bas(0:mxdl,mxdset)             !<  basis functions for angular momentum l
-  real(REAL64), intent(out)         ::  r_bas(3,0:mxdl,mxdset)           !<  cutoff for the basis (up to triple zeta and l = 4)
-  integer, intent(out)              ::  nz_bas(3,0:mxdl,mxdset)          !<  number of non-trivial zeroes in basis function
+  real(REAL64), intent(out)         ::  r_bas(4,0:mxdl,mxdset)           !<  cutoff for the basis (up to quadruple zeta), 0: energy derivative of previous
+  integer, intent(out)              ::  nz_bas(4,0:mxdl,mxdset)          !<  number of non-trivial zeroes in basis function
   real(REAL64), intent(out)         ::  r_siesta(0:mxdl)                 !<  cutoff using the SIESTA recipe
   real(REAL64), intent(out)         ::  r_99(0:mxdl)                     !<  radius with 99% of charge
 
@@ -177,12 +179,10 @@ subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
     r_99(l) = ZERO
     do i = 1,mxdset
       n_bas(l,i) = 0
-      r_bas(1,l,i) = ZERO
-      r_bas(2,l,i) = ZERO
-      r_bas(3,l,i) = ZERO
-      nz_bas(1,l,i) = 0
-      nz_bas(2,l,i) = 0
-      nz_bas(3,l,i) = 0
+      do j = 1,4
+        r_bas(j,l,i) = ZERO
+        nz_bas(j,l,i) = 0
+      enddo
     enddo
   enddo
 
@@ -283,12 +283,17 @@ subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
 
     enddo
 
-!   uses l = 0 in the case potential is not available
+!   uses the highest available l in the case potential is not available
 
-    ll = 0
+    ll = -1
     do i = 1,npot(0)
       if(lo(i,0) == l) ll = l
     enddo
+    if(ll < 0) then
+      do i = 1,npot(0)
+        if(lo(i,0) > ll) ll = lo(i,0)
+      enddo
+    endif
 
     do j = 2,nr
       veff(j) = (vionic(j,ll,0)  + (l*(l+1)) /r(j)) / r(j)  + vscreen(j)
@@ -327,16 +332,17 @@ subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
 
     elseif(ch_temp(1:2) == 'DZ') then
 
+!     second zeta is the relaxed energy derivative of the first (r_bas = 0)
+
       do l = 0,lmax_bas(i)
         if(l > 1 .and. abs(zo(l) - 2*(2*l+1)) < 0.01) then
           n_bas(l,i) = 2
           r_bas(1,l,i) = 1.1*r_siesta(l)
-          r_bas(2,l,i) = max(1.2*r_siesta(l),r_siesta(1),r_siesta(0))
-          nz_bas(2,l,i) = 1
+          r_bas(2,l,i) = ZERO
         else
           n_bas(l,i) = 2
           r_bas(1,l,i) = 1.0*r_siesta(l)
-          r_bas(2,l,i) = 1.2*r_bas(1,l,i)
+          r_bas(2,l,i) = ZERO
         endif
       enddo
 
@@ -352,8 +358,7 @@ subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
       elseif(ch_temp(1:2) == 'DZ') then
         n_bas(l,i) = 2
         r_bas(1,l,i) = max(1.0*r_siesta(1),1.0*r_siesta(0))
-        r_bas(2,l,i) = 1.2*r_bas(1,l,i)
-        nz_bas(2,l,i) = 1
+        r_bas(2,l,i) = ZERO
       endif
 
     endif
