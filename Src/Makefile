@@ -42,12 +42,16 @@ libatom:
 
 
 
-clean:
+cleanobj:
 	(cd lib_atom          &&  make clean )
 	(cd lib_num           &&  make clean )
 	(cd lib_blas_pack     &&  make clean )
 	(cd lib_psd           &&  make clean )
 	(cd lib_kb            &&  make clean )
 	(cd lib_plot          &&  make clean )
+	(/bin/rm -f *.mod *.o *~)
 
-.PHONY:   clean libatom
+clean:  cleanobj
+	(/bin/rm -f *.a *.exe)
+
+.PHONY:   clean cleanobj libatom

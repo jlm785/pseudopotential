@@ -219,7 +219,7 @@ subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
               lvalid = .TRUE.
               if(r_in < 1.0 .or. r_in > 15.0) write(6,*) '  Strange value...'
             elseif(abs(r_in) <= SMALL .and. i > 1) then
-              if(r_bas(i-1,l,j) > ZERO) then
+              if(r_bas(i-1,l,j) > EPS) then
                 lvalid = .TRUE.
                 r_in = ZERO
               endif
@@ -240,7 +240,7 @@ subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
             r_bas(i,l,j) = r_in
           else
             if(i == 1) then
-              if(r_bas(i,l,j) <= ZERO) r_bas(i,l,j) = max(r_siesta(l),r_siesta(0))
+              if(r_bas(i,l,j) <= EPS) r_bas(i,l,j) = max(r_siesta(l),r_siesta(0))
             elseif(r_bas(i-1,l,j) > EPS) then
               r_bas(i,l,j) = ZERO
             else
