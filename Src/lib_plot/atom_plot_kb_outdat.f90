@@ -20,6 +20,7 @@ subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
 ! kinetic, 9 October 2021. JLM
 ! nump can be zero. 18 October 2021. JLM
 ! es format and min/max indices for basis functions. 25 October 2026. claude
+! es format for projectors, kinetic energy, local potential. 25 October 2026. claude
 
   implicit none
 
@@ -184,7 +185,7 @@ subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
     write(iob,'("#     r (a.u.)",3x,20(1x,a12))') (labelp(i),i=1,ip)
     write(iob,'("#")')
     do i = 1,numbp(1)
-      write(iob,'(20(3x,f10.6))') px(i,1),(py(i,kc),kc=1,ip)
+      write(iob,'(20(1x,es15.7))') px(i,1),(py(i,kc),kc=1,ip)
       do kc = 1,ip
         if(py(i,kc) < yminp) yminp = py(i,kc)
         if(py(i,kc) > ymaxp) ymaxp = py(i,kc)
@@ -204,7 +205,7 @@ subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
     write(iob,'("#     q (1 / a.u.)",3x,20(1x,a12))') (labelq(i),i=1,iq)
     write(iob,'("#")')
     do i = 1,numbq(1)
-      write(iob,'(20(3x,f10.6))') qx(i,1),(qy(i,kc),kc=1,iq)
+      write(iob,'(20(1x,es15.7))') qx(i,1),(qy(i,kc),kc=1,iq)
       do kc = 1,iq
         if(qy(i,kc) < yminq) yminq = qy(i,kc)
         if(qy(i,kc) > ymaxq) ymaxq = qy(i,kc)
@@ -222,7 +223,7 @@ subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
   write(iob,'("#     q (1 / a.u.)",3x,20(1x,a12))') labelek
   write(iob,'("#")')
   do i = 1,numbek
-    write(iob,'(f12.6,3x,f18.10)') qek(i),ek(i)
+    write(iob,'(2(1x,es15.7))') qek(i),ek(i)
   enddo
   xmaxek = 5*(floor(qek(numbek)/5)+1)
   ymaxek = (10*ONE)**floor(log10(ek(1))+1)
@@ -237,7 +238,7 @@ subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
   write(iob,'("#     r (a.u.)",7x,20(1x,a12))') labelv
   write(iob,'("#")')
   do i = 1,numbv
-    write(iob,'(f12.6,3x,f18.10)') vr(i), vk(i)
+    write(iob,'(2(1x,es15.7))') vr(i), vk(i)
     if(yminv > vk(i)) yminv = vk(i)
     if(ymaxv < vk(i)) ymaxv = vk(i)
   enddo

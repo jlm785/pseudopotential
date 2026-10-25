@@ -11,9 +11,10 @@ subroutine atom_plot_spec(iotape, sfname, nlabel, zion, lcentr,         &
         x_min, x_max, y_min, y_max, iw, label, ip, label2)
 
 ! Written by claude from atom_plot_command. 25 October 2026. claude
+! fwft, fppt, kbop, kbtr, kbek, kbvk, ylog. 25 October 2026. claude
 
 ! Same arguments as atom_plot_command (without lpdf).
-! Only wfct, ppot, bas* and log*/ln* are implemented, other figures
+! All figures of atom_plot_command are implemented, unknown figures
 ! are silently skipped.
 !
 ! Format of the file, one item per line, "key = value", fields of
@@ -27,6 +28,7 @@ subroutine atom_plot_spec(iotape, sfname, nlabel, zion, lcentr,         &
 !   coulomb     = c   | label | style | color index      (y = -c / x)
 !   centrifugal = c   | label | style | color index      (y = c / x**2)
 !   hline  = y
+!   ylog   = 1                                       (logarithmic y axis)
 ! Lines starting with # are comments.
 ! Color index 0 is used for reference curves (Coulomb tail, pseudo
 ! wave-function in the basis plots).
@@ -65,6 +67,9 @@ subroutine atom_plot_spec(iotape, sfname, nlabel, zion, lcentr,         &
   integer         ::  i
 
   lknown = sfname == 'wfct' .or. sfname == 'ppot' .or.                   &
+           sfname == 'fwft' .or. sfname == 'fppt' .or.                   &
+           sfname == 'kbop' .or. sfname == 'kbtr' .or.                   &
+           sfname == 'kbek' .or. sfname == 'kbvk' .or.                   &
            sfname(1:3) == 'bas' .or. sfname(1:3) == 'log' .or.           &
            sfname(1:2) == 'ln'
 
@@ -126,6 +131,69 @@ subroutine atom_plot_spec(iotape, sfname, nlabel, zion, lcentr,         &
           sfname, i+iw+1, trim(label2(i)), i
     enddo
 
+  elseif(sfname == 'fwft') then
+
+    write(iotape,'("title = Wave Function Transforms")')
+    write(iotape,'("xlabel = q [1/a.u.]")')
+    write(iotape,'("ylabel = R(q)")')
+
+    do i = 1,iw
+      write(iotape,'("curve = ",a4,".gp | 1 | ",i3," | ",a," | solid | ",i3)')  &
+          sfname, i+1, trim(label(i)), i
+    enddo
+
+  elseif(sfname == 'fppt') then
+
+    write(iotape,'("title = Fourier Transforms of Potential")')
+    write(iotape,'("xlabel = q [1/a.u.]")')
+    write(iotape,'("ylabel = q^2/4piZion V(q) [Ry]")')
+
+    do i = 1,iw
+      write(iotape,'("curve = ",a4,".gp | 1 | ",i3," | ",a," | solid | ",i3)')  &
+          sfname, i+1, trim(label(i)), i
+    enddo
+
+  elseif(sfname == 'kbop') then
+
+    write(iotape,'("title = Kleinman-Bylander Operators")')
+    write(iotape,'("xlabel = r [a.u.]")')
+    write(iotape,'("ylabel = P(r)")')
+
+    do i = 1,iw
+      write(iotape,'("curve = ",a4,".gp | 1 | ",i3," | ",a," | solid | ",i3)')  &
+          sfname, i+1, trim(label(i)), i
+    enddo
+
+  elseif(sfname == 'kbtr') then
+
+    write(iotape,'("title = Fourier Transform Kleinman-Bylander Operators")')
+    write(iotape,'("xlabel = q [1/a.u.]")')
+    write(iotape,'("ylabel = P(q)")')
+
+    do i = 1,iw
+      write(iotape,'("curve = ",a4,".gp | 1 | ",i3," | ",a," | solid | ",i3)')  &
+          sfname, i+1, trim(label(i)), i
+    enddo
+
+  elseif(sfname == 'kbek') then
+
+    write(iotape,'("title = Integral of Kinetic energy (difference)")')
+    write(iotape,'("xlabel = q [1/a.u.]")')
+    write(iotape,'("ylabel = E_kin(inf) - E_kin(q) [Ry]")')
+    write(iotape,'("ylog = 1")')
+
+    write(iotape,'("curve = ",a4,".gp | 1 | 2 | ",a," | solid | 1")')            &
+        sfname, trim(label(1))
+
+  elseif(sfname == 'kbvk') then
+
+    write(iotape,'("title = Choice of Local Pseudopotential")')
+    write(iotape,'("xlabel = r [a.u.]")')
+    write(iotape,'("ylabel = V_local(r) [Ry]")')
+
+    write(iotape,'("curve = ",a4,".gp | 1 | 2 | ",a," | solid | 1")')            &
+        sfname, trim(label(1))
+
   else
 
 !   log derivatives, zion is the radius
@@ -145,7 +213,14 @@ subroutine atom_plot_spec(iotape, sfname, nlabel, zion, lcentr,         &
 
   endif
 
-  write(iotape,'("hline = 0.0")')
+! reference lines, for kbek the suggested accuracies (Ry)
+
+  if(sfname == 'kbek') then
+    write(iotape,'("hline = 0.0004")')
+    write(iotape,'("hline = 0.005")')
+  else
+    write(iotape,'("hline = 0.0")')
+  endif
 
   close(iotape)
 

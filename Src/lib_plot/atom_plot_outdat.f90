@@ -20,6 +20,7 @@ subroutine atom_plot_outdat (iost, nmax, numw, nump, nftp,               &
 ! converted to fortran 90, 6 August 2021
 ! corrected gnuplot comment statements. 19 October 2021. JLM
 ! es format for wave-functions and potentials. 25 October 2026. claude
+! es format for Fourier transforms. 25 October 2026. claude
 
   implicit none
 
@@ -126,7 +127,7 @@ subroutine atom_plot_outdat (iost, nmax, numw, nump, nftp,               &
      write(iofw,'("#   q (1/a.u.)",3x,10(1x,a12))') (labelfw(i),i=1,ifw)
      write(iofw,'("#")')
      do i = 1,numbfw(ifw)
-        write(iofw,'(20(3x,f10.6))') fwx(i,1),(fwy(i,kc),kc=1,ifw)
+        write(iofw,'(20(1x,es15.7))') fwx(i,1),(fwy(i,kc),kc=1,ifw)
      enddo
   endif
 
@@ -162,7 +163,7 @@ subroutine atom_plot_outdat (iost, nmax, numw, nump, nftp,               &
      write(iofp,'("#    q (1/a.u.)",1x,10(2x,a12))') (labelf(i),i=1,ifp)
      write(iofp,'("#")')
      do i = 1,numbf(ifp)
-        write(iofp,'(20(4x,f10.6))') fx(i,1),(fy(i,kc),kc=1,ifp)
+        write(iofp,'(20(1x,es15.7))') fx(i,1),(fy(i,kc),kc=1,ifp)
      enddo
   endif
 

@@ -21,6 +21,7 @@ subroutine atom_plot_kb_outpdf(iocomm, iotmp, numw, numb, nump, nftp,    &
 ! nump can be zero. 18 October 2021. JLM
 ! printing, 21 October 2021. JLM
 ! figure description for matplotlib (bas). 25 October 2026. claude
+! figure description for matplotlib (kbvk, kbop, kbtr, kbek). 25 October 2026. claude
 
 
   implicit none
@@ -186,6 +187,9 @@ subroutine atom_plot_kb_outpdf(iocomm, iotmp, numw, numb, nump, nftp,    &
   call atom_plot_command(iocomm, sfname, 1, zion, 0, .TRUE.,             &
          x_min, x_max, y_min, y_max, 1, labelv, 0, labelb)
 
+  call atom_plot_spec(iocomm, sfname, 1, zion, 0,                        &
+         x_min, x_max, y_min, y_max, 1, labelv, 0, labelb)
+
   call atom_plot_gnuplot(iotmp, sfname, 'run  ')
 
 ! projectors real space
@@ -201,6 +205,9 @@ subroutine atom_plot_kb_outpdf(iocomm, iotmp, numw, numb, nump, nftp,    &
     sfname = 'kbop'
 
     call atom_plot_command(iocomm, sfname, nump, zion, 0, .TRUE.,          &
+           x_min, x_max, y_min, y_max, ip, labelp, 0, labelb)
+
+    call atom_plot_spec(iocomm, sfname, nump, zion, 0,                     &
            x_min, x_max, y_min, y_max, ip, labelp, 0, labelb)
 
     call atom_plot_gnuplot(iotmp, sfname, 'run  ')
@@ -222,6 +229,9 @@ subroutine atom_plot_kb_outpdf(iocomm, iotmp, numw, numb, nump, nftp,    &
     call atom_plot_command(iocomm, sfname, nftp, zion, 0, .TRUE.,          &
            x_min, x_max, y_min, y_max, iq, labelq, 0, labelb)
 
+    call atom_plot_spec(iocomm, sfname, nftp, zion, 0,                     &
+           x_min, x_max, y_min, y_max, iq, labelq, 0, labelb)
+
     call atom_plot_gnuplot(iotmp, sfname, 'run  ')
 
   endif
@@ -237,6 +247,9 @@ subroutine atom_plot_kb_outpdf(iocomm, iotmp, numw, numb, nump, nftp,    &
   sfname = 'kbek'
 
   call atom_plot_command(iocomm, sfname, 1, zion, 0, .TRUE.,             &
+         x_min, x_max, y_min, y_max, 1, labelek, 0, labelb)
+
+  call atom_plot_spec(iocomm, sfname, 1, zion, 0,                        &
          x_min, x_max, y_min, y_max, 1, labelek, 0, labelb)
 
   call atom_plot_gnuplot(iotmp, sfname, 'run  ')

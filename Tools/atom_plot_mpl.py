@@ -93,6 +93,8 @@ def read_spec(filename):
                                           'color': int(icolor)})
             elif key == 'hline':
                 spec['hlines'].append(float(value))
+            elif key == 'ylog':
+                spec['ylog'] = int(value) != 0
             else:
                 print(f'  {filename}: unknown key {key}, ignored')
     return spec
@@ -122,7 +124,9 @@ def plot_figure(name, dirname, fmt):
         y = data[:, c['y'] - 1].copy()
         # points far outside the y range are dropped, which breaks the
         # line at poles (log derivatives) instead of drawing a vertical line
-        if np.isfinite(span):
+        if spec.get('ylog'):
+            y[y <= 0] = np.nan
+        elif np.isfinite(span):
             y[(y < ymin - span) | (y > ymax + span)] = np.nan
         ax.plot(data[:, c['x'] - 1], y, label=c['label'],
                 color=color(c['color']), linestyle=LINESTYLES[c['style']])
@@ -138,6 +142,8 @@ def plot_figure(name, dirname, fmt):
         ax.axhline(y, color=STYLE['zero_line_color'],
                    linewidth=STYLE['zero_line_width'], zorder=0)
 
+    if spec.get('ylog'):
+        ax.set_yscale('log')
     if 'xrange' in spec:
         ax.set_xlim(*spec['xrange'])
     if 'yrange' in spec:

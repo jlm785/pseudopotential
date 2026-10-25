@@ -18,6 +18,7 @@ subroutine atom_plot_outpdf(iocomm, iotmp, numw, nump, zion,             &
 ! modified June 24 2012 for new gnuplot conventions. JLM
 ! converted to fortran 90, 6 August 2021. JLM
 ! figure description for matplotlib (wfct, ppot). 25 October 2026. claude
+! figure description for matplotlib (fwft, fppt). 25 October 2026. claude
 
 
   implicit none
@@ -95,6 +96,9 @@ subroutine atom_plot_outpdf(iocomm, iotmp, numw, nump, zion,             &
   call atom_plot_command(iocomm, sfname, nump, zion, 0, .TRUE.,          &
       x_min, x_max, y_min, y_max, ifw, labelfw, ip, labelfw)
 
+  call atom_plot_spec(iocomm, sfname, nump, zion, 0,                     &
+      x_min, x_max, y_min, y_max, ifw, labelfw, ip, labelfw)
+
   call atom_plot_gnuplot(iotmp, sfname, 'run  ')
 
 ! create third sheet: pseudopotentials
@@ -127,6 +131,9 @@ subroutine atom_plot_outpdf(iocomm, iotmp, numw, nump, zion,             &
   sfname = 'fppt'
 
   call atom_plot_command(iocomm, sfname, nump, zion, 0, .TRUE.,          &
+      x_min, x_max, y_min, y_max, ifp, labelf, ip, labelw)
+
+  call atom_plot_spec(iocomm, sfname, nump, zion, 0,                     &
       x_min, x_max, y_min, y_max, ifp, labelf, ip, labelw)
 
   call atom_plot_gnuplot(iotmp, sfname, 'run  ')
