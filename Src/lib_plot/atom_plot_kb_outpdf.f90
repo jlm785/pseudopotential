@@ -1,9 +1,9 @@
 !>  Writes the files with data for subsequent plotting
-!>  of wave-functions and potentials with gnuplot
+!>  of wave-functions and potentials with gnuplot ot matplotlib
 !>
 !>  \author       Peter Schuster, Manuel Maria Alemany, Jose Luis Martins
-!>  \version      6.0.5
-!>  \date         4 September 2021, 9 October 2021.
+!>  \version      6.1.0
+!>  \date         4 September 2021, 25 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_kb_outpdf(iocomm, iotmp, numw, numb, nump, nftp,    &
@@ -20,6 +20,7 @@ subroutine atom_plot_kb_outpdf(iocomm, iotmp, numw, numb, nump, nftp,    &
 ! kinetic, 9 October 2021. JLM
 ! nump can be zero. 18 October 2021. JLM
 ! printing, 21 October 2021. JLM
+! figure description for matplotlib (bas). 25 October 2026. claude
 
 
   implicit none
@@ -155,6 +156,9 @@ subroutine atom_plot_kb_outpdf(iocomm, iotmp, numw, numb, nump, nftp,    &
       endif
 
       call atom_plot_command(iocomm, sfname, nlabel, zion, 0, .TRUE.,    &
+         x_min, x_max, y_min, y_max, nw, label_wl, nbas, label_bl)
+
+      call atom_plot_spec(iocomm, sfname, nlabel, zion, 0,               &
          x_min, x_max, y_min, y_max, nw, label_wl, nbas, label_bl)
 
       call atom_plot_gnuplot(iotmp, sfname, 'run  ')

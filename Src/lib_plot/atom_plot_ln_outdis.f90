@@ -13,6 +13,7 @@ subroutine atom_plot_ln_outdis(ioplot, iotmp, lkb,                       &
 
 ! adapted from the old program August 2021. JLM
 ! mxdsc. 25 September 2021. JLM
+! label format. 25 October 2026. claude
 
   implicit none
 
@@ -114,7 +115,7 @@ subroutine atom_plot_ln_outdis(ioplot, iotmp, lkb,                       &
 
   do i = 1,nsc
     if(iso(i) == 0) then
-      write(label(i),'("8x,l=",i2)') lo(i)
+      write(label(i),'("l=",i2)') lo(i)
     else
       write(label(i),'("l=",i2,", s=",f4.1)') lo(i), 0.5*iso(i)
     endif

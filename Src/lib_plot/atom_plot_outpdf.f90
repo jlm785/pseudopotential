@@ -1,9 +1,10 @@
 !>  Writes the command-file to be accepted by gnuplot
 !>  and gets the plots in pdf format
+!>  Also writes file for matplotlib
 !>
 !>  \author       Peter Schuster, Manuel Maria Alemany, Jose Luis Martins
-!>  \version      6.013
-!>  \date         April 1993, January 2000, 30 August 2021
+!>  \version      6.1.0
+!>  \date         April 1993, January 2000, 25 October 2026
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_outpdf(iocomm, iotmp, numw, nump, zion,             &
@@ -15,7 +16,8 @@ subroutine atom_plot_outpdf(iocomm, iotmp, numw, nump, zion,             &
 ! interative ploting added by Manuel Maria Alemany, January 2000
 ! removed H formats 22 January 2008. JLM
 ! modified June 24 2012 for new gnuplot conventions. JLM
-! converted to fortran 90, 6 August 2021
+! converted to fortran 90, 6 August 2021. JLM
+! figure description for matplotlib (wfct, ppot). 25 October 2026. claude
 
 
   implicit none
@@ -75,6 +77,9 @@ subroutine atom_plot_outpdf(iocomm, iotmp, numw, nump, zion,             &
   call atom_plot_command(iocomm, sfname, numw, zion, 0, .TRUE.,          &
       x_min, x_max, y_min, y_max, iw, labelw, ip, labelp)
 
+  call atom_plot_spec(iocomm, sfname, numw, zion, 0,                     &
+      x_min, x_max, y_min, y_max, iw, labelw, ip, labelp)
+
   call atom_plot_gnuplot(iotmp, sfname, 'run  ')
 
 ! create second sheet: pseudo wave-function transforms
@@ -104,6 +109,9 @@ subroutine atom_plot_outpdf(iocomm, iotmp, numw, nump, zion,             &
   sfname = 'ppot'
 
   call atom_plot_command(iocomm, sfname, nump, zion, 0, .TRUE.,          &
+      x_min, x_max, y_min, y_max, iv, labelv, ip, labelv)
+
+  call atom_plot_spec(iocomm, sfname, nump, zion, 0,                     &
       x_min, x_max, y_min, y_max, iv, labelv, ip, labelv)
 
   call atom_plot_gnuplot(iotmp, sfname, 'run  ')

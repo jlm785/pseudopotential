@@ -10,7 +10,7 @@ subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
          mxdl, mxdset)
 
 ! split from atom_kb_setup. 14 January 2026. JLM
-! up to 4 zeta, r_bas = 0 for relaxed energy derivative of previous function. 24 October 2026. JLM
+! up to 4 zeta, r_bas = 0 for relaxed energy derivative of previous function. 24 October 2026. JLM+claude
 
   implicit none
 

@@ -1,8 +1,8 @@
 !>  Writes the files with data for subsequent plotting
-!>  of wave-functions and potentials with gnuplot
+!>  of wave-functions and potentials with gnuplot or matplotlib
 !>
 !>  \author       Peter Schuster, Manuel Maria Alemany, Jose Luis Martins
-!>  \version      6.013
+!>  \version      6.1.0
 !>  \date         April 1993, January 2000, 6 August 2021, 19 October 2021.
 !>  \copyright    GNU Public License v2
 
@@ -15,10 +15,11 @@ subroutine atom_plot_outdat (iost, nmax, numw, nump, nftp,               &
 
 ! adapted from old code
 ! originally written by Peter Schuster, April 1993
-! interative ploting added by Manuel Maria Alemany, January 2000
+! interactive ploting added by Manuel Maria Alemany, January 2000
 ! removed H formats 22 January 2008. JLM
 ! converted to fortran 90, 6 August 2021
 ! corrected gnuplot comment statements. 19 October 2021. JLM
+! es format for wave-functions and potentials. 25 October 2026. claude
 
   implicit none
 
@@ -104,7 +105,7 @@ subroutine atom_plot_outdat (iost, nmax, numw, nump, nftp,               &
     yminwp = ZERO
     ymaxwp = ZERO
     do i = 1,numbw(iw)
-       write(iowf,'(20(3x,f10.6))') wx(i,1),(wy(i,kc),py(i,kc),kc=1,iw)
+       write(iowf,'(20(1x,es15.7))') wx(i,1),(wy(i,kc),py(i,kc),kc=1,iw)
        do k = 1,iw
           if(wy(i,k) < yminwp) yminwp = wy(i,k)
           if(wy(i,k) > ymaxwp) ymaxwp = wy(i,k)
@@ -143,7 +144,7 @@ subroutine atom_plot_outdat (iost, nmax, numw, nump, nftp,               &
      write(iopp,'("#      r (a.u.)",1x,10(3x,a12))') (labelv(j),j=1,iv)
      write(iopp,'("#")')
      do i = 1,numbv(iv)
-        write(iopp,'(11(4x,f11.6))') vx(i,1),(vy(i,kc),kc=1,iv)
+        write(iopp,'(11(1x,es15.7))') vx(i,1),(vy(i,kc),kc=1,iv)
        do k = 1,iv
            if(vy(i,k) < yminv) yminv = vy(i,k)
         enddo

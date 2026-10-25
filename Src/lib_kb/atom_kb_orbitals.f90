@@ -22,9 +22,10 @@ subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
          rpsi_b, lo_b,                                                   &
          iowrite, mxdnr, mxdl, mxdbas, mxdset)
 
-! split from atom_kb_sub. 24 October 2026. JLM
-! highest available l potential if l has none. 24 October 2026. JLM
-! relaxed energy derivative phi as basis function (r_bas = 0). 24 October 2026. JLM
+! split from atom_kb_sub. 24 October 2026. claude+JLM
+! highest available l potential if l has none. 24 October 2026. JLM+claude
+! relaxed energy derivative phi as basis function (r_bas = 0). 24 October 2026. claude+JLM
+
 
 ! The relaxed energy derivative phi follows the spirit of the
 ! linearization with u and du/dE of LAPW/LMTO:

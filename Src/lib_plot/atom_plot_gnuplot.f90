@@ -1,13 +1,14 @@
 !>  Manages the temporary files (tmp_mmga_*) associated with gnuplot
 !>
 !>  \author       Manuel Maria Alemany, Jose Luis Martins
-!>  \version      6.013
-!>  \date         January 2000, 6 August 2021
+!>  \version      6.1.0
+!>  \date         January 2000, 25 October 2026
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_gnuplot(iotmp, sfname, task)
 
 ! adapted from outdis. 9 August 2021. JLM
+! removes fig_*.dat. 25 October 2026. claude
 
   implicit none
 
@@ -63,6 +64,7 @@ subroutine atom_plot_gnuplot(iotmp, sfname, task)
     call system('rm ./command_*.gp 2> /dev/null')
     call system('rm ./*t.gp ./log*.gp 2> /dev/null')
     call system('rm ./kb*.gp ./bas*.gp 2> /dev/null')
+    call system('rm ./fig_*.dat 2> /dev/null')
 
   else
 

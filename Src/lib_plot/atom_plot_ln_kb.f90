@@ -2,8 +2,8 @@
 !>  for the Kleinman-Bylander type of pseudopotential
 !>
 !>  \author       Norm Troullier, Manuel Maria Alemany, Jose Luis Martins
-!>  \version      6.013
-!>  \date         1980s and 1990s, 21 August 2021. 25 September 2021.
+!>  \version      6.1.0
+!>  \date         1980s and 1990s, 21 August 2021. 25 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_ln_kb(npoint, numtotal, ehist, dlogx,               &
@@ -15,6 +15,8 @@ subroutine atom_plot_ln_kb(npoint, numtotal, ehist, dlogx,               &
 
 ! extracted from lnplot.f and converted fo f90
 ! mxdsc. 25 September 2021. JLM
+! centrifugal term in vref. 25 October 2026. JLM
+! lsafe checks all points except near nodes of rpsi. 25 October 2026. claude
 
 
 
@@ -64,6 +66,8 @@ subroutine atom_plot_ln_kb(npoint, numtotal, ehist, dlogx,               &
   integer        ::  iflag
 
   real(REAL64)   ::  prowav
+  logical        ::  lclamp                                              !  potential was clamped at this point
+  logical        ::  lnode                                               !  point is next to a node of rpsi
 
   integer        ::  nrevi
   integer        ::  l, lvio
@@ -124,7 +128,7 @@ subroutine atom_plot_ln_kb(npoint, numtotal, ehist, dlogx,               &
     do j = 2,npoint
       vs(j) = vlocal(j) + vhxc(j,iso(i)) + l*(l+1)/(r(j)*r(j))
       v(j) = vs(j)
-      vref(j) = vionic(j,lvio,iso(i))/r(j) + vhxc(j,iso(i))
+      vref(j) = vionic(j,lvio,iso(i))/r(j) + vhxc(j,iso(i)) + l*(l+1)/(r(j)*r(j))
     enddo
 
     if(inorm(lvio,iso(i)) /= 0) then
@@ -169,16 +173,24 @@ subroutine atom_plot_ln_kb(npoint, numtotal, ehist, dlogx,               &
           do j = 2,npoint
             agp(j) = inorm(lvio,iso(i))*prowav*vkbproj(j,lvio,iso(i))*r(j)/rpsi(j)
           enddo
+!         tries to avoid instabilities.  agp diverges at nodes of rpsi,
+!         clamping next to a node is harmless, elsewhere the result is not safe
+
+          lsafe = .TRUE.
           do j = 2,npoint
             v(j) = vs(j) + agp(j)
-!           tries to avoid instabilities
-            lsafe = .TRUE.
+            lclamp = .FALSE.
             if(v(j) > vref(j) + 10*ONE) then
               v(j) = vref(j) + 10*ONE
-              lsafe = .FALSE.
+              lclamp = .TRUE.
             elseif(v(j) < vref(j) - 10*ONE) then
               v(j) = vref(j) - 10*ONE
-              lsafe = .FALSE.
+              lclamp = .TRUE.
+            endif
+            if(lclamp) then
+              lnode = rpsi(j)*rpsi(j-1) <= ZERO
+              if(j < npoint) lnode = lnode .or. rpsi(j)*rpsi(j+1) <= ZERO
+              if(.not. lnode) lsafe = .FALSE.
             endif
           enddo
 

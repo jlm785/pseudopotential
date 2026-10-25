@@ -9,8 +9,8 @@
 program kb_conv
 
 ! name of input file, 26 January 2026. JLM
-! up to quadruple zeta basis, 24 October 2026. JLM
-! tbasis, lmax_bas allocated with mxdset, 24 October 2026. JLM
+! up to quadruple zeta basis, 24 October 2026. JLM+claude
+! tbasis, lmax_bas allocated with mxdset, 24 October 2026. JLM+claude
 
   implicit none
 

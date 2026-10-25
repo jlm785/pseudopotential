@@ -2,8 +2,8 @@
 !>  Note that vionic is the ionic potential times r.
 !>
 !>  \author       Sverre Froyen, Norm Troullier, Jose Luis Martins
-!>  \version      6.0.8
-!>  \date         22 June 2021, 25 May 2022.
+!>  \version      6.1.0
+!>  \date         22 June 2021, 25 October 2026.
 !>  \copyright    GNU Public License v2
 
  subroutine atom_atm_vpseudo(ispp, icorr, ifcore,                        &
@@ -30,6 +30,7 @@
 ! vionic, cdd, 10 September 2021. JLM
 ! psdtitle, 18 May 2022. JLM
 ! initialize np. 25 May 2022. JLM
+! j = l+1/2 and l-1/2 were swapped when unaveraging vionic. 25 October 2026. claude
 
 
   implicit none
@@ -350,9 +351,9 @@
         do j = 1,nr
           vsum = vionic(j,l, 1)
           vdiff = vionic(j,l,-1)
-          vionic(j,l, 1) = vsum - ((l+1)*vdiff)/2
+          vionic(j,l, 1) = vsum + (l*vdiff)/2
           vionic(j,l, 0) = vsum
-          vionic(j,l,-1) = vsum + (l*vdiff)/2
+          vionic(j,l,-1) = vsum - ((l+1)*vdiff)/2
         enddo
       enddo
 

@@ -37,8 +37,8 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 ! more than one atomic basis set. 14 January 2026. JLM
 ! tauc, 7 January 2026. JLM
 ! fileparsec -> filereal, 26 January 2026. JLM
-! confined orbitals moved to atom_kb_orbitals, up to 4 zeta. 24 October 2026. JLM
-! rpsi(:,:,0) to atom_kb_plot, rpsi initialized. 24 October 2026. JLM
+! confined orbitals moved to atom_kb_orbitals, up to 4 zeta. 24 October 2026. JLM+claude
+! rpsi(:,:,0) to atom_kb_plot, rpsi initialized. 24 October 2026. JLM+claude
 
 
   implicit none

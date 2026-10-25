@@ -15,8 +15,8 @@ subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
 ! jhard. 21 december 2021. JLM
 ! psdtitle, ifcore. 19 May 2022. JLM
 ! fileparsec -> filereal. 26 January 2026. JLM
-! highest available l potential instead of l = 0. 24 October 2026. JLM
-! second zeta is the relaxed energy derivative (r_bas = 0), up to 4 zeta. 24 October 2026. JLM
+! highest available l potential instead of l = 0. 24 October 2026. JLM+claude
+! second zeta is the relaxed energy derivative (r_bas = 0), up to 4 zeta. 24 October 2026. JLM+claude
 
   implicit none
 

@@ -2,8 +2,8 @@
 !>  (semi-local or KB non-local)
 !>
 !>  \author       Norm Troullier, J.L.Martins
-!>  \version      6.0.8
-!>  \date         22 August 2021. 19 May 2022.
+!>  \version      6.1.0
+!>  \date         22 August 2021. 25 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_ln_in_psd(iopsd, filepsd, lkb,                      &
@@ -15,6 +15,8 @@ subroutine atom_plot_ln_in_psd(iopsd, filepsd, lkb,                      &
 ! adapted from the old program August 2021. JLM
 ! unaverage vionic. 25 September 2021. JLM
 ! remove ititle,iray from output, 19 May 2022. JLM
+! j = l+1/2 and l-1/2 were swapped when unaveraging vionic. 25 October 2026. claude
+! vionic not unaveraged again when reading KB. 25 October 2026. claude
 
   implicit none
 
@@ -233,9 +235,9 @@ subroutine atom_plot_ln_in_psd(iopsd, filepsd, lkb,                      &
 
   norb = norb + numu
 
-! recovers pseudopotential
+! recovers pseudopotential (vionic is not read for KB)
 
-  if(irel == 'rel') then
+  if(irel == 'rel' .and. .not. lkb) then
 
     do j = 1,nr
       vionic(j,0,-1) = vionic(j,0, 1)
@@ -245,9 +247,9 @@ subroutine atom_plot_ln_in_psd(iopsd, filepsd, lkb,                      &
       do j = 1,nr
         vsum = vionic(j,l, 1)
         vdiff = vionic(j,l,-1)
-        vionic(j,l, 1) = vsum - ((l+1)*vdiff)/2
+        vionic(j,l, 1) = vsum + (l*vdiff)/2
         vionic(j,l, 0) = vsum
-        vionic(j,l,-1) = vsum + (l*vdiff)/2
+        vionic(j,l,-1) = vsum - ((l+1)*vdiff)/2
       enddo
     enddo
 

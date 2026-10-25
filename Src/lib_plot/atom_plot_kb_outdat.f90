@@ -2,8 +2,8 @@
 !>  of wave-functions and potentials with gnuplot
 !>
 !>  \author       Peter Schuster, Manuel Maria Alemany, Jose Luis Martins
-!>  \version      6.0.5
-!>  \date         4 September 2021, 9 October 2021.
+!>  \version      6.1.0
+!>  \date         4 September 2021, 25 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
@@ -19,6 +19,7 @@ subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
 ! adapted from all-electron+pseudopotential plot code.
 ! kinetic, 9 October 2021. JLM
 ! nump can be zero. 18 October 2021. JLM
+! es format and min/max indices for basis functions. 25 October 2026. claude
 
   implicit none
 
@@ -144,10 +145,10 @@ subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
       write(iob,'("#     r (a.u.)",3x,20(1x,a12))') (labelb(ipoint_b(i)),i=1,nbas)
       write(iob,'("#")')
       do i = 1,numbb(ipoint_b(1))
-        write(iob,'(20(3x,f10.6))') bx(i,1),(by(i,ipoint_b(kc)),kc=1,nbas)
+        write(iob,'(20(1x,es15.7))') bx(i,1),(by(i,ipoint_b(kc)),kc=1,nbas)
         do kc = 1,nbas
-          if(by(i,kc) < yminwp) yminwp = by(i,kc)
-          if(by(i,kc) > ymaxwp) ymaxwp = by(i,kc)
+          if(by(i,ipoint_b(kc)) < yminwp) yminwp = by(i,ipoint_b(kc))
+          if(by(i,ipoint_b(kc)) > ymaxwp) ymaxwp = by(i,ipoint_b(kc))
         enddo
       enddo
 
@@ -157,10 +158,10 @@ subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
                  (labelb(ipoint_b(i)),i=1,nbas)
       write(iob,'("#")')
       do i = 1,numbw(ipoint_w)
-        write(iob,'(20(3x,f10.6))') wx(i,1),wy(i,ipoint_w),              &
+        write(iob,'(20(1x,es15.7))') wx(i,1),wy(i,ipoint_w),             &
                  (by(i,ipoint_b(kc)),kc=1,nbas)
-        if(wy(i,1) < yminwp) yminwp = wy(i,1)
-        if(wy(i,1) > ymaxwp) ymaxwp = wy(i,1)
+        if(wy(i,ipoint_w) < yminwp) yminwp = wy(i,ipoint_w)
+        if(wy(i,ipoint_w) > ymaxwp) ymaxwp = wy(i,ipoint_w)
         do kc = 1,nbas
           if(by(i,ipoint_b(kc)) < yminwp) yminwp = by(i,ipoint_b(kc))
           if(by(i,ipoint_b(kc)) > ymaxwp) ymaxwp = by(i,ipoint_b(kc))

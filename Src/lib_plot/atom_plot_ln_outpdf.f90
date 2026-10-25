@@ -1,8 +1,9 @@
 !>  Uses gnuplot to create pdf plots of the log derivatives.
+!>  Prepares files for matplotlib
 !>
 !>  \author       Norm Troullier, Manuel Maria Alemany, J.L.Martins
-!>  \version      6.0.3
-!>  \date         1990s, 30 August 2021, 25 September 2021.
+!>  \version      6.1.0
+!>  \date         1990s, 30 August 2021, 25 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_ln_outpdf(ioplot, iotmp, lkb,                       &
@@ -13,6 +14,7 @@ subroutine atom_plot_ln_outpdf(ioplot, iotmp, lkb,                       &
 
 ! adapted from the old program August 2021. JLM
 ! mxdsc. 25 September 2021. JLM
+! label format, figure description for matplotlib. 25 October 2026. claude
 
   implicit none
 
@@ -94,7 +96,7 @@ subroutine atom_plot_ln_outpdf(ioplot, iotmp, lkb,                       &
 
   do i = 1,nsc
     if(iso(i) == 0) then
-      write(label(i),'("8x,l=",i2)') lo(i)
+      write(label(i),'("l=",i2)') lo(i)
     else
       write(label(i),'("l=",i2,", s=",f4.1)') lo(i), 0.5*iso(i)
     endif
@@ -116,6 +118,9 @@ subroutine atom_plot_ln_outpdf(ioplot, iotmp, lkb,                       &
 
 
     call  atom_plot_command(ioplot, c_val(i), nsc, rpoint, 0, .TRUE.,    &
+          x_min, x_max, y_min, y_max, iw, label, i, label2)
+
+    call  atom_plot_spec(ioplot, c_val(i), nsc, rpoint, 0,               &
           x_min, x_max, y_min, y_max, iw, label, i, label2)
 
     call atom_plot_gnuplot(iotmp,c_val(i),'run  ')
