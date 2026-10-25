@@ -9,6 +9,7 @@
 subroutine ft_radial(nr, nq, r, drdi, qp, fin, fout, l)
 
 ! included the (2 pi)**3 factor here.
+! OpenMP in the loops over q. 25 October 2026. claude
 
   implicit none
 
@@ -109,12 +110,17 @@ subroutine ft_radial(nr, nq, r, drdi, qp, fin, fout, l)
 
   if(nr2 > 0) then
 
-    allocate(a(0:nr2))
-
 !   Due to the high number of oscilations in the integrand,
 !   an eight point Newton-Cotes intagration method is used.
 !   See  Abramowitz and Stegun Eq. 25.4.17
 
+!   the q points are independent, each thread has its own work array a
+
+!$omp parallel private(a, j, k)
+
+    allocate(a(0:nr2))
+
+!$omp do schedule(static)
     do j = 0,nq
       a(0) = ZERO
       do k = 1,nr2
@@ -126,8 +132,11 @@ subroutine ft_radial(nr, nq, r, drdi, qp, fin, fout, l)
       enddo
       fout(j) = (7*XN*fout(j))/17280
     enddo
+!$omp end do
 
     deallocate(a)
+
+!$omp end parallel
 
   endif
 
@@ -167,8 +176,13 @@ subroutine ft_radial(nr, nq, r, drdi, qp, fin, fout, l)
     deallocate(y,yp,ypp)
     deallocate(vp,vpp)
 
+!   the q points are independent, each thread has its own work array a
+
+!$omp parallel private(a, j, k, fout2j)
+
     allocate(a(nr4))
 
+!$omp do schedule(static)
     do j = 0,nq
       fout2j = ZERO
       do k = 1,nr4
@@ -180,12 +194,16 @@ subroutine ft_radial(nr, nq, r, drdi, qp, fin, fout, l)
       enddo
       fout(j) = fout(j) + (7*deltar*XN*fout2j) / 17280
     enddo
+!$omp end do
+
+    deallocate(a)
+
+!$omp end parallel
+
+    deallocate(r2)
+    deallocate(v)
 
   endif
-
-  deallocate(r2)
-  deallocate(a)
-  deallocate(v)
 
   return
 

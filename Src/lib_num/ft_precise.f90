@@ -10,6 +10,7 @@ subroutine ft_precise(nr, nqnl, r, drdi, qp, fin, fout, l)
 
 ! adapted from old code J.L.Martins 30/4/2012
 ! copyright jlm inesc-mn
+! OpenMP in the loop over q. 25 October 2026. claude
 
   implicit none
 
@@ -52,14 +53,10 @@ subroutine ft_precise(nr, nqnl, r, drdi, qp, fin, fout, l)
 
   real(REAL64), external   :: sbessj
 
-  allocate(w(0:nr+7),y(0:nr+7))
+  allocate(w(0:nr+7))
 
   do k = 1,nr
     w(k) = drdi(k)*r(k)*r(k)*fin(k)
-  enddo
-  y(0) = zero
-  do k = nr+1,nr+7
-    y(k) = zero
   enddo
   crnorm = (7*sqrt((2*l+1)*PI4))/17280
 
@@ -67,6 +64,17 @@ subroutine ft_precise(nr, nqnl, r, drdi, qp, fin, fout, l)
 ! an eight point newton-cotes intagration method is used.
 ! see  abramowitz and stegun eq. 25.4.17
 
+! the q points are independent, each thread has its own work array y
+
+!$omp parallel private(y, j, k)
+
+  allocate(y(0:nr+7))
+  y(0) = zero
+  do k = nr+1,nr+7
+    y(k) = zero
+  enddo
+
+!$omp do schedule(static)
   do j = 0,nqnl
 
     do k = 1,nr
@@ -81,8 +89,13 @@ subroutine ft_precise(nr, nqnl, r, drdi, qp, fin, fout, l)
     fout(j) = crnorm * fout(j)
 
   enddo
+!$omp end do
 
-  deallocate(w,y)
+  deallocate(y)
+
+!$omp end parallel
+
+  deallocate(w)
   
   return
 

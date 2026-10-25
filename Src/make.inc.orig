@@ -46,6 +46,14 @@ DEBUG=false
 # DEBUG=true
 
 
+#   OpenMP parallelization of the Fourier (Bessel) transforms (true, false).
+#   The number of threads is set by the environment variable OMP_NUM_THREADS
+#   (default: all cores).
+
+OPENMP=true
+# OPENMP=false
+
+
 
 #   suffix for executables if you want to compare compilers
 
@@ -141,3 +149,15 @@ ifeq ($(F77),pgfortran)
 endif
 
 
+
+#  OpenMP flags (also used when linking)
+
+ifeq ($(OPENMP),true)
+   ifeq ($(F77),gfortran)
+      FCOPTS+= -fopenmp
+   else ifeq ($(F77),pgfortran)
+      FCOPTS+= -mp
+   else
+      FCOPTS+= -qopenmp
+   endif
+endif
