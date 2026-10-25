@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 # path to executable you want to test
 
