@@ -13,6 +13,7 @@ subroutine atom_atm_difnrl(nr, r, drdi, d2rodr, v, rpsi, drpsidr,        &
 
 ! interface to two subroutines depending if the requested state is
 ! bound.
+! if the test does not work, assumes bound state, iflag /= 0 on failure. 25 October 2026. claude
 
 
   implicit none
@@ -75,10 +76,26 @@ subroutine atom_atm_difnrl(nr, r, drdi, d2rodr, v, rpsi, drpsidr,        &
       l, einf, revi, nrevi, iflag,                                       &
       iowrite, mxdnr)
 
+! The test integration may stop before r(nr), for example at a spike
+! of v (KB tests at a node of the previous wave-function).
+! Assumes the orbital is bound (the usual case) with the input guess.
+
   if(nrevi /= nr .or. iflag /= 0) then
-    write(6,*)
-    write(6,*) '  atom_atm_difnrl: could not find if orbital is bound'
-    write(6,*)
+
+    call atom_atm_difnrl_bound(nr, r, drdi, d2rodr, v, rpsi, drpsidr,    &
+        n, l, ev, iflag, tol,                                            &
+        iowrite, mxdnr)
+
+    if(iflag /= 0) then
+      write(6,*)
+      write(6,*) '  atom_atm_difnrl: could not find if orbital is bound,'
+      write(6,'("   and failed as bound state, n, l, iflag = ",3i4)') n, l, iflag
+      write(6,*)
+
+!     not a major error, the caller may recover in the next iteration
+
+      iflag = 1
+    endif
 
     return
 

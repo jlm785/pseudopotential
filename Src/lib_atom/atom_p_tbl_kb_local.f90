@@ -26,7 +26,7 @@ subroutine atom_p_tbl_kb_local(name, llocal, jhard)
   elseif (name == 'He') then
     llocal = 0
   elseif (name == 'Li') then
-    llocal = -1
+    llocal = 1
   elseif (name == 'Be') then
     llocal = -1
   elseif (name == 'B ' .or. name == ' B') then
