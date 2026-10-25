@@ -4,8 +4,8 @@
 !>  It uses an intial guess for the eigenvalues from dsolv1 or older value.
 !>
 !>  \author       Sverre Froyen, Norm Troullier, Jose Luis Martins
-!>  \version      6.0.3
-!>  \date         1980s, 12 September 2021.
+!>  \version      6.1.0
+!>  \date         1980s, 12 September 2021, 25 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_atm_difrel(nr, r, drdi, v, ar, br,                       &
@@ -15,6 +15,7 @@ subroutine atom_atm_difrel(nr, r, drdi, v, ar, br,                       &
 ! interface to two subroutines depending if the requested state is
 ! bound.
 ! so->iso, 12 September 2021. JLM
+! if the test does not work, assumes bound state, iflag /= 0 on failure. 25 October 2026. claude
 
 
   implicit none
@@ -80,10 +81,24 @@ subroutine atom_atm_difrel(nr, r, drdi, v, ar, br,                       &
       l, iso, znuc, vzero, einf, revi, nrevi, iflag,                     &
       iowrite, mxdnr)
 
+! Assumes the orbital is bound (the usual case) with the input guess.
+
   if(nrevi /= nr .or. iflag /= 0) then
-    write(6,*)
-    write(6,*) '  atom_atm_difrel: could not find if orbital is bound'
-    write(6,*)
+
+    call atom_atm_difrel_bound(nr, r, drdi, v, ar, br,                   &
+          n, l, iso, znuc, vzero, ev, iflag, tol,                        &
+          iowrite, mxdnr)
+
+    if(iflag /= 0) then
+      write(6,*)
+      write(6,*) '  atom_atm_difrel: could not find if orbital is bound,'
+      write(6,'("   and failed as bound state, n, l, iso, iflag = ",4i4)') n, l, iso, iflag
+      write(6,*)
+
+!     not a major error, the caller may recover in the next iteration
+
+      iflag = 1
+    endif
 
     return
 

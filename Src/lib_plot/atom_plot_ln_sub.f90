@@ -5,7 +5,7 @@
 !>
 !>  \author       Norm Troullier, Manuel Maria Alemany, Jose Luis Martins
 !>  \version      6.1.0
-!>  \date         1980s and 1990s, 21 August 2021, 7 January 2026.
+!>  \date         1980s and 1990s, 21 August 2021, 7 January 2026, 25 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_ln_sub(iowrite, iodata, datafile, iopsd, pseudo,    &
@@ -44,6 +44,7 @@ subroutine atom_plot_ln_sub(iowrite, iodata, datafile, iopsd, pseudo,    &
 ! printing. 21 October 2021. JLM
 ! remove iray, ititle, 19 May 2022. JLM
 ! tauc_total. 7 January 2026. JLM
+! lmax_ps for the pseudopotential log derivatives. 25 October 2026. JLM+claude
 
   implicit none
 
@@ -139,6 +140,7 @@ subroutine atom_plot_ln_sub(iowrite, iodata, datafile, iopsd, pseudo,    &
 
   integer                           ::  itype, ifcore                    !  core correction
   integer                           ::  lmax_v                           !  maximum angular momentum in potential
+  integer                           ::  lmax_ps                          !  maximum angular momentum in pseudopotential
 
   real(REAL64)                      ::  zval                             !  valence charge
   real(REAL64)                      ::  zel                              !  electron charge
@@ -391,6 +393,7 @@ subroutine atom_plot_ln_sub(iowrite, iodata, datafile, iopsd, pseudo,    &
       vionic, cdc, cdv,  vlocal, vkbproj, inorm,                         &
       mxdorb, mxdl, mxdnr)
 
+  lmax_ps = maxval(lo_ps(1:norb_ps))
 
   nval = norb_ps
 
@@ -404,7 +407,7 @@ subroutine atom_plot_ln_sub(iowrite, iodata, datafile, iopsd, pseudo,    &
   call atom_plot_ln_nokb(' ', npoint, numtotal, ehist, dlog_p,            &
         nr, r, drdi, d2rodr,                                              &
         nsc, lo_sc, iso_sc, znuc,                                         &
-        lmax_v, vionic, vhxc,                                             &
+        lmax_ps, vionic, vhxc,                                            &
         iowrite, mxdnr, mxdl, mxdsc, mxdpts)
 
 
@@ -417,6 +420,8 @@ subroutine atom_plot_ln_sub(iowrite, iodata, datafile, iopsd, pseudo,    &
         norb_ps, lo_ps, iso_ps, nr, r, drdi, d2rodr, znuc,               &
         vionic, cdc, cdv,  vlocal, vkbproj, inorm,                       &
         mxdorb, mxdl, mxdnr)
+
+    lmax_ps = maxval(lo_ps(1:norb_ps))
 
     nval = norb
     itype = ifcore + 1
@@ -433,7 +438,7 @@ subroutine atom_plot_ln_sub(iowrite, iodata, datafile, iopsd, pseudo,    &
     call atom_plot_ln_kb(npoint, numtotal, ehist, dlog_k,                &
         nr, r, drdi, d2rodr,                                             &
         nsc, lo_sc, iso_sc,                                              &
-        lmax_v, vkbproj, vionic, vhxc, vlocal, inorm,                    &
+        lmax_ps, vkbproj, vionic, vhxc, vlocal, inorm,                   &
         iowrite, mxdnr, mxdl, mxdsc, mxdpts)
 
   endif

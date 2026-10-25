@@ -2,10 +2,12 @@
 !>
 !>  \author       Jose Luis Martins
 !>  \version      6.1.0
-!>  \date         26 March 2026.
+!>  \date         26 March 2026, 25 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_change_cfac(ifcore, cfac, rcfac, cfactau)
+
+! rcfac not changed by a wrong value. 25 October 2026. JLM+claude
 
 
   implicit none
@@ -26,6 +28,7 @@ subroutine atom_psd_change_cfac(ifcore, cfac, rcfac, cfactau)
 ! local variables
 
   character(len=1)         ::  yesno
+  real(REAL64)             ::  r_in
 
 ! constants
 
@@ -73,9 +76,9 @@ subroutine atom_psd_change_cfac(ifcore, cfac, rcfac, cfactau)
     else
       write(6,*)
       write(6,'("  The current value of rcfac is ",f10.3)') rcfac
-      write(6,*) '  The xc partial core correction will be set at that valur'
+      write(6,*) '  The xc partial core correction will be set at that value'
       write(6,*)
-      write(6,*) '  Do you want to change cfac? (y/n)'
+      write(6,*) '  Do you want to change rcfac? (y/n)'
       write(6,*)
 
       read(5,*) yesno
@@ -85,20 +88,23 @@ subroutine atom_psd_change_cfac(ifcore, cfac, rcfac, cfactau)
         write(6,*) '  Enter new value of rcfac'
         write(6,*)
 
-        read(5,*) rcfac
+        read(5,*) r_in
 
-        if(rcfac < 0.1 .or. rcfac > 10.0) then
+        if(r_in < 0.1 .or. r_in > 10.0) then
           write(6,*)
           write(6,*) '  The value looks strange,  check it and enter it again'
           write(6,*)
 
-          read(5,*) rcfac
+          read(5,*) r_in
 
-          if(rcfac <= ZERO) then
-            write(6,*)
-            write(6,*) '  rcfac cannot be negative, not changing it'
-            write(6,*)
-          endif
+        endif
+
+        if(r_in <= ZERO) then
+          write(6,*)
+          write(6,*) '  rcfac must be positive, not changing it'
+          write(6,*)
+        else
+          rcfac = r_in
         endif
       endif
     endif

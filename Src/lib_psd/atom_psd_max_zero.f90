@@ -2,7 +2,7 @@
 !>
 !>  \author       Jose Luis Martins
 !>  \version      6.1.0
-!>  \date         28 August 2021, 7 January 2026.
+!>  \date         28 August 2021, 7 January 2026, 25 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_max_zero(rz, rx, mxdlc, iowrite, ioae, fileae)
@@ -10,6 +10,7 @@ subroutine atom_psd_max_zero(rz, rx, mxdlc, iowrite, ioae, fileae)
 ! new structure indx. 2 November 2021. JLM
 ! nzero = 0. 26 january 2022. JLM
 ! tauc. 7 January 2026. JLM
+! rz, rx zero up to mxdlc, arguments of atom_atm_zero_extr. 25 October 2026. claude
 
 
   implicit none
@@ -171,7 +172,7 @@ subroutine atom_psd_max_zero(rz, rx, mxdlc, iowrite, ioae, fileae)
 
 ! begin loop over valence orbitals
 
-  do l = 0,lcmax
+  do l = 0,mxdlc
     rz(l) = ZERO
     rx(l) = ZERO
   enddo
@@ -196,7 +197,8 @@ subroutine atom_psd_max_zero(rz, rx, mxdlc, iowrite, ioae, fileae)
             iowrite, mxdnr)
 
         call atom_atm_zero_extr(ispp, ar, br, nr, r,                     &
-            no(i), lo(i), iso(i) ,vionic, vhxc, ev,                      &
+            no(i), lo(i), iso(i), vionic(:,lo(i),iso(i)),                &
+            vhxc(:,iso(i)), ev(i),                                       &
             nzero, nextr, rz_all, rx_all, ax_all, bx_all,                &
             mxdnr)
 

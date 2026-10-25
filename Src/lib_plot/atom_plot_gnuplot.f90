@@ -9,6 +9,7 @@ subroutine atom_plot_gnuplot(iotmp, sfname, task)
 
 ! adapted from outdis. 9 August 2021. JLM
 ! removes fig_*.dat. 25 October 2026. claude
+! kill: own processes (pgrep), no crash if none, pid longer than 6. 25 October 2026. claude
 
   implicit none
 
@@ -22,7 +23,8 @@ subroutine atom_plot_gnuplot(iotmp, sfname, task)
 
   character(len=15)   :: fname
 
-  character(len=6)    ::  c_pid
+  character(len=12)   ::  c_pid
+  integer             ::  ios
 
   fname = 'command_'//sfname//'.gp'
 
@@ -37,23 +39,29 @@ subroutine atom_plot_gnuplot(iotmp, sfname, task)
 
   elseif(trim(task) == 'kill') then
 
-    call system('ps -a | grep gnuplot | tail -1 > tmp_mmga_t ')
+!   most recent gnuplot of the user, nothing to do if there is none
 
+    call system('pgrep -n -u "$(id -u)" gnuplot > tmp_mmga_t 2> /dev/null')
 
     open(unit=iotmp, file='tmp_mmga_t', status='unknown', form='formatted')
 
-    read(iotmp,*) c_pid
+    c_pid = ' '
+    read(iotmp,*,iostat=ios) c_pid
 
     close(iotmp)
 
-    open(unit=iotmp, file='tmp_mmga_x', status='unknown', form='formatted')
+    if(ios == 0 .and. len_trim(c_pid) > 0) then
 
-    write(iotmp,'("kill -9 ",a6," 1> /dev/null 2>&1  ")') c_pid
+      open(unit=iotmp, file='tmp_mmga_x', status='unknown', form='formatted')
 
-    close(iotmp)
+      write(iotmp,'("kill -9 ",a," 1> /dev/null 2>&1  ")') trim(c_pid)
 
-    call system ('chmod +x ./tmp_mmga_x')
-    call system ('./tmp_mmga_x')
+      close(iotmp)
+
+      call system ('chmod +x ./tmp_mmga_x')
+      call system ('./tmp_mmga_x')
+
+    endif
 
   elseif(trim(task) == 'clean') then
 

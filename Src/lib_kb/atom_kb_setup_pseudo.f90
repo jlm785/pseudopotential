@@ -2,12 +2,13 @@
 !>
 !>  \author       J.L.Martins
 !>  \version      6.1.0
-!>  \date         14 January 2026.
+!>  \date         14 January 2026, 25 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_setup_pseudo(llocal, lmax_pot, nql, delql)
 
 ! split from atom_kb_setup. 14 January 2026. JLM
+! nql and delql must be positive. 25 October 2026. JLM+claude
 
   implicit none
 
@@ -99,7 +100,7 @@ subroutine atom_kb_setup_pseudo(llocal, lmax_pot, nql, delql)
 
       read(5,*) n_in, r_in
 
-      if(n_in < 0) then
+      if(n_in <= 0) then
         write(6,*)
         write(6,*) '  Wrong value. Will use nql = ',nql
         write(6,*)
@@ -108,7 +109,7 @@ subroutine atom_kb_setup_pseudo(llocal, lmax_pot, nql, delql)
         nql = n_in
       endif
 
-      if(r_in < ZERO) then
+      if(r_in <= ZERO) then
         write(6,*)
         write(6,*) '  Wrong value. Will use delql = ',delql
         write(6,*)

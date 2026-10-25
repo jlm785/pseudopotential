@@ -17,6 +17,8 @@ subroutine atom_plot_ln_kb(npoint, numtotal, ehist, dlogx,               &
 ! mxdsc. 25 September 2021. JLM
 ! centrifugal term in vref. 25 October 2026. JLM
 ! lsafe checks all points except near nodes of rpsi. 25 October 2026. claude
+! no projector for l > lmax_v (pseudopotential lmax), ehist(numev). 25 October 2026. claude
+! clamping also harmless deep in the forbidden region (f channels). 25 October 2026. claude
 
 
 
@@ -48,7 +50,7 @@ subroutine atom_plot_ln_kb(npoint, numtotal, ehist, dlogx,               &
   integer, intent(in)               ::  lo(mxdsc)                        !<  angular quantum number l
   integer, intent(in)               ::  iso(mxdsc)                       !<  2*spin or 2*(j-l)
 
-  integer, intent(in)               ::  lmax_v                           !<  maximum angular momentum in potential
+  integer, intent(in)               ::  lmax_v                           !<  maximum angular momentum in pseudopotential
   real(REAL64), intent(in)          ::  vionic(mxdnr,0:mxdl,-1:1)        !<  r*ionic potential in Rydberg
 
   real(REAL64), intent(in)          ::  vhxc(mxdnr,-1:1)                 !<  screening potential in Rydberg
@@ -93,6 +95,7 @@ subroutine atom_plot_ln_kb(npoint, numtotal, ehist, dlogx,               &
 
   real(REAL64), parameter    ::  ONE = 1.0_REAL64, ZERO = 0.0_REAL64
   real(REAL64), parameter    ::  EPS = 1.0E-4_REAL64, SMALL = 1.0E-20_REAL64
+  real(REAL64), parameter    ::  VFAR = 100.0_REAL64                     !  clamping harmless if vref - E > VFAR (Ry)
 
 ! counters
 
@@ -131,7 +134,9 @@ subroutine atom_plot_ln_kb(npoint, numtotal, ehist, dlogx,               &
       vref(j) = vionic(j,lvio,iso(i))/r(j) + vhxc(j,iso(i)) + l*(l+1)/(r(j)*r(j))
     enddo
 
-    if(inorm(lvio,iso(i)) /= 0) then
+!   for l > lmax_v there is no projector, only the local potential
+
+    if(l <= lmax_v .and. inorm(lvio,iso(i)) /= 0) then
 
       ag(1) = ZERO
       do j = 2,npoint
@@ -174,7 +179,8 @@ subroutine atom_plot_ln_kb(npoint, numtotal, ehist, dlogx,               &
             agp(j) = inorm(lvio,iso(i))*prowav*vkbproj(j,lvio,iso(i))*r(j)/rpsi(j)
           enddo
 !         tries to avoid instabilities.  agp diverges at nodes of rpsi,
-!         clamping next to a node is harmless, elsewhere the result is not safe
+!         clamping next to a node is harmless, or near the origin where vref
+!         (centrifugal barrier) is far above the energy, elsewhere the result is not safe
 
           lsafe = .TRUE.
           do j = 2,npoint
@@ -190,7 +196,7 @@ subroutine atom_plot_ln_kb(npoint, numtotal, ehist, dlogx,               &
             if(lclamp) then
               lnode = rpsi(j)*rpsi(j-1) <= ZERO
               if(j < npoint) lnode = lnode .or. rpsi(j)*rpsi(j+1) <= ZERO
-              if(.not. lnode) lsafe = .FALSE.
+              if(.not. lnode .and. vref(j) - ehist(numev) < VFAR) lsafe = .FALSE.
             endif
           enddo
 
@@ -235,7 +241,7 @@ subroutine atom_plot_ln_kb(npoint, numtotal, ehist, dlogx,               &
                 write(6,*)
                 write(6,*) '  Stopped in atom_plot_ln_kb:'
                 write(6,*) '  can not reach self-consistency at energy:',  &
-                         ehist(i),' (Ry)'
+                         ehist(numev),' (Ry)'
 
                  STOP
 

@@ -13,7 +13,7 @@
 !>
 !>  \author       claude+J.L.Martins
 !>  \version      6.1.0
-!>  \date         24 October 2026.
+!>  \date         24 October 2026, 25 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
@@ -223,6 +223,8 @@ subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
 !           veff_b(j) = veff_b(j) + vsiesta
 !         endif
         enddo
+!       not used by the solver, defined for the energy derivative (r(1) = 0)
+        veff_b(1) = veff_b(2)
 
         call atom_atm_difnrl_zr(nr, r, drdi, d2rodr,                     &
             veff_b, rpsi_b(:,n,nb), drpsidr_b,                           &
