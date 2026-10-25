@@ -23,6 +23,6 @@ $executable $element >> ptb.out
 
 mkdir res_$element
 
-mv *.gp atom.out *.dat *.UPF *.DAT *.psf psd.pot *.pdf res_$element
+mv *.gp atom.out *.dat *.UPF *.DAT *.psf psd.pot *.pdf *.psp8 res_$element
 
 done  < $input
