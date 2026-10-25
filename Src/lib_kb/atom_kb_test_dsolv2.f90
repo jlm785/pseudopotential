@@ -1,12 +1,12 @@
-!>     kb_test_dsolv2 finds the wave function and energies
-!>     for a kleinman-Bylander type of potential.
-!>     The energy level and wave-function from the previous iteration is used
-!>     as initial guess, and they must therefore be reasonable
-!>     accurate.
+!>  Finds the wave function and energies
+!>  for a kleinman-Bylander type of potential.
+!>  The energy level and wave-function from the previous iteration is used
+!>  as initial guess, and they must therefore be reasonable
+!>  accurate.
 !>
 !>  \author       Norm Troullier, Jose Luis Martins
-!>  \version      6.0.3
-!>  \date         1980s, 22 June 2021, 17 September 2021.
+!>  \version      6.1.0
+!>  \date         1980s, 22 June 2021, 25 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_test_dsolv2(iter, iconv,                              &
@@ -20,6 +20,7 @@ subroutine atom_kb_test_dsolv2(iter, iconv,                              &
 ! cleanup and new interface, July 2019. JLM
 ! exit bug. 22 June 2021. JLM
 ! mxdnr, mxdl, 17 September 2021. JLM
+! KB term regularized at nodes of the previous wave-function. 25 October 2026. claude
 
   implicit none
 
@@ -74,6 +75,7 @@ subroutine atom_kb_test_dsolv2(iter, iconv,                              &
   real(REAL64), allocatable         ::  v(:)                             !  work array (potential)
   real(REAL64), allocatable         ::  ar(:), br(:)                     !  work array (wave-functions)
   real(REAL64), allocatable         ::  work(:)                          !  work array (projector integration)
+  real(REAL64), allocatable         ::  vkbt(:)                          !  KB term as a local potential
 
 ! local variables
 
@@ -89,11 +91,17 @@ subroutine atom_kb_test_dsolv2(iter, iconv,                              &
 
   logical        ::  lsp, lnosp
 
+  real(REAL64)   ::  rpsimax                                             !  max |rpsi| of previous wave-function in the range of the projector
+  real(REAL64)   ::  projmax                                             !  max |vkbproj|, defines the range of the projector
+  integer        ::  ja, jb                                              !  limits of region near a node
+
 ! constants
 
   real(REAL64), parameter    ::  ONE = 1.0_REAL64, ZERO = 0.0_REAL64
   real(REAL64), parameter    ::  SMEV = 0.0001_REAL64
   real(REAL64), parameter    ::  TOL = 1.0E-12_REAL64
+  real(REAL64), parameter    ::  FNODE = 0.05_REAL64                     !  region near node where |rpsi| < FNODE max |rpsi|
+  real(REAL64), parameter    ::  PRANGE = 1.0E-8_REAL64                  !  projector range where |vkbproj| > PRANGE max |vkbproj|
 
 ! counters
 
@@ -103,6 +111,7 @@ subroutine atom_kb_test_dsolv2(iter, iconv,                              &
   allocate(v(mxdnr))
   allocate(ar(mxdnr), br(mxdnr))
   allocate(work(mxdnr))
+  allocate(vkbt(mxdnr))
 
   revi = 10.0
 
@@ -150,9 +159,53 @@ subroutine atom_kb_test_dsolv2(iter, iconv,                              &
         br(j) = ZERO
       enddo
 
+!     KB term as a local potential, it diverges at nodes of the previous
+!     wave-function (lowest states of the pseudopotential have no nodes,
+!     but intermediate iterations may).  Near a node inside the range of
+!     the projector it is replaced by a linear interpolation in r.
+
+      projmax = ZERO
       do j = 2,nr
-        v(j) = vlocal(j) + llp/(r(j)*r(j)) + vhxc(j,i) +                 &
-                   prowav*vkbproj(j,l,iso(i))*r(j)/rpsi(j,l,iso(i))
+        projmax = max(projmax,abs(vkbproj(j,l,iso(i))))
+      enddo
+      rpsimax = ZERO
+      do j = 2,nr
+        if(abs(vkbproj(j,l,iso(i))) > PRANGE*projmax)                    &
+               rpsimax = max(rpsimax,abs(rpsi(j,l,iso(i))))
+      enddo
+
+      do j = 2,nr
+        if(rpsi(j,l,iso(i)) /= ZERO) then
+          vkbt(j) = prowav*vkbproj(j,l,iso(i))*r(j)/rpsi(j,l,iso(i))
+        else
+          vkbt(j) = ZERO
+        endif
+      enddo
+
+      j = 3
+      do while (j <= nr)
+        if(rpsi(j-1,l,iso(i))*rpsi(j,l,iso(i)) <= ZERO .and.             &
+           (abs(vkbproj(j-1,l,iso(i))) > PRANGE*projmax .or.             &
+            abs(vkbproj(j,l,iso(i))) > PRANGE*projmax)) then
+          ja = j-1
+          do while (ja > 2 .and. abs(rpsi(ja,l,iso(i))) < FNODE*rpsimax)
+            ja = ja-1
+          enddo
+          jb = j
+          do while (jb < nr .and. abs(rpsi(jb,l,iso(i))) < FNODE*rpsimax)
+            jb = jb+1
+          enddo
+          do k = ja+1,jb-1
+            vkbt(k) = vkbt(ja) + (vkbt(jb)-vkbt(ja))*(r(k)-r(ja))/(r(jb)-r(ja))
+          enddo
+          j = jb+1
+        else
+          j = j+1
+        endif
+      enddo
+
+      do j = 2,nr
+        v(j) = vlocal(j) + llp/(r(j)*r(j)) + vhxc(j,i) + vkbt(j)
       enddo
 
 !     Call the integration routine.
@@ -236,6 +289,7 @@ subroutine atom_kb_test_dsolv2(iter, iconv,                              &
   deallocate(v)
   deallocate(ar, br)
   deallocate(work)
+  deallocate(vkbt)
 
   return
 
