@@ -55,6 +55,8 @@ subroutine atom_psd_tm2_inbrac(x1, x2, lfound,                           &
   real(REAL64)      ::  xlo, xhi
   logical           ::  la                                               !  gamfn succeeded at xa
 
+  real(REAL64)      ::  x1_in, x2_in                                     !  original interval
+
   integer    ::  ifl
 
 ! constants
@@ -68,6 +70,9 @@ subroutine atom_psd_tm2_inbrac(x1, x2, lfound,                           &
 
 
   lfound = .FALSE.
+
+  x1_in = x1
+  x2_in = x2
 
   if(x1 == x2) return
 
@@ -86,12 +91,6 @@ subroutine atom_psd_tm2_inbrac(x1, x2, lfound,                           &
   if(f1*f2 < ZERO) return
 
 ! samples the interval, keeps the sign change closest to the guess
-
-  write(6,*)
-  write(6,'("   The interval ",2g12.3," contains zero or an even number of roots")') x1, x2
-  write(6,*) "  Calculation may fail or produce bad pseudopotentials"
-  write(6,'("   Check the wave-functions for l = ",i5," and check if core radius must be larger")') lo
-  write(6,*)
 
   xguess = x1
   distmin = huge(distmin)
@@ -132,6 +131,10 @@ subroutine atom_psd_tm2_inbrac(x1, x2, lfound,                           &
   if(lfound) then
     x1 = xlo
     x2 = xhi
+  write(6,*)
+  write(6,'("   The interval ",2g12.3," contains an even number of roots")') x1_in, x2_in
+  write(6,'("   Check the wave-functions for l = ",i5," and check if core radius should be larger")') lo
+  write(6,*)
   endif
 
   return
