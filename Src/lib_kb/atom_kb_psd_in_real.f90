@@ -2,7 +2,7 @@
 !>
 !>  \author       J.L.Martins
 !>  \version      6.1.0
-!>  \date         25 May 2012, 19 May 2022. 5 february 2026.
+!>  \date         25 May 2012, 19 May 2022. 5 february 2026, 25 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_psd_in_real(iotape, fname,                            &
@@ -18,6 +18,7 @@ subroutine atom_kb_psd_in_real(iotape, fname,                            &
 ! tauc, 7 January 2026. JLM
 ! in_parsec -> in_real in name. 26 January 2026. JLM
 ! tauc, 5 february 2026. JLM
+! paranoid check of r against a, b (as other readers). 25 October 2026. claude
 
   implicit none
 
@@ -74,6 +75,7 @@ subroutine atom_kb_psd_in_real(iotape, fname,                            &
 
   integer                       ::  ifcore
   real(REAL64)                  ::  cfac, rcfac, rv0, rv0pr
+  real(REAL64)                  ::  rtry
   integer                       ::  l
   integer                       ::  ios
   integer                       ::  nrm
@@ -83,6 +85,7 @@ subroutine atom_kb_psd_in_real(iotape, fname,                            &
 ! parameters
 
   real(REAL64), parameter                 :: ZERO = 0.0_REAL64, ONE = 1.0_REAL64
+  real(REAL64), parameter                 :: SMALL = 1.0E-8_REAL64
 
 ! counters
 
@@ -129,6 +132,21 @@ subroutine atom_kb_psd_in_real(iotape, fname,                            &
   read(iotape,*)                               !'Radial grid follows'
 
   read(iotape,'(4g20.12)') (r(j),j=2,nr)
+
+! paranoid check
+
+  do i = 1,nr
+    rtry = a*(exp(b*(i-1))-ONE)
+
+    if(abs(rtry - r(i)) > SMALL) then
+      write(6,*)
+      write(6,'("   Stopped in atom_kb_psd_in_real")')
+      write(6,'("   INCOMPATIBLE  a, b r(i) ")')
+
+      STOP
+
+    endif
+  enddo
 
 ! convention from atomic program:   npot(-1) > npot(1)
 

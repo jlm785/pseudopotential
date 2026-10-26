@@ -1,8 +1,8 @@
 !>  Calculates the screening potential and total charge
 !>
 !>  \author       N. Troullier, J.L.Martins
-!>  \version      6.0.8
-!>  \date         90s, May 2012, 19 May 2022.
+!>  \version      6.1.0
+!>  \date         90s, May 2012, 25 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_screen(nr, r, drdi, cdv, cdc, icorr, ifcore, totvel, vscreen,   &
@@ -12,6 +12,7 @@ subroutine atom_kb_screen(nr, r, drdi, cdv, cdc, icorr, ifcore, totvel, vscreen,
 ! kb_conv program does not have spin-polarization
 ! mxdnr, iowrite, 20 September 2021. JLM
 ! deallocate, 19 May 2022. JLM
+! array argument ans of spliq. 25 October 2026. claude
 
   implicit none
 
@@ -47,6 +48,7 @@ subroutine atom_kb_screen(nr, r, drdi, cdv, cdc, icorr, ifcore, totvel, vscreen,
 
   integer                           ::  ierr
   real(REAL64), dimension(10)       ::  etot(10)
+  real(REAL64)                      ::  ans(1)                           !  integral from spliq
 
 ! parameters
 
@@ -75,7 +77,7 @@ subroutine atom_kb_screen(nr, r, drdi, cdv, cdc, icorr, ifcore, totvel, vscreen,
 
   endif
 
-  call spliq(r, y, yp, ypp, nr, ZERO, r(nr), 1, totvel, ierr)
+  call spliq(r, y, yp, ypp, nr, ZERO, r(nr), 1, ans, ierr)
 
   if (ierr /= 1) then
     write(iowrite,'(1x,"   error in kb_screen, spliq ierr = ",i2)') ierr
@@ -83,6 +85,8 @@ subroutine atom_kb_screen(nr, r, drdi, cdv, cdc, icorr, ifcore, totvel, vscreen,
     stop
 
   endif
+
+  totvel = ans(1)
 
 !  find el-el potential
 

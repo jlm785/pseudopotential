@@ -2,7 +2,7 @@
 !>
 !>  \author       Norm Troullier, Jose Luis Martins, Manuel Maria Alemany
 !>  \version      6.1.0
-!>  \date         1980s and 1990s, 30 June 2021, 25 May 2022.
+!>  \date         1980s and 1990s, 30 June 2021, 25 May 2022, 25 October 2026.
 !>  \copyright    GNU Public License v2
 
 
@@ -16,6 +16,7 @@ subroutine atom_psd_unscreen(ifcore, icorr, ispp, nr, r, drdi,           &
 ! and converted to f90.
 ! Modified (cleaning) 8 July 2021. JLM
 ! Initializes vpsd. 25 May 2022. JLM
+! zval intent(inout), changed by atom_atm_velect if ifcore = 2. 25 October 2026. claude
 
 !mmga  modifications from early Sverre code by Manuel Maria Gonzalez Alemany
 !njtj  modifications from early Sverre code by Norm Troullier
@@ -49,7 +50,6 @@ subroutine atom_psd_unscreen(ifcore, icorr, ispp, nr, r, drdi,           &
 
   real(REAL64), intent(in)          ::  vscr(mxdnr,0:lc,-1:1)            !<  screened-pseudo-potential in Rydberg
   real(REAL64), intent(in)          ::  cdc(mxdnr)                       !<  core charge density
-  real(REAL64), intent(in)          ::  zval                             !<  valence electron charge
 
 ! output
 
@@ -60,6 +60,7 @@ subroutine atom_psd_unscreen(ifcore, icorr, ispp, nr, r, drdi,           &
 
   real(REAL64), intent(inout)       ::  cdpsd(mxdnr,-1:1)                !<  valence charge density (down or total)
   real(REAL64), intent(inout)       ::  zion                             !<  pseudo-potential ionic charge
+  real(REAL64), intent(inout)       ::  zval                             !<  valence electron charge
 
 
 ! local allocatable arrays

@@ -45,6 +45,7 @@ subroutine atom_plot_ln_sub(iowrite, iodata, datafile, iopsd, pseudo,    &
 ! remove iray, ititle, 19 May 2022. JLM
 ! tauc_total. 7 January 2026. JLM
 ! lmax_ps for the pseudopotential log derivatives. 25 October 2026. JLM+claude
+! plot lmax up to mxdl+1. 25 October 2026. claude
 
   implicit none
 
@@ -183,10 +184,10 @@ subroutine atom_plot_ln_sub(iowrite, iodata, datafile, iopsd, pseudo,    &
 
     if(yesno == 'y' .or. yesno == 'Y') then
       write(6,*)
-      write(6,*) '  Enter new maximum angular momentum for plots'
+      write(6,'("   Enter new maximum angular momentum for plots (0,...,",i2,")")') mxdl+1
       write(6,*)
       read(5,*) lmax_in
-      if(lmax_in < 0 .or. lmax_in > 10) then
+      if(lmax_in < 0 .or. lmax_in > mxdl+1) then
         write(6,*)
         write(6,*) '  Wrong value, keeping old value.'
         write(6,*)

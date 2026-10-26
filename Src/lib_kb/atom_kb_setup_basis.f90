@@ -2,7 +2,7 @@
 !>
 !>  \author       J.L.Martins+claude
 !>  \version      6.1.0
-!>  \date         14 January 2026.
+!>  \date         14 January 2026, 25 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
@@ -11,6 +11,7 @@ subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
 
 ! split from atom_kb_setup. 14 January 2026. JLM
 ! up to 4 zeta, r_bas = 0 for relaxed energy derivative of previous function. 24 October 2026. JLM+claude
+! range of number of basis sets in prompt. 25 October 2026. claude
 
   implicit none
 
@@ -71,7 +72,7 @@ subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
   if(yesno == 'Y' .or. yesno == 'y') then
 
     write(6,*)
-    write(6,'("  Enter the number of atomic basis sets (1,...,",i2,")")') n_bsets_old
+    write(6,'("  Enter the number of atomic basis sets (1,...,",i2,")")') mxdset
     write(6,*)
 
     read(5,*) n_in

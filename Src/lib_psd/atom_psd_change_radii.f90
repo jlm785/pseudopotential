@@ -1,11 +1,14 @@
 !>  Asks the user for changes in core radii
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.013
-!>  \date         30 August June 2021
+!>  \version      6.1.0
+!>  \date         30 August 2021, 25 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_change_radii(lpmax, rc, rc_tab, rz, rx)
+
+! written 30 August 2021. JLM
+! warning for a new l. 25 October 2026. claude
 
   implicit none
 
@@ -71,6 +74,8 @@ subroutine atom_psd_change_radii(lpmax, rc, rc_tab, rz, rx)
         write(6,*) '  Enter new core radius for angular momentum l = ',lp
         if(lp > lpmax_old) then
           write(6,*) '  Validity of rc not checked (new l)'
+          write(6,*) '  It is only used if the all-electron calculation'
+          write(6,*) '  has an orbital with that angular momentum.'
           lpc = lpmax_old
         else
           write(6,'("   Current value is: ",f12.3)') rc(lp)

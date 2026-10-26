@@ -2,7 +2,7 @@
 !>
 !>  \author       Norm Troullier, Manuel Maria Alemany, J.L.Martins
 !>  \version      6.0.3
-!>  \date         1990s, 23 August 2021. 25 September 2021.
+!>  \date         1990s, 23 August 2021. 25 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_ln_outdis(ioplot, iotmp, lkb,                       &
@@ -14,6 +14,7 @@ subroutine atom_plot_ln_outdis(ioplot, iotmp, lkb,                       &
 ! adapted from the old program August 2021. JLM
 ! mxdsc. 25 September 2021. JLM
 ! label format. 25 October 2026. claude
+! files written by atom_plot_ln_write, failed points as NaN. 25 October 2026. claude
 
   implicit none
 
@@ -61,7 +62,7 @@ subroutine atom_plot_ln_outdis(ioplot, iotmp, lkb,                       &
 
 ! counters
 
-  integer                  :: i, k
+  integer                  :: i
 
 
   allocate(label(nsc), label2(nsc))
@@ -70,38 +71,23 @@ subroutine atom_plot_ln_outdis(ioplot, iotmp, lkb,                       &
   write(iowrite,*) '... WRITING TRUE DERIVATIVES IN log_true.gp ...'
   write(iowrite,*)
 
-  open (unit=ioplot,file='log_true.gp',status='unknown',form='formatted')
-
-  write(ioplot,'("#    E(Ry)",10x,20(a4,11x))') (c_val(i),i=1,nsc)
-  do i = 1,numtotal
-    write(ioplot,'(2x,e13.6,20(2x,e13.6))') ehist(i),(dlog_t(i,k),k=1,nsc)
-  enddo
-  close(ioplot)
+  call atom_plot_ln_write(ioplot, 'log_true.gp', c_val, nsc, numtotal,   &
+      ehist, dlog_t, mxdsc, mxdpts)
 
   write(iowrite,*)
   write(iowrite,*) '... WRITING SEMI-LOCAL PSEUDO DERIVATIVES IN log_ppot.gp ...'
   write(iowrite,*)
 
-  open (unit=ioplot,file='log_ppot.gp',status='unknown',form='formatted')
-
-  write(ioplot,'("#    E(Ry)",10x,20(a4,11x))') (c_val(i),i=1,nsc)
-  do i = 1,numtotal
-    write(ioplot,'(2x,e13.6,20(2x,e13.6))') ehist(i),(dlog_p(i,k),k=1,nsc)
-  enddo
-  close(ioplot)
+  call atom_plot_ln_write(ioplot, 'log_ppot.gp', c_val, nsc, numtotal,   &
+      ehist, dlog_p, mxdsc, mxdpts)
 
   if(lkb) then
     write(iowrite,*)
     write(iowrite,*) '... WRITING NON-LOCAL KB PSEUDO DERIVATIVES IN log_ppkb.gp ...'
     write(iowrite,*)
 
-    open (unit=ioplot,file='log_ppkb.gp',status='unknown',form='formatted')
-
-    write(ioplot,'("#    E(Ry)",10x,20(a4,11x))') (c_val(i),i=1,nsc)
-    do i = 1,numtotal
-      write(ioplot,'(2x,e13.6,20(2x,e13.6))') ehist(i),(dlog_k(i,k),k=1,nsc)
-    enddo
-    close(ioplot)
+    call atom_plot_ln_write(ioplot, 'log_ppkb.gp', c_val, nsc, numtotal, &
+        ehist, dlog_k, mxdsc, mxdpts)
     iw = 1
   else
     iw = 0

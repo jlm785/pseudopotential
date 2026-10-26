@@ -3,8 +3,8 @@
 !>  added in dsolv1/dsolv2.
 !>
 !>  \author       Sverre Froyen, Norm troullier, Carlos Balbas, Jose Luis Martins
-!>  \version      6.0.3
-!>  \date         1980's, 22 June 2021,12 September 2021.
+!>  \version      6.1.0
+!>  \date         1980's, 22 June 2021,12 September 2021, 25 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_atm_velect(iter, iconv, icorr, ispp, ifcore,             &
@@ -20,6 +20,9 @@ subroutine atom_atm_velect(iter, iconv, icorr, ispp, ifcore,             &
 ! converted to f90, February 2018
 ! cleanup and new interface, July 2019. JLM
 ! cdv, 12 September 2021. JLM
+! r intent(in), r(1) no longer set here (callers define it). 25 October 2026. JLM+claude
+! The first grid point is treated as the origin (y(1) = 0, extrapolations
+! to r = 0), so r(1) must be zero, as in the standard mesh.  Warns otherwise.
 
 
   implicit none
@@ -39,6 +42,7 @@ subroutine atom_atm_velect(iter, iconv, icorr, ispp, ifcore,             &
   integer, intent(in)               ::  ifcore                           !<  0 no partial core correction, 1 partial xc, 2 partial
 
   integer, intent(in)               ::  nr                               !<  dimension of the number of radial points
+  real(REAL64), intent(in)          ::  r(mxdnr)                         !<  radial grid points
 
   real(REAL64), intent(in)          ::  drdi(mxdnr)                      !<  d r(i) / d i
 
@@ -54,7 +58,6 @@ subroutine atom_atm_velect(iter, iconv, icorr, ispp, ifcore,             &
 ! input and output
 
   real(REAL64), intent(inout)       ::  zel                              !<  electron charge
-  real(REAL64), intent(inout)       ::  r(mxdnr)                         !<  radial grid points
 
   real(REAL64), intent(inout)       ::  cdv(mxdnr,-1:1)                  !<  4*pi*r**2 * valence charge density
 
@@ -93,6 +96,7 @@ subroutine atom_atm_velect(iter, iconv, icorr, ispp, ifcore,             &
   real(REAL64), parameter    ::  PFIVE = 0.5_REAL64
   real(REAL64), parameter    ::  OPF = 1.5_REAL64
   real(REAL64), parameter    ::  PNN = 0.99_REAL64
+  real(REAL64), parameter    ::  EPS = 1.0E-12_REAL64
 
 
   allocate(y(mxdnr),yp(mxdnr),ypp(mxdnr))
@@ -106,6 +110,15 @@ subroutine atom_atm_velect(iter, iconv, icorr, ispp, ifcore,             &
   enddo
 
   pi = 4*atan(ONE)
+
+! paranoid check
+
+  if(r(1) < EPS) then
+    write(iowrite,*)
+    write(iowrite,'("   W A R N I N G   in atom_atm_velect: r(1) = ",es12.4,  &
+       &   " should be zero")') r(1)
+    write(iowrite,*)
+  endif
 
 ! fit cd/r by splines
 
@@ -251,8 +264,6 @@ subroutine atom_atm_velect(iter, iconv, icorr, ispp, ifcore,             &
     irel = 0
   endif
   nspin = 2
-
-  r(1) = ZERO
 
   if (icorr == 'ca') then
     call atom_xc('LDA', 'ca', irel, nr, mxdnr, r, nspin, dens,           &

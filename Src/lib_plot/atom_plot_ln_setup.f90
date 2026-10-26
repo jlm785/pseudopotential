@@ -2,11 +2,13 @@
 !>  logarithmic derivative ( d psi / dr ) / psi
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.0.1.4
-!>  \date         30 August 2021
+!>  \version      6.1.0
+!>  \date         30 August 2021, 25 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_ln_setup(datafile, pseudo, pseudokb, lkb, rpoint)
+
+! default name of pseudo file in prompt. 25 October 2026. claude
 
 
   implicit none
@@ -48,7 +50,7 @@ subroutine atom_plot_ln_setup(datafile, pseudo, pseudokb, lkb, rpoint)
 
   write(6,*)
   write(6,*)' Enter semi-local pseudopotential file (max 15 chr.):'
-  write(6,*)'(default value = pseudo.dat01)'
+  write(6,*)'(default value = pseudo.dat)'
 
   read(5,'(a15)') pseudo
   if (pseudo == ' ') THEN

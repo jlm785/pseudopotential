@@ -15,6 +15,7 @@ subroutine atom_plot_ln_outpdf(ioplot, iotmp, lkb,                       &
 ! adapted from the old program August 2021. JLM
 ! mxdsc. 25 September 2021. JLM
 ! label format, figure description for matplotlib. 25 October 2026. claude
+! files written by atom_plot_ln_write, failed points as NaN. 25 October 2026. claude
 
   implicit none
 
@@ -58,37 +59,22 @@ subroutine atom_plot_ln_outpdf(ioplot, iotmp, lkb,                       &
 
 ! counters
 
-  integer                  :: i, k
+  integer                  :: i
 
 
   allocate(label(nsc), label2(nsc))
 
-  open (unit=ioplot,file='log_true.gp',status='unknown',form='formatted')
-
-  write(ioplot,'("#    E(Ry)",10x,20(a4,11x))') (c_val(i),i=1,nsc)
-  do i = 1,numtotal
-    write(ioplot,'(2x,e13.6,20(2x,e13.6))') ehist(i),(dlog_t(i,k),k=1,nsc)
-  enddo
-  close(ioplot)
+  call atom_plot_ln_write(ioplot, 'log_true.gp', c_val, nsc, numtotal,   &
+      ehist, dlog_t, mxdsc, mxdpts)
 
 
-  open (unit=ioplot,file='log_ppot.gp',status='unknown',form='formatted')
-
-  write(ioplot,'("#    E(Ry)",10x,20(a4,11x))') (c_val(i),i=1,nsc)
-  do i = 1,numtotal
-    write(ioplot,'(2x,e13.6,20(2x,e13.6))') ehist(i),(dlog_p(i,k),k=1,nsc)
-  enddo
-  close(ioplot)
+  call atom_plot_ln_write(ioplot, 'log_ppot.gp', c_val, nsc, numtotal,   &
+      ehist, dlog_p, mxdsc, mxdpts)
 
   if(lkb) then
 
-    open (unit=ioplot,file='log_ppkb.gp',status='unknown',form='formatted')
-
-    write(ioplot,'("#    E(Ry)",10x,20(a4,11x))') (c_val(i),i=1,nsc)
-    do i = 1,numtotal
-      write(ioplot,'(2x,e13.6,20(2x,e13.6))') ehist(i),(dlog_k(i,k),k=1,nsc)
-    enddo
-    close(ioplot)
+    call atom_plot_ln_write(ioplot, 'log_ppkb.gp', c_val, nsc, numtotal, &
+        ehist, dlog_k, mxdsc, mxdpts)
     iw = 1
   else
     iw = 0
