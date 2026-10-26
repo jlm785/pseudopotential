@@ -3,7 +3,7 @@
 !>
 !>  \author       Norm Troullier, Jose Luis Martins
 !>  \version      6.0.6
-!>  \date         April 1990, 29 October 2021.
+!>  \date         April 1990, 29 October 2021, 26 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_tm2_eqsolve(r, drdi, jrc, lo,                        &
@@ -11,6 +11,8 @@ subroutine atom_psd_tm2_eqsolve(r, drdi, jrc, lo,                        &
      mxdnr)
 
 ! extracted from the atom_psd_tm2 code. 29 October 2021. JLM
+! iflag initialized, overflow and zero charge checks, hint on failure. 26 October 2026. claude
+! roots inside the initial interval (atom_psd_tm2_inbrac). 26 October 2026. claude
 
   implicit none
 
@@ -51,11 +53,14 @@ subroutine atom_psd_tm2_eqsolve(r, drdi, jrc, lo,                        &
   real(REAL64)         ::  fdnew, fdold, ddelta
   integer              ::  iflag
   real(REAL64)         ::  x1, x2
+  real(REAL64)         ::  polymax
+  logical              ::  lfound
 
 ! constants
 
   real(REAL64), parameter    ::  ZERO = 0.0_REAL64, ONE = 1.0_REAL64
   real(REAL64), parameter    ::  SMALL = 1.0E-12_REAL64
+  real(REAL64), parameter    ::  PMAX = 100.0_REAL64                     !  maximum exponent of the trial wave-function (about 3 in solutions)
 
 ! counter
 
@@ -75,6 +80,7 @@ subroutine atom_psd_tm2_eqsolve(r, drdi, jrc, lo,                        &
   enddo
 
   delta = ZERO
+  iflag = 1
 
 ! could allocate only up to jrc...
 
@@ -102,12 +108,17 @@ subroutine atom_psd_tm2_eqsolve(r, drdi, jrc, lo,                        &
       bkrk(k) = bj(k-1)
     enddo
 
+    call atom_psd_krk_polymax(6, bkrk, .TRUE., jrc, r, polymax, mxdnr)
+
+    if(polymax > PMAX) exit
+
     call atom_psd_krk_psi(6, bkrk, .TRUE., jrc, r, lo, rpsi, mxdnr)
-!    call atom_psd_tm2_psi(jrc, r, lo, bj, gama, ZERO, rpsi, mxdnr)
 
 !   Integrate pseudo charge density from r = 0 to rc.
 
     call atom_psd_psi_charge_nrl(jrc, drdi, rpsi, cdps, mxdnr)
+
+    if(cdps <= ZERO) exit
 
 !   Calculate new delta
 
@@ -138,6 +149,7 @@ subroutine atom_psd_tm2_eqsolve(r, drdi, jrc, lo,                        &
     write(6,*)
     write(6,'(" error in atom_psd_tm2_eqsolve - nonconvergence")')
     write(6,'("  in finding starting delta for l = ",i3)') lo
+    write(6,'("  try a different core radius for l = ",i3)') lo
 
     STOP
 
@@ -146,16 +158,28 @@ subroutine atom_psd_tm2_eqsolve(r, drdi, jrc, lo,                        &
 ! Bracket the correct gamma, use gamma and -gamma
 ! from above as intial brackets, expands brackets
 ! until a root is found..
+! If v''(0) has the same sign at both ends and the interval
+! contains roots, uses the one closest to the initial gamma.
 
   x1 = gama
   x2 =-gama
 
-  call atom_psd_tm2_zrbac(x1,x2, iflag,                                  &
+  call atom_psd_tm2_inbrac(x1,x2, lfound,                                &
       jrc, r, drdi, bjin, rcpn, cdrc, lo, rpsi, delta, bj,               &
       mxdnr)
 
+  if(lfound) then
+    iflag = 0
+  else
+    call atom_psd_tm2_zrbac(x1,x2, iflag,                                &
+        jrc, r, drdi, bjin, rcpn, cdrc, lo, rpsi, delta, bj,             &
+        mxdnr)
+  endif
+
   if(iflag /= 0) then
+
     write(6,'("   stopped in atom_psd_tm2_eqsolve. iflag = ",i3)') iflag
+    write(6,'("   no Troullier-Martins solution found, try a different core radius for l = ",i3)') lo
 
     STOP
 
@@ -170,6 +194,7 @@ subroutine atom_psd_tm2_eqsolve(r, drdi, jrc, lo,                        &
 
   if(iflag /= 0) then
     write(6,'("   stopped in atom_psd_tm2_eqsolve. iflag = ",i3)') iflag
+    write(6,'("   no Troullier-Martins solution found, try a different core radius for l = ",i3)') lo
 
     STOP
 

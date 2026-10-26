@@ -4,7 +4,7 @@
 !>
 !>  \author       Norm Troullier, Jose Luis Martins
 !>  \version      6.0.6
-!>  \date         April 1990, 30 June 2021, 30 October 2021.
+!>  \date         April 1990, 30 June 2021, 30 October 2021, 26 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_tm2_rtbis(x1, x2, iflag,                             &
@@ -21,6 +21,7 @@ subroutine atom_psd_tm2_rtbis(x1, x2, iflag,                             &
 
 ! use bjin, instead of recalculating. 1 July 2021. JLM
 ! lp -> lo, 30 October 2021. JLM
+! stops if atom_psd_tm2_gamfn fails. 26 October 2026. claude
 
   implicit none
 
@@ -110,6 +111,13 @@ subroutine atom_psd_tm2_rtbis(x1, x2, iflag,                             &
               jrc, r, drdi, bjin, rcpn, cdrc, lo, rpsi, delta, bj,       &
               mxdnr)
 
+          if(ifl /= 0) then
+            iflag = 5
+
+            exit
+
+          endif
+
           if(fmid < ZERO) gama = xmid
           if(abs(dx) < XACC .or. fmid == ZERO) then
             iflag = 0
@@ -123,12 +131,16 @@ subroutine atom_psd_tm2_rtbis(x1, x2, iflag,                             &
     endif
   endif
 
-  if(iflag /=0) then
+  if(iflag == 1) then
     write(6,*)
     write(6,*)
     write(6,'("  error in bisection method, psd_tm2_rtbis")')
     write(6,'("  too many bisections used")')
-    iflag = 1
+  elseif(iflag == 5) then
+    write(6,*)
+    write(6,*)
+    write(6,'("  error in bisection method, psd_tm2_rtbis")')
+    write(6,'("  psd_tm2_gamfn failed")')
   endif
 
   return

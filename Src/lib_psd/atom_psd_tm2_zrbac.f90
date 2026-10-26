@@ -2,7 +2,7 @@
 !>
 !>  \author       Norm Troullier, Jose Luis Martins
 !>  \version      6.0.6
-!>  \date         April 1990, 30 June 2021, 30 October 2021.
+!>  \date         April 1990, 30 June 2021, 30 October 2021, 26 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_tm2_zrbac(x1, x2, iflag,                             &
@@ -16,6 +16,7 @@ subroutine atom_psd_tm2_zrbac(x1, x2, iflag,                             &
 ! *  njtj
 ! **********************************************************
 ! lp -> lo, 30 October 2021. JLM
+! stops expanding if atom_psd_tm2_gamfn fails. 26 October 2026. claude
 
 
   implicit none
@@ -102,6 +103,15 @@ subroutine atom_psd_tm2_zrbac(x1, x2, iflag,                             &
             call atom_psd_tm2_gamfn(x2, f2, ifl,                          &
                 jrc, r, drdi, bjin, rcpn, cdrc, lo, rpsi, delta, bj,      &
                 mxdnr)
+          endif
+
+!         larger gamma will not help
+
+          if(ifl /= 0) then
+            iflag = 5
+
+            exit
+
           endif
 
         enddo

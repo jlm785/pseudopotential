@@ -2,7 +2,7 @@
 !>
 !>  \author       Norm Troullier, Jose Luis Martins
 !>  \version      6.0.6
-!>  \date         1980s and 1990s, 30 June 2021, 30 October 2021.
+!>  \date         1980s and 1990s, 30 June 2021, 30 October 2021, 26 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_tm2_gamfn(gama, v0pp, iflag,                         &
@@ -20,6 +20,7 @@ subroutine atom_psd_tm2_gamfn(gama, v0pp, iflag,                         &
 
 ! use bjin, instead of recalculating. 1 July 2021. JLM
 ! lp -> lo, bkrk, 30 October 2021. JLM
+! fails before exp(polyr) overflows or if the charge vanishes, v0pp defined. 26 October 2026. claude
 
   implicit none
 
@@ -50,7 +51,7 @@ subroutine atom_psd_tm2_gamfn(gama, v0pp, iflag,                         &
   real(REAL64), intent(out)         ::  delta                            !<  value of delta
   real(REAL64), intent(out)         ::  bj(5)                            !<  polyr coefficients
 
-  integer, intent(out)              ::  iflag                            !<  iflag = 0: success
+  integer, intent(out)              ::  iflag                            !<  iflag = 0: success, 1: no convergence, 2: wave-function too large, 3: zero charge
 
 ! input and output
 
@@ -65,12 +66,14 @@ subroutine atom_psd_tm2_gamfn(gama, v0pp, iflag,                         &
   real(REAL64)        ::  cdps
   real(REAL64)        ::  fdold, fdnew, ddelta
   real(REAL64)        ::  bkrk(0:6)
+  real(REAL64)        ::  polymax
 
 ! constants
 
   real(REAL64), parameter    ::  ONE = 1.0_REAL64, ZERO = 0.0_REAL64
   real(REAL64), parameter    ::  ERRMIN = 1.0E-12_REAL64
   integer, parameter         ::  NTRY = 100
+  real(REAL64), parameter    ::  PMAX = 100.0_REAL64                     !  maximum exponent of the trial wave-function (about 3 in solutions)
 
 ! counters
 
@@ -80,6 +83,7 @@ subroutine atom_psd_tm2_gamfn(gama, v0pp, iflag,                         &
   allocate(aj(5,5))
 
   delta = ZERO
+  v0pp = ZERO
 
   call atom_psd_tm2_ajbj_gam(bjin, rcpn, ZERO, gama, aj, bj)
 
@@ -98,9 +102,26 @@ subroutine atom_psd_tm2_gamfn(gama, v0pp, iflag,                         &
       bkrk(k) = bj(k-1)
     enddo
 
+!   rejects coefficients that would overflow exp(polyr)
+
+    call atom_psd_krk_polymax(6, bkrk, .TRUE., jrc, r, polymax, mxdnr)
+    if(polymax > PMAX) then
+      iflag = 2
+
+      exit
+
+    endif
+
     call atom_psd_krk_psi(6, bkrk, .TRUE., jrc, r, lo, rpsi, mxdnr)
 
     call atom_psd_psi_charge_nrl(jrc, drdi, rpsi, cdps, jrc)
+
+    if(cdps <= ZERO) then
+      iflag = 3
+
+      exit
+
+    endif
 
 !   Calculate new delta(with gamma fixed), uses false position
 
@@ -127,7 +148,7 @@ subroutine atom_psd_tm2_gamfn(gama, v0pp, iflag,                         &
   if (iflag /= 0) then
     write(6,*)
     write(6,*)
-    write(6,'("  error in psd_tm2_gamfn - delta not found")')
+    write(6,'("  error in psd_tm2_gamfn - delta not found, iflag = ",i2)') iflag
 
   endif
 
