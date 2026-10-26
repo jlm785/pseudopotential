@@ -113,7 +113,7 @@ subroutine atom_atm_velect(iter, iconv, icorr, ispp, ifcore,             &
 
 ! paranoid check
 
-  if(r(1) < EPS) then
+  if(abs(r(1)) > EPS) then
     write(iowrite,*)
     write(iowrite,'("   W A R N I N G   in atom_atm_velect: r(1) = ",es12.4,  &
        &   " should be zero")') r(1)
