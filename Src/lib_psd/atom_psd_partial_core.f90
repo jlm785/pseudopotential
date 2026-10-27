@@ -3,7 +3,7 @@
 !>
 !>  \author       Norm Troullier, Jose Luis Martins, Manuel Maria Alemany
 !>  \version      6.1.0
-!>  \date         24 March 2026.
+!>  \date         24 March 2026, 27 October 2026.
 !>  \copyright    GNU Public License v2
 
 
@@ -15,6 +15,7 @@ subroutine atom_psd_partial_core(ifcore, ispp, cfac, rcfac, cfactau,     &
 
 ! extracted from atom_psd_unscreen, 5 February 2026. JLM
 ! added flexibility to tau correction radius. 24 March 2026. JLM
+! full core kinetic energy density if cfactau < 0 (as cfac). 27 October 2026. claude
 
 !mmga  modifications from early Sverre code by Manuel Maria Gonzalez Alemany
 
@@ -153,35 +154,48 @@ subroutine atom_psd_partial_core(ifcore, ispp, cfac, rcfac, cfactau,     &
     xsum = xsum + tauc(i)*drdi(i)
   enddo
 
+! if cfactau < 0 or the valence charge is zero the full core kinetic
+! energy density is used (tests with very large cutoffs)
+
   if(xsum > EPS) then
 
     write(iowrite,'(" core kinetic energy =",f10.2)') xsum
 
-    do i = nr,2,-1
-      icore = i
-      if(ispp == ' ') then
-        cdfac = cfactau*zratio*cdpsd(i,0)
-      else
-        cdfac = cfactau*zratio*(cdpsd(i, 1)+cdpsd(i,-1))
-      endif
-      if (cdc_total(i) > cdfac) exit
-    enddo
+    if(cfactau > ZERO .and. zratio /= ZERO) then
 
-    call atom_psd_pcc_exp(nr, icore, ac, bc, cc, r, tauc)
+      do i = nr,2,-1
+        icore = i
+        if(ispp == ' ') then
+          cdfac = cfactau*zratio*cdpsd(i,0)
+        else
+          cdfac = cfactau*zratio*(cdpsd(i, 1)+cdpsd(i,-1))
+        endif
+        if (cdc_total(i) > cdfac) exit
+      enddo
 
-    write(iowrite,*)
-    write(iowrite,'(" kinetic energy density truncated")')
-    write(iowrite,'(" inside r =",f7.3)') r(icore)
-    write(iowrite,'(" ac =",f7.3," bc =",f7.3," cc =",f7.3)') ac, bc, cc
-    write(iowrite,*)
+      call atom_psd_pcc_exp(nr, icore, ac, bc, cc, r, tauc)
 
-    xsum = ZERO
-    do i = 1,nr
-      xsum = xsum + tauc(i)*drdi(i)
-    enddo
+      write(iowrite,*)
+      write(iowrite,'(" kinetic energy density truncated")')
+      write(iowrite,'(" inside r =",f7.3)') r(icore)
+      write(iowrite,'(" ac =",f7.3," bc =",f7.3," cc =",f7.3)') ac, bc, cc
+      write(iowrite,*)
 
-    write(iowrite,'(" truncated core kinetic energy =",f10.2)') xsum
-    write(iowrite,*)
+      xsum = ZERO
+      do i = 1,nr
+        xsum = xsum + tauc(i)*drdi(i)
+      enddo
+
+      write(iowrite,'(" truncated core kinetic energy =",f10.2)') xsum
+      write(iowrite,*)
+
+    else
+
+      write(iowrite,*)
+      write(iowrite,'(" full core kinetic energy density used")')
+      write(iowrite,*)
+
+    endif
 
   endif
 

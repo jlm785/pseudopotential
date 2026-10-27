@@ -612,7 +612,8 @@ two variables.
 
 The seventh number in that line plays the role of {\tt rcore\_flag}
 for the partial core kinetic energy density.  If it is zero or blank
-it is set equal to one.
+it is set equal to one.  If it is negative the full core kinetic energy
+density is used, which is only useful for tests with very large cutoffs.
 
 The output file contains the radius used and the $A$ ($a$) and $b$ (and $c$)
 parameters used for the matching.

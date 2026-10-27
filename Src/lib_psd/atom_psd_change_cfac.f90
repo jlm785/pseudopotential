@@ -2,12 +2,13 @@
 !>
 !>  \author       Jose Luis Martins
 !>  \version      6.1.0
-!>  \date         26 March 2026, 25 October 2026.
+!>  \date         26 March 2026, 25 October 2026, 27 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_change_cfac(ifcore, cfac, rcfac, cfactau)
 
 ! rcfac not changed by a wrong value. 25 October 2026. JLM+claude
+! negative cfactau for the full core kinetic energy density. 27 October 2026. claude
 
 
   implicit none
@@ -116,8 +117,10 @@ subroutine atom_psd_change_cfac(ifcore, cfac, rcfac, cfactau)
   write(6,'("  The current value of cfactau is ",f10.3)') cfactau
   write(6,*) '  The kinetic energy density partial core correction will be set'
   write(6,*) '  at the radius where the core charge density'
-  write(6,*) '  is cfac times the valence cahrge density'
+  write(6,*) '  is cfactau times the valence charge density'
   write(6,*) '  (there is a correction for ionized reference atoms)'
+  write(6,*) '  A negative value keeps the full core kinetic energy density,'
+  write(6,*) '  it needs a huge cutoff and is strongly NOT recommended'
   write(6,*)
   write(6,*) '  Do you want to change cfactau? (y/n)'
   write(6,*)
@@ -131,19 +134,27 @@ subroutine atom_psd_change_cfac(ifcore, cfac, rcfac, cfactau)
 
     read(5,*) cfactau
 
-    if(cfactau < 0.1 .or. cfactau > 10.0) then
+    if(cfactau >= ZERO .and. (cfactau < 0.1 .or. cfactau > 10.0)) then
       write(6,*)
       write(6,*) '  The value looks strange, check it and enter it again'
       write(6,*)
 
       read(5,*) cfactau
 
-      if(cfactau <= ZERO) then
+      if(cfactau == ZERO) then
         write(6,*)
-        write(6,*) '  cfactau cannot be negative, setting it to 1'
+        write(6,*) '  cfactau cannot be zero, setting it to 1'
         write(6,*)
         cfactau = ONE
       endif
+    endif
+
+    if(cfactau < ZERO) then
+      write(6,*)
+      write(6,*) '  W A R N I N G'
+      write(6,*) '  The full core kinetic energy density will be used.'
+      write(6,*) '  It needs a huge cutoff and is strongly NOT recommended.'
+      write(6,*)
     endif
   endif
 
