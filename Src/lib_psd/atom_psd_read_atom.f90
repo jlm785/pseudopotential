@@ -18,12 +18,14 @@ subroutine atom_psd_read_atom(ioread, filein, nameat, rc,                &
 ! cfactau, 25 March 2026. JLM
 ! old convention (cfac in columns 41-50) unless there is a g orbital,
 ! cfac, rcfac, cfactau optional. 27 October 2026. JLM+claude
+! fixed 10 column fields as the 1982 code, negative cfac kept,
+! rc(l) stored only up to MXDLC. 27 October 2026. claude
 
   implicit none
 
   integer, parameter          :: REAL64 = selected_real_kind(12)
 
-  integer, parameter                ::  mxdlc = 4                        !  maximum valence angular momentum
+  integer, parameter                ::  MXDLC = 4                        !  maximum valence angular momentum
 
 ! input
 
@@ -34,7 +36,7 @@ subroutine atom_psd_read_atom(ioread, filein, nameat, rc,                &
 
 ! output
 
-  real(REAL64), intent(out)         ::  rc(0:mxdlc)                      !<  core radius r_c(l)
+  real(REAL64), intent(out)         ::  rc(0:MXDLC)                      !<  core radius r_c(l)
   real(REAL64), intent(out)         ::  cfac                             !<  criteria for pseudo-core charge
   real(REAL64), intent(out)         ::  rcfac                            !<  pseudo-core radius
   real(REAL64), intent(out)         ::  cfactau                          !<  core correction factor for kinetic energy density
@@ -46,9 +48,11 @@ subroutine atom_psd_read_atom(ioread, filein, nameat, rc,                &
   character(len=2)     ::  ctype                                         !  type of calculation flag
   integer              ::  nc, nv
   integer              ::  ni, li                                        !  valence orbital
-  integer              ::  nrc                                           !  number of core radii fields (4 or 5)
+  integer              ::  nrc                                           !  number of core radii fields (4 or lmax+1)
+  integer              ::  lmax                                          !  maximum angular momentum
   integer              ::  icfac                                         !  column where cfac starts
-  real(REAL64)         ::  c1, c2, c3
+  real(REAL64)         ::  c1
+  real(REAL64)         ::  rcin(0:8)                                     !  core radii as read (up to 9 fields)
 
   integer              ::  ioerror
   character(len=2)     ::  name                                          !  element on the atom.dat file
@@ -67,14 +71,16 @@ subroutine atom_psd_read_atom(ioread, filein, nameat, rc,                &
 
 ! default values
 
-  do l = 0,mxdlc
+  do l = 0,MXDLC
     rc(l) = ZERO
   enddo
   cfac = ONE
   rcfac = ZERO
   cfactau = ONE
 
-! read rc(s),rc(p),rc(d),rc(f),rc(g),cfac,rcfac
+! read rc(s),rc(p),rc(d),rc(f),rc(g),cfac,rcfac or
+! read rc(s),rc(p),rc(d), rc(f), cfac,rcfac or
+! read rc(s),rc(p),rc(d), empty, cfac,rcfac or....
 
 ! cfac is used for the pseudocore - the pseudocore stops where
 ! the core charge density equals cfac times the renormalized
@@ -113,10 +119,20 @@ subroutine atom_psd_read_atom(ioread, filein, nameat, rc,                &
 ! a g orbital in the valence needs a fifth field
 
   nrc = 4
+  lmax = 0
   do i = 1,nv
     read(ioread,'(2i5)') ni, li
-    if(li > 3) nrc = li+1
+    if(li > lmax) lmax = li
   enddo
+  if(lmax > 3) nrc = lmax+1
+
+  if(lmax > MXDLC .or. lmax > 8) then
+    write(6,*)
+    write(6,*) '    Stopped in atom_psd_read_atom, lmax = ',lmax,' > ',MXDLC, ' or 8'
+
+    stop
+
+  endif
 
 ! uses cline to be able to keep back-compatibility
 
@@ -128,41 +144,36 @@ subroutine atom_psd_read_atom(ioread, filein, nameat, rc,                &
 
   close(unit=ioread)
 
-! core radii by angular momentum
+! core radii by angular momentum, stored up to MXDLC
+! (atom_psd_ind stops if the valence has larger l)
 
-  read(cline,'(9f10.5)',iostat = ioerror) (rc(l),l=0,nrc-1)
-  if(ioerror /= 0) then
-    do l = 0,mxdlc
-      rc(l) = ZERO
+  read(cline,'(9f10.5)',iostat = ioerror) (rcin(l),l=0,lmax)
+  if(ioerror == 0) then
+    do l = 0,lmax
+      rc(l) = rcin(l)
     enddo
   endif
 
-! cfac, rcfac and cfactau, missing values keep the defaults.
-! Version 6.1.0 wrote them from column 51 with columns 41-50 blank.
+! cfac, rcfac and cfactau, each in its own 10 column field as in the
+! 1982 code.  A blank field reads as zero and keeps the default,
+! a field that cannot be read (e.g. a label) also keeps the default.
 
   icfac = 10*nrc+1
 
-  read(cline(icfac:128),*,iostat = ioerror) c1, c2, c3
-  if(ioerror == 0) then
-    cfac = c1
-    rcfac = c2
-    cfactau = c3
-  else
-    read(cline(icfac:128),*,iostat = ioerror) c1, c2
-    if(ioerror == 0) then
-      cfac = c1
-      rcfac = c2
-    else
-      read(cline(icfac:icfac+9),'(f10.5)',iostat = ioerror) c1
-      if(ioerror == 0) cfac = c1
-    endif
-  endif
+  read(cline(icfac:icfac+9),'(f10.5)',iostat = ioerror) c1
+  if(ioerror == 0) cfac = c1
+  read(cline(icfac+10:icfac+19),'(f10.5)',iostat = ioerror) c1
+  if(ioerror == 0) rcfac = c1
+  read(cline(icfac+20:icfac+29),'(f10.5)',iostat = ioerror) c1
+  if(ioerror == 0) cfactau = c1
 
   lres = .TRUE.
   if(abs(rc(0)) < EPS) lres = .FALSE.
 
-  if(cfac < EPS) cfac = ONE
-  if(cfactau < EPS) cfactau = ONE
+! negative cfac means full core, keep the option for cfactau
+
+  if(abs(cfac) < EPS) cfac = ONE
+  if(abs(cfactau) < EPS) cfactau = ONE
 
   return
 

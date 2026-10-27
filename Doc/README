@@ -28,13 +28,11 @@ If the documentation is already present just refresh the link.
 
 
 
-If you have LaTeX installed go to the userguide directory and run it (twice) on
-the two TeX files,
+If you have LaTeX installed go to the UserGuide directory and run it (twice) on
+the TeX file,
 
-Doc/user guide$ pdflatex atom_file
-Doc/user guide$ pdflatex atom_file
-Doc/user guide$ pdflatex user_guide
-Doc/user guide$ pdflatex user_guide
+Doc/UserGuide$ pdflatex user_guide
+Doc/UserGuide$ pdflatex user_guide
 
-to have a description of the atom.dat file adapted from the SIESTA documentation and a user
-guide on how to compile and run the present code.
+to have a user guide on how to compile and run the present code, including a
+description of the atom.dat file adapted from the SIESTA documentation.

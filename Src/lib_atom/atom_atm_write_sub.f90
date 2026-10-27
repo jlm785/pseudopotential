@@ -15,6 +15,7 @@ subroutine atom_atm_write_sub(ioread, filein, nameat)
 ! correct format of core radii and cfactau. 27 March 2026. JLM
 ! MXDVAL, core radii by angular momentum, old convention (cfac in
 ! columns 41-50) unless there is a g orbital. 27 October 2026. JLM+claude
+! rcval up to 9 fields. 27 October 2026. claude
 
   implicit none
 
@@ -49,7 +50,7 @@ subroutine atom_atm_write_sub(ioread, filein, nameat)
   integer                           ::  no(MXDVAL), lo(MXDVAL)           !  configuration
   real(REAL64)                      ::  zo(MXDVAL)                       !  occupation
   real(REAL64)                      ::  rc(0:LC)                         !  core radii from the table
-  real(REAL64)                      ::  rcval(0:LC)                      !  core radii of the valence angular momenta
+  real(REAL64)                      ::  rcval(0:8)                       !  core radii of the valence angular momenta (up to 9 fields)
   integer                           ::  lmax                             !  maximum valence angular momentum
   integer                           ::  nrc                              !  number of core radii fields (4 or 5)
   character(len=30)                 ::  status                           !  quality of pseudopotential in table
@@ -104,7 +105,7 @@ subroutine atom_atm_write_sub(ioread, filein, nameat)
     write(ioread,'(1x,i4,1x,i4,1x,f8.2,2x,f8.2)') no(n), lo(n), zo(n), ZERO
   enddo
 
-  do n = 1,80
+  do n = 1,128
     cline(n:n) = ' '
   enddo
 
@@ -112,12 +113,12 @@ subroutine atom_atm_write_sub(ioread, filein, nameat)
 ! Old convention, 4 fields and cfac in columns 41-50, unless there
 ! is a g (or higher) orbital.
 
-  do l = 0,LC
+  do l = 0,8
     rcval(l) = ZERO
   enddo
   lmax = 0
   do n = 1,nval
-    rcval(lo(n)) = rc(lo(n))
+    if(lo(n) <= LC) rcval(lo(n)) = rc(lo(n))
     if(lo(n) > lmax) lmax = lo(n)
   enddo
 
@@ -132,7 +133,7 @@ subroutine atom_atm_write_sub(ioread, filein, nameat)
 
   endif
 
-  write(cline,'(9f10.5)') (rcval(l),l=0,nrc-1)
+  write(cline,'(9f10.5)') (rcval(l),l=0,lmax)
   write(cline(10*nrc+1:10*nrc+30),'(3f10.5)') ONE, ZERO, ONE
   write(ioread,'(a128)') cline
 

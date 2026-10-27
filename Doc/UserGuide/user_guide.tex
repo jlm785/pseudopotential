@@ -32,7 +32,7 @@
 \par\vspace{3cm}
 \hrulefill
 \par\vspace{3cm}
-{\Large {\bf Version 6.0.8, October 2022}}
+{\Large {\bf Version 6.2.0, October 2026}}
 \par\vspace{2cm}
 \hrulefill
 
@@ -44,6 +44,10 @@ INESC MN, Lisboa, Portugal
 \texttt{jlmartins@inesc-mn.pt}
 
 \texttt{jose.l.martins@tecnico.ulisboa.pt}
+
+\vspace{1cm}
+Section~\ref{sec:atomdat} adapted from the \textsc{ATOM} documentation of \textsc{SIESTA}
+by Alberto Garc\'{\i}a, Universidad del Pa\'{\i}s Vasco, Bilbao, Spain
 }
 \vfill
 \end{center}
@@ -73,6 +77,31 @@ with the SIESTA code.
 
 The present code is a "translation" from old FORTRAN (Fortran 70) to modern Fortran (90 $\rightarrow$ present)
 with more detailed documentation by Jos\'e Lu\'{\i}s Martins, who added a few enhancements.
+In \texttt{Doc/Historic} one can find the almost original code, that still compiles and runs!
+
+A version used by the \textsc{SIESTA} code (\texttt{https://siesta-project.org/siesta/})
+is maintained by Alberto Garc\'{\i}a, who added some features and made substantial
+structural changes to the April 1990 (5.0) Minnesota version.
+Both versions can use the same input file as the original 1982 code.
+The description of that file, Section~\ref{sec:atomdat}, was written mostly by Alberto Garc\'{\i}a
+for the \textsc{SIESTA} documentation (version 3.2.2, January 2006) and adapted to the present code.
+
+The program's basic capabilities are:
+
+\begin{itemize}
+\item All-electron DFT atomic calculations for arbitrary electronic
+configurations and a few Local Density Approximation (LDA) and
+Generalized Gradient Approximations (GGA) functionals.
+
+\item Generation of ab-initio pseudopotentials, and their transformation
+to the Kleinman-Bylander form with atomic basis functions.
+
+\item Atomic calculations in which the effect of the core is represented
+by a previously generated pseudopotential. These are useful to make
+sure that the pseudopotential correctly reproduces the all-electron
+results for the valence complex.
+
+\end{itemize}
 
 \section{Installation}
 \label{sec:install}
@@ -101,10 +130,9 @@ If you cloned the git you already have the relevant code in the main directory.
 \label{sec:step2}
 
 The documentation is in the \texttt{atom-6.x.y/Doc} directory.
-It includes: \texttt{atom_file.tex}, a short description of the key input file
-\texttt{atom.dat} taken from the SIESTA documentation written by Alberto Garcia;
-this file, \texttt{user_guide.tex};
-A setup to generate a detailed
+It includes this file, \texttt{user\_guide.tex}, with a description of the key input file
+\texttt{atom.dat} in Section~\ref{sec:atomdat};
+a setup to generate a detailed
 description of the whole code for developers in the \texttt{Doc/doxy}.
 
 For that detailed description you need doxygen (\texttt{https://www.doxygen.nl}) and
@@ -210,7 +238,7 @@ the whole pseudopotential generation and testing with a simple command:
 \noindent
 the code will check if there is a \texttt{atom.dat} file in the working directory.
 This is the original input file of the old code and its strictly formatted structure
-is described in the \texttt{atom\_file.pdf} document adapted from the SIESTA code.
+is described in Section~\ref{sec:atomdat}.
 If the file is present it will use it, otherwise
 the program will ask for the chemical symbol of the element you want,
 write a \texttt{atom.dat} file with default values.  In both cases it will then proceed with
@@ -276,8 +304,7 @@ This is done by running the ``atom'' code:
 
 the program searches for a file \texttt{atom.dat} in the \texttt{WORK} directory with the information on the atomic
 configuration and options of the calculation such as the exchange and correlation model.
-This is the key input file and is described on a separate document adapted from the SIESTA
-documentation.
+This is the key input file and is described in Section~\ref{sec:atomdat}.
 
 If the file \texttt{atom.dat} is not present, the code asks the user the chemical symbol of the element to be calculated,
 writes a \texttt{atom.dat} file with the default values and runs the calculation.
@@ -406,5 +433,463 @@ with all- electrons pseudopotential and pseudopotential in KB form.
 
 Discrepancies on the range of a few hundredth of eV are to be expected, anything larger
 may indicate a bad pseudopotential.
+
+
+
+\section{The atom.dat input file}
+\label{sec:atomdat}
+
+\subsection{All-electron calculations}
+\label{sec:atomdat-ae}
+
+Assume we want to find the orbital eigenvalues, total energy, and/or
+charge density of Si in its ground state for some functional.
+You already have the compiled executables from \textsc{SIESTA} or
+from the \textsc{ATOM} code that you can find in the \texttt{Src/} folder.
+You should now go to a ``working''
+directory and try the following:  Our
+input file is named \texttt{atom.dat} and contains the lines (see
+Sect.~\ref{sec:inputfile} for more details):
+
+\begin{verbatim}
+   ae     Si   ground state all-electron
+ n=Si c=ca
+      14.0       0.0       0.0     120.0       6.0      80.0
+    3    2
+    3    0     2.00      0.00
+    3    1     2.00      0.00
+
+#2345678901234567890123456789012345678901234567890      Ruler
+\end{verbatim}
+
+We can run the calculation by typing
+\textit{pathtoexecutables}\texttt{/atom.exe $>$ atom.out}
+or \textit{pathtoexecutables}\texttt{/atom\_}\textit{compilername}\texttt{.exe $>$ atom.out}
+Here we are redirecting the output to \texttt{atom.out}.
+As described in Section~\ref{sec:step3}, the present release of the code adds
+the compiler name by default, for example \texttt{atom\_gfortran.exe} for code compiled
+with \texttt{gfortran}.
+
+It is interesting to peruse the \texttt{atom.out} file.
+In particular, it lists the orbital eigenvalues (in Rydbergs, as almost
+every other energy in the program):
+
+\begin{verbatim}
+ nl    s      occ         eigenvalue    kinetic energy      pot energy
+
+ 1s   0.0    2.0000    -130.36911227     183.01377610    -378.73491457
+ 2s   0.0    2.0000     -10.14892691      25.89954256     -71.62102165
+ 2p   0.0    6.0000      -7.02876265      24.42537869     -68.74331196
+ 3s   0.0    2.0000      -0.79662738       3.23745216     -17.68692614
+ 3p   0.0    2.0000      -0.30705175       2.06135786     -13.62572529
+\end{verbatim}
+
+(For a relativistic or spin-polarized calculation, there would be
+``up'' and ``down'' flags in the {\tt s} column above.)
+
+\subsection{Pseudopotential generation}
+\label{sec:atomdat-pg}
+
+To generate a pseudopotential for Si, using
+the Troullier-Martins scheme repeat the calculation with relativistic
+effects (although they are quite small) and
+use the LDA (Ceperley-Alder flavor). The input file
+contains the lines (see Sect.~\ref{sec:inputfile} for more
+details):
+
+\begin{verbatim}
+   pg     Si     Silicon
+        tm2
+ n=Si c=car
+      14.0       0.0       0.0     120.0       6.0      80.0
+    3    4
+    3    0     2.00      0.00
+    3    1     2.00      0.00
+    3    2     0.00      0.00
+    4    3     0.00      0.00
+    1.90     1.90     1.90     1.90
+
+#23456789012345678901234567890123456789012345678901234567890      Ruler
+\end{verbatim}
+
+Note the two extra lines with respect to an all-electron calculation.
+The pseudopotential core radii for all channels are 1.90 bohrs. Even
+though they are nominally empty in the ground state, we include the
+$3d$ and $4f$ states in order to generate the corresponding
+pseudopotentials.
+
+It is certainly cumbersome to type a fixed format input file.
+The good news is that running
+\texttt{/atom\_}\textit{compilername}\texttt{.exe}
+in a folder without the \texttt{atom.dat} and entering
+the chemical symbol of the element will generate such a file
+with default values, which can be modified for subsequent runs.
+Notice that the default values may not be the best, so that file
+is just a template to be edited!
+
+We can run the calculation by typing again
+\textit{pathtoexecutables}\texttt{/atom.exe $>$ atom.out} or
+\textit{pathtoexecutables}\texttt{/atom\_}\textit{compilername}\texttt{.exe $>$ atom.out}
+The {\tt atom.out} file now has the spin-orbit effect and we
+see in the effect on eigenvalues that is small.  The empty scattering orbitals
+may have a small positive eigenvalue.
+
+\begin{verbatim}
+ nl    s      occ         eigenvalue    kinetic energy      pot energy
+
+ 1s   0.5    2.0000    -130.51541377       0.00000000    -380.32924747
+ 2s   0.5    2.0000     -10.18537055       0.00000000     -71.99156489
+ 2p  -0.5    2.0000      -7.05518951       0.00000000     -69.08320077
+ 2p   0.5    4.0000      -7.00775181       0.00000000     -68.71538886
+ 3s   0.5    2.0000      -0.79937163       0.00000000     -17.74263422
+ 3p  -0.5    0.6667      -0.30807126       0.00000000     -13.66178946
+ 3p   0.5    1.3333      -0.30567131       0.00000000     -13.60785806
+ 3d  -0.5    0.0000       0.00231324       0.00000000      -0.38199583
+ 3d   0.5    0.0000       0.00231324       0.00000000      -0.38199582
+ 4f  -0.5    0.0000       0.00340155       0.00000000      -0.35430233
+ 4f   0.5    0.0000       0.00340155       0.00000000      -0.35430233
+\end{verbatim}
+
+Running the pseudopotential generation by typing
+\textit{pathtoexecutables}\texttt{/psd{\_}gen.exe $>$ psd.out} or
+\textit{pathtoexecutables}\texttt{/psd\_gen\_}\textit{compilername}\texttt{.exe $>$ psd.out}
+will give you (just accept the defaults) a new default output
+where you can find the pseudopotential eigenvalues.
+
+\begin{verbatim}
+ nl    s      occ         eigenvalue    kinetic energy      pot energy
+
+ 1s   0.5    2.0000      -0.79936317       0.50555149      -3.74109919
+ 2p  -0.5    0.6667      -0.30805322       0.77243757      -3.26354801
+ 2p   0.5    1.3333      -0.30566087       0.76702417      -3.25195654
+ 3d  -0.5    0.0000       0.00231324       0.00233363      -0.10914167
+ 3d   0.5    0.0000       0.00231324       0.00233363      -0.10914167
+ 4f  -0.5    0.0000       0.00340158       0.00342993      -0.10122710
+ 4f   0.5    0.0000       0.00340158       0.00342993      -0.10122710
+\end{verbatim}
+which are almost identical to the all-electron values.
+
+
+\subsection{Core corrections}
+\label{sec:cc}
+
+The program can generate pseudopotentials with the non-linear
+exchange-correlation correction proposed in S. G. Louie, S. Froyen,
+and M. L. Cohen, Phys. Rev. B 26, 1738 (1982).
+
+In the traditional approach (which is the default for LDA
+calculations), the pseudocore charge density equals the charge density
+outside a given radius $r_{pc}$ had the smooth form
+$$
+\rho_{pc}(r) = A r   \sin(b r)
+$$
+inside that radius. A smooth matching was provided with suitable $A$
+and $b$ parameters calculated by the program.
+
+A new scheme has been implemented to fix some problems in the generation
+of GGA pseudopotentials. The smooth function is now
+$$
+\rho_{pc}(r) =  r^2  \exp{(a + b r^2 +c r^4)}
+$$
+and derivatives up to the second are continuous  at $r_{pc}$.
+
+To use core corrections in the pseudopotential generation
+the jobcode in the first line should be {\tt pe} instead of {\tt pg}.
+
+The radius $r_{pc}$ should be  given in the sixth slot in the last
+input line (see above). If it is negative or zero (or blank), the
+radius is then computed using the fifth number in that line ({\tt
+rcore\_flag}, see the example input file above)
+and the following criterion: at $r_{pc}$ the core charge density
+equals {\tt rcore\_flag}*(valence charge density).
+It is {\it highly recommended} to set an explicit value for the pseudocore
+radius $r_{pc}$, rather than letting the program provide a default.
+
+If {\tt rcore\_flag} is input as negative, the full core charge is used.
+If {\tt rcore\_flag} is input as zero, it is set equal to one, which will be
+thus the default if {\tt pe} is given but no numbers are given for these
+two variables.
+
+The seventh number in that line plays the role of {\tt rcore\_flag}
+for the partial core kinetic energy density.  If it is zero or blank
+it is set equal to one.
+
+The output file contains the radius used and the $A$ ($a$) and $b$ (and $c$)
+parameters used for the matching.
+
+
+\subsection{Format of the file}
+\label{sec:inputfile}
+
+For historical reasons, the input file is in a rigid column
+format. Fortunately, most of the column fields line up, so the
+possibility of errors is reduced.  We will begin by describing in
+detail a very simple input file for an {\bf all-electron calculation} for
+the ground state of Si.
+
+The file for Si could be:
+\begin{verbatim}
+   ae     Si   ground state all-electron
+ n=Si c=ca
+       0.0       0.0       0.0       0.0       0.0       0.0
+    3    2
+    3    0     2.00      0.00
+    3    1     2.00      0.00
+
+#2345678901234567890123456789012345678901234567890      Ruler
+\end{verbatim}
+
+\begin{itemize}
+\item The first line specifies:
+	\begin{itemize}
+	\item The calculation code ({\tt ae} here stands for ``all-electron'').
+	\item A title for the job (here {\tt Si ground state all-electron}).
+	\end{itemize}
+
+	(format 3x,a2,a50)
+
+\item Second line:
+	\begin{itemize}
+
+	\item Chemical symbol of the nucleus (here {\tt Si}, obviously)
+	\item Exchange-correlation type. Here, {\tt ca} stands for
+          Ceperley-Alder.  The
+          ``best'' LDA choice should be {\tt ca}.  It is also possible
+          to use a gradient-corrected functional: {\tt pb} indicates use
+          of the PBE scheme by Perdew, Burke, and Ernzerhof (PRL 77,
+          3865 (1996)).
+	  The exchange-correlation energy and potential
+	  are computed using a modified Soler-Balb\'as package.
+
+	\item The character {\tt r} next to {\tt ca} is a flag to perform the
+          calculation relativistically, that is, solving the Dirac equation
+          instead of the Schrodinger equation.
+	  The full range of options is:
+	    \begin{itemize}
+		\item {\tt s} : Spin-polarized calculation, non-relativistic.
+		\item {\tt r}: Relativistic calculation, obviously polarized.
+		\item (blank) : Non-polarized (spin ignored), non-relativistic
+           		calculation.
+	    \end{itemize}
+	\end{itemize}
+
+	(format 3x,a2,3x,a2,a1,2x)
+
+\item Third line. Its use is somewhat esoteric and for most
+calculations it may contain just zeros (six numbers) as the code
+will use the default values.
+
+The first number is the nuclear charge, $Z$.  You can invent elements with fractional charge.
+If it is zero the program will get it from the chemical symbol of the previous line.
+The second and third number are there for historical reasons.  Their values are
+never used.  The fourth to sixth numbers specify the integration mesh.
+Again if they are zero the code uses default values.
+The fourth number is the maximum range of the radius values $r_{\rm max}$.
+The sixth number $B$ controls the increment between consecutive grid points.
+$r(n+1) \sim (1+1/B) r(n)$, in other words it takes about $B$ points to increase the
+radius in the mesh by about $e$.  The fifth number $A$ controls the first non-zero
+point in the mesh. $r(1) = 0$, $r(2) \simeq exp(-A)/(Z*B)$.
+
+The full specification of the quasi-logarithmic mesh is
+$a = exp(-A)/Z$, $b = 1/B$, $r(i) = a*(exp(b*(i-1))-1)$, $r(i) < r_{\rm max}$.
+
+\end{itemize}
+
+The rest of the file is devoted to the specification of the electronic
+configuration:
+
+\begin{itemize}
+
+\item Fourth line:\\
+	 Number of core and valence orbitals. For example, for Si, we
+	have $1s$, $2s$, and $2p$ in the core (a total of 3 orbitals), and
+	$3s$ and $3p$ in the valence complex (2 orbitals).
+
+	(format 2i5)
+
+\item Fifth, sixth... lines: (there is one line for each valence
+orbital)
+	\begin{itemize}
+	\item {\tt n} (principal quantum number)
+	\item {\tt l} (angular momentum quantum number)
+	\item Occupation of the orbital in electrons.
+	\end{itemize}
+
+	(format 2i5,3f10.3)
+
+	(There are two f input descriptors to allow the input of ``up''
+	and ``down'' occupations in spin-polarized calculations (see
+	example below)).
+	There is a third float point number that can fix the eigenvalue of the orbital.
+	It has not been used in years,  Forget it exists.
+
+	The valence orbitals can be given in any order.  The same orbital
+	cannot be given twice, nor can a valence orbital be one of the core orbitals
+	(the program stops in those cases).  Two valence orbitals with the same
+	angular momentum and different principal quantum numbers are allowed.
+
+\end{itemize}
+
+
+The different treatment of core and valence orbitals in the input for an
+all-electron calculation is purely cosmetic. The program ``knows'' how
+to fill the internal orbitals in the right order, so it is only
+necessary to give their number. That is handy for heavy atoms...
+Overzealous users might want to check the output to make sure that the
+core orbitals are indeed correctly treated.
+
+For compatibility with the old code, the file should end
+with an empty line.  The new code doesn't care about it.
+
+For a {\bf pseudopotential test calculation}, the format is exactly
+the same, except that the job code is {\tt pt} instead of {\tt ae}.
+
+
+For a {\bf pseudopotential generation run}, in addition to the
+electronic configuration chosen for the generation of the
+pseudopotentials (which is input in the same manner as above), one has
+to specify the ``flavor'' (generation scheme) and the set of core
+radii $r_c$ for the construction of the pseudowavefunction. Here is an
+example for Si using the Troullier-Martins scheme:
+
+\begin{verbatim}
+   pg     Si     Pseudopotential
+        tm2     2.00
+ n=Si c=ca
+       0.0       0.0       0.0       0.0       0.0       0.0
+    3    3
+    3    0     2.00      0.00
+    3    1     0.50      0.00
+    3    2     0.50      0.00
+      1.12      1.35      1.17       0.0       0.0       0.0
+
+#23456789012345678901234567890123456789012345678901234567890   Ruler
+\end{verbatim}
+
+Apart from the {\tt pg} (pseudopotential generation) job code in the
+first line, there are two extra lines:
+
+\begin{itemize}
+\item Second line:
+
+Flavor and radius at which to compute logarithmic
+derivatives for test purposes.
+
+The flavor can be one of :
+\begin{tabular}{ll}
+	tm2	&Improved Troullier-Martins\\
+\end{tabular}
+
+(format 8x, a3, f9.3)
+
+\item The last line (before the blank line) specifies, as in \textsc{SIESTA}
+and the old versions of the code:
+
+\begin{itemize}
+\item The values of the $r_c$ in atomic units (bohrs) for the $s$,
+$p$, $d$, and $f$ orbitals.  They are given by angular momentum,
+whatever the order of the valence orbitals in the previous lines
+(it is a good practice to input the valence
+orbitals in the order of increasing angular momentum,
+so that there is no possible confusion).
+
+(format 4f10.5)
+
+\item Two extra fields (2f10.5) which are relevant only if partial
+core corrections are used (see Sect~\ref{sec:cc}).  If they are zero
+or blank default values are used.
+
+\item In the most recent versions of the code an extra field (f10.5) is used
+for the definition of the matching radius of the partial core kinetic energy density.
+
+\end{itemize}
+
+The fields are read in fixed columns: the core radii in columns 1--40,
+{\tt rcore\_flag} in columns 41--50, $r_{pc}$ in 51--60 and the kinetic energy
+density flag in 61--70.  Any of the last three can be left blank.
+Versions of the code from 2021 to 2026 wrote these three numbers in columns 51--80
+(with columns 41--50 blank); such files should be edited to move them ten columns
+to the left.
+
+\end{itemize}
+
+In the {\tt tm2} example above, only $s$ ,$p$, and $d$ $r_c$'s are
+given. Here is an example for Silicon in which we are only interested
+in the $s$ and $p$ channels for our pseudopotential:
+
+\begin{verbatim}
+   pg     Si     s and p only
+        tm2     2.00
+ n=Si c=ca
+       0.0       0.0       0.0       0.0       0.0       0.0
+    3    2
+    3    0     2.00      0.00
+    3    1     2.00      0.00
+      1.80      1.80      0.00       0.0       0.0       0.0
+
+#23456789012345678901234567890123456789012345678901234567890   Ruler
+\end{verbatim}
+
+The new version of the code has an extension for the case a $g$ orbital
+(or higher angular momentum) is present
+in the valence.  In that case the line has one $r_c$ field for each angular momentum
+up to the largest one in the valence, for example five fields (format 5f10.5) for a $g$
+orbital, and the core correction fields follow immediately after them
+(columns 51--80 in that example).
+Pseudopotentials are generated up to $g$ ($l = 4$).
+
+This completes the discussion of the more common features of the input
+file.
+
+
+\section{A primer on ab-initio pseudopotentials}
+\label{sec:primer}
+
+We will not review here the background of density functional pseudopotentials.
+But, in this case more than ever,
+there is a lot to be gained from reading the original literature.
+Here are a few basic references:
+
+\begin{itemize}
+\item Some seminal papers on ab-initio pseudopotentials:
+
+Kerker, J. Phys. C 13, L189-94 (1980)\\
+Hamann, Schluter, Chiang, Phys. Rev. Lett. 43, 1494 (1979)
+
+\item More on HSC scheme:
+
+Bachelet, Schluter, Phys. Rev. B 25, 2103 (1982)\\
+Bachelet, Hamann, Schluter, Phys. Rev. B 26, 4199 (1982)
+
+\item Troullier-Martins elaboration of Kerker method:
+
+Troullier, Martins, Phys. Rev. B 43, 1993 (1991)\\
+
+\item Core corrections:
+
+Louie, Froyen, Cohen, Phys. Rev. B 26, 1738 (1982)
+
+\item The full picture of plane-wave pseudopotential ab-initio calculations:
+
+W. E. Pickett, ``Pseudopotential Methods in Condensed Matter
+Applications'', Computer Physics Reports 9, 115 (1989)
+
+M. C. Payne, M. P. Teter, D. C. Allan, T. A. Arias and
+J. D. Joannopoulos, ``Iterative minimization techniques for ab initio
+total-energy calculations: molecular dynamics and conjugate
+gradients'', Rev. Mod. Phys. 64, 1045, (1992)
+
+Also, the book by Richard Martin
+``Electronic Structure: Basic Theory and Practical Methods''
+(Cambridge University Press) has a chapter on pseudopotentials.
+
+\item Use in \textsc{SIESTA}:
+
+J.M. Soler, E. Artacho, J.D. Gale, A. Garcia, J. Junquera, P. Ordejon,
+D. Sanchez-Portal, ``The SIESTA method for ab initio O(N)
+materials simulation'', Jour. Phys.: Condens. Matter, 14, 2745-2779
+(2002).
+
+\end{itemize}
 
 \end{document}

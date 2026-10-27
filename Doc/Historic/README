@@ -3,8 +3,8 @@ dated from 1982 with some minor modifications so that
 it would run on a cdc205, a supercomputer with 
 17 Linpack Mflops, same as a good 2011 cell phone.
 
-It still compiles, complaining about Holerith constants
-and still runs.  Oviously the old code does not
+It still compiles, complaining about Hollerith constants
+and still runs.  Obviously the old code does not
 have all the options and capabilities, so a
 compatible atom.dat file is provided.
 
