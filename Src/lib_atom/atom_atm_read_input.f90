@@ -1,8 +1,8 @@
 !>  reads calculation parameters, by default from atom.dat (set by ioread)
 !>
 !>  \author       Sverre Froyen, Norm Troullier, Carlos Balbas, Jose Luis Martins
-!>  \version      6.013
-!>  \date         4 August 2021
+!>  \version      6.1.0
+!>  \date         4 August 2021, 27 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_atm_read_input(nameat, ctype, ititle, kerker, icorr, ispp,  &
@@ -27,6 +27,7 @@ subroutine atom_atm_read_input(nameat, ctype, ititle, kerker, icorr, ispp,  &
 ! minor cleanup, new name, 22 June 2021. JLM
 ! jlm  version 6.011
 ! jlm adapted from atm_input.f90.  zsh, rsh deprecated
+! checks the valence orbitals (atom_atm_check_valence). 27 October 2026. claude
 
 
   implicit none
@@ -135,6 +136,16 @@ subroutine atom_atm_read_input(nameat, ctype, ititle, kerker, icorr, ispp,  &
       read(ioread,'(2i5,4f10.3)') ni(i),li(i),zd(i),zu(i),evd(i)
 
     enddo
+
+!   the core orbitals are only given for all-electron calculations
+
+    if (ctype == 'ae' .or. ctype == 'pg' .or. ctype == 'pe' .or. ctype == 'ph') then
+      call atom_atm_check_valence(min(ncore,ncmax), nc, lc, nval, ni, li, &
+          'atom_atm_read_input')
+    else
+      call atom_atm_check_valence(0, nc, lc, nval, ni, li,               &
+          'atom_atm_read_input')
+    endif
 
   endif
 

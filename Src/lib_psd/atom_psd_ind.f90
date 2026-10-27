@@ -2,8 +2,8 @@
 !>  to calculate the pseudopotentials for a given angular momentum, spin or j.
 !>
 !>  \author       Sverre Froyen,  Norm Troullier, Jose Luis Martins
-!>  \version      6.0.8
-!>  \date         1980s and 1990s, 8 July 2021, 2 November 2021.
+!>  \version      6.1.0
+!>  \date         1980s and 1990s, 8 July 2021, 27 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_ind(indv, indx, nindx, lcmax, norb, ncore, lo, iso,  &
@@ -12,6 +12,7 @@ subroutine atom_psd_ind(indv, indx, nindx, lcmax, norb, ncore, lo, iso,  &
 ! extracted from pseud2. 8 July 2021. JLM
 ! indd, indu -> indv, indx. 15 September 2021. JLM
 ! new structure indx. 2 November 2021. JLM
+! stops if l > mxdlc. 27 October 2026. claude
 
  implicit none
 
@@ -50,6 +51,16 @@ subroutine atom_psd_ind(indv, indx, nindx, lcmax, norb, ncore, lo, iso,  &
 
   lcmax = 0
   do i = ncore+1,norb
+
+    if(lo(i) < 0 .or. lo(i) > mxdlc) then
+      write(6,*)
+      write(6,'("   Stopped in atom_psd_ind: valence orbital with l = ",i3)') lo(i)
+      write(6,'("   pseudopotentials are generated up to l = ",i3)') mxdlc
+      write(6,*)
+
+      STOP
+
+    endif
 
     if(lcmax < lo(i)) lcmax = lo(i)
 

@@ -1,8 +1,14 @@
 !>  Reads the pseudopotential core radii
 !>
+!>  The line after the valence orbitals has the core radii by angular
+!>  momentum, rc(s), rc(p), rc(d), rc(f) in 4f10.5 (old convention),
+!>  followed by cfac, rcfac and cfactau.  If there is a valence g
+!>  orbital rc(g) is a fifth field and cfac etc. start in column 51.
+!>  Files written by version 6.1.0 (columns 41-50 blank) are also read.
+!>
 !>  \author       Jose Luis Martins
 !>  \version      6.1.0
-!>  \date         27 August 2021, 25 March 2026.
+!>  \date         27 August 2021, 25 March 2026, 27 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_read_atom(ioread, filein, nameat, rc,                &
@@ -10,6 +16,8 @@ subroutine atom_psd_read_atom(ioread, filein, nameat, rc,                &
 
 ! written 27 August 2021 from previous code. JLM
 ! cfactau, 25 March 2026. JLM
+! old convention (cfac in columns 41-50) unless there is a g orbital,
+! cfac, rcfac, cfactau optional. 27 October 2026. JLM+claude
 
   implicit none
 
@@ -37,16 +45,20 @@ subroutine atom_psd_read_atom(ioread, filein, nameat, rc,                &
 
   character(len=2)     ::  ctype                                         !  type of calculation flag
   integer              ::  nc, nv
+  integer              ::  ni, li                                        !  valence orbital
+  integer              ::  nrc                                           !  number of core radii fields (4 or 5)
+  integer              ::  icfac                                         !  column where cfac starts
+  real(REAL64)         ::  c1, c2, c3
 
   integer              ::  ioerror
   character(len=2)     ::  name                                          !  element on the atom.dat file
 
   character(len=128)   ::  cline
-  real(REAL64)         ::  rctmp(0:mxdlc)
 
 ! constants
 
   real(REAL64), parameter    ::  ZERO = 0.0_REAL64, ONE = 1.0_REAL64
+  real(REAL64), parameter    ::  EPS = 1.0E-12_REAL64
 
 ! counters
 
@@ -97,8 +109,13 @@ subroutine atom_psd_read_atom(ioread, filein, nameat, rc,                &
 
   read(ioread,*)
   read(ioread,*) nc,nv
+
+! a g orbital in the valence needs a fifth field
+
+  nrc = 4
   do i = 1,nv
-    read(ioread,*)
+    read(ioread,'(2i5)') ni, li
+    if(li > 3) nrc = li+1
   enddo
 
 ! uses cline to be able to keep back-compatibility
@@ -111,26 +128,41 @@ subroutine atom_psd_read_atom(ioread, filein, nameat, rc,                &
 
   close(unit=ioread)
 
-! note that mxdlc is hard coded here, but it is the old format...
+! core radii by angular momentum
 
-  read(cline,'(5f10.5)') rc(0)
-  do l = 1,4
-    read(cline,'(5f10.5)',iostat = ioerror) (rctmp(i),i=0,l-1),rc(l)
-    if(ioerror /= 0) exit
-  enddo
-
-  read(cline(51:128),*,iostat = ioerror) cfac, rcfac
-
-  lres = .TRUE.
-  if(ioerror /= 0) lres = .FALSE.
-  if(abs(rc(0)) < 0.001) lres = .FALSE.
-
-  if(ioerror == 0) then
-    read(cline(51:128),*,iostat = ioerror) rctmp(1), rctmp(2), cfactau
+  read(cline,'(9f10.5)',iostat = ioerror) (rc(l),l=0,nrc-1)
+  if(ioerror /= 0) then
+    do l = 0,mxdlc
+      rc(l) = ZERO
+    enddo
   endif
 
-  if(cfac == ZERO) cfac = ONE
-  if(cfactau == ZERO) cfactau = ONE
+! cfac, rcfac and cfactau, missing values keep the defaults.
+! Version 6.1.0 wrote them from column 51 with columns 41-50 blank.
+
+  icfac = 10*nrc+1
+
+  read(cline(icfac:128),*,iostat = ioerror) c1, c2, c3
+  if(ioerror == 0) then
+    cfac = c1
+    rcfac = c2
+    cfactau = c3
+  else
+    read(cline(icfac:128),*,iostat = ioerror) c1, c2
+    if(ioerror == 0) then
+      cfac = c1
+      rcfac = c2
+    else
+      read(cline(icfac:icfac+9),'(f10.5)',iostat = ioerror) c1
+      if(ioerror == 0) cfac = c1
+    endif
+  endif
+
+  lres = .TRUE.
+  if(abs(rc(0)) < EPS) lres = .FALSE.
+
+  if(cfac < EPS) cfac = ONE
+  if(cfactau < EPS) cfactau = ONE
 
   return
 

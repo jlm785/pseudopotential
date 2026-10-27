@@ -71,8 +71,8 @@ Since then the code has been maintained and improved by Jos\'e Lu\'{\i}s Martins
 wrote new plotting packages.  GGA were introduced by Carlos Balbas and José Soler in a collaboration
 with the SIESTA code.
 
-The present code is a "translation" from old FORTRAN (Fortran 70) to modern Fortran (90 -> present)
-with detailed documentation by Jos\'e Lu\'{\i}s Martins, plus a few enhancements.
+The present code is a "translation" from old FORTRAN (Fortran 70) to modern Fortran (90 $\rightarrow$ present)
+with more detailed documentation by Jos\'e Lu\'{\i}s Martins, who added a few enhancements.
 
 \section{Installation}
 \label{sec:install}
@@ -89,7 +89,7 @@ and from GitHub
 \noindent\texttt{https://github.com/jlm785/}
 
 If you downloaded the \texttt{atom-6.x.y.tgz} file (where \texttt{x} and \texttt{y}
-are the minor version numbers) just extract it,
+are major and minor version numbers) just extract it,
 
 \noindent\texttt{\$ tar xzf atom-6.x.y.tgz}
 
@@ -100,9 +100,12 @@ If you cloned the git you already have the relevant code in the main directory.
 \subsection{Step 2: Generating the documentation}
 \label{sec:step2}
 
-The documentation is in the \texttt{atom-6.x.y/Doc} directory.  It includes a short description of the key input file
-\texttt{atom.dat} taken from the SIESTA documentation by Alberto Garcia, this file, and the means to generate a detailed
-description of the code for developers.
+The documentation is in the \texttt{atom-6.x.y/Doc} directory.
+It includes: \texttt{atom_file.tex}, a short description of the key input file
+\texttt{atom.dat} taken from the SIESTA documentation written by Alberto Garcia;
+this file, \texttt{user_guide.tex};
+A setup to generate a detailed
+description of the whole code for developers in the \texttt{Doc/doxy}.
 
 For that detailed description you need doxygen (\texttt{https://www.doxygen.nl}) and
 graphviz (\texttt{https://graphviz.org/}), both are

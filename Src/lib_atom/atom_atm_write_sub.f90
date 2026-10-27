@@ -5,7 +5,7 @@
 !>
 !>  \author       Jose Luis Martins
 !>  \version      6.1.0
-!>  \date         22 June 2021, 27 March 2026.
+!>  \date         22 June 2021, 27 March 2026, 27 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_atm_write_sub(ioread, filein, nameat)
@@ -13,10 +13,15 @@ subroutine atom_atm_write_sub(ioread, filein, nameat)
 ! nval2, jhard. 21 December 2021. JLM
 ! default mesh. 21 April 2022. JLM
 ! correct format of core radii and cfactau. 27 March 2026. JLM
+! MXDVAL, core radii by angular momentum, old convention (cfac in
+! columns 41-50) unless there is a g orbital. 27 October 2026. JLM+claude
 
   implicit none
 
   integer, parameter          :: REAL64 = selected_real_kind(12)
+
+  integer, parameter          :: LC = 4                                  !  maximum angular momentum in the tables
+  integer, parameter          :: MXDVAL = LC + 1                         !  maximum number of valence orbitals in the tables
 
 ! input
 
@@ -41,12 +46,15 @@ subroutine atom_atm_write_sub(ioread, filein, nameat)
   integer                           ::  ncore                            !  canonical number of core orbitals
   integer                           ::  nval                             !  canonical number of interesting valence orbitals
   integer                           ::  jhard                            !  flag for accuracy/speed compromise
-  integer                           ::  no(5), lo(5)                     !  configuration
-  real(REAL64)                      ::  zo(5)                            !  occupation
-  real(REAL64)                      ::  rc(5)                            !  core radii
+  integer                           ::  no(MXDVAL), lo(MXDVAL)           !  configuration
+  real(REAL64)                      ::  zo(MXDVAL)                       !  occupation
+  real(REAL64)                      ::  rc(0:LC)                         !  core radii from the table
+  real(REAL64)                      ::  rcval(0:LC)                      !  core radii of the valence angular momenta
+  integer                           ::  lmax                             !  maximum valence angular momentum
+  integer                           ::  nrc                              !  number of core radii fields (4 or 5)
   character(len=30)                 ::  status                           !  quality of pseudopotential in table
 
-  character(len=80)                 ::  cline                            !  better way to code the last line (read subroutine goes up to 128)
+  character(len=128)                ::  cline                            !  better way to code the last line
 
 ! constants
 
@@ -54,7 +62,7 @@ subroutine atom_atm_write_sub(ioread, filein, nameat)
 
 ! counters
 
-  integer     ::  n
+  integer     ::  n, l
 
 
   jhard = 0
@@ -100,9 +108,33 @@ subroutine atom_atm_write_sub(ioread, filein, nameat)
     cline(n:n) = ' '
   enddo
 
-  write(cline,'(5f10.5)') (rc(n),n=1,nval)
-  write(cline(51:80),'(3f10.5)') ONE, ZERO, ONE
-  write(ioread,'(a80)') cline
+! core radii by angular momentum (zero if l is not in the valence).
+! Old convention, 4 fields and cfac in columns 41-50, unless there
+! is a g (or higher) orbital.
+
+  do l = 0,LC
+    rcval(l) = ZERO
+  enddo
+  lmax = 0
+  do n = 1,nval
+    rcval(lo(n)) = rc(lo(n))
+    if(lo(n) > lmax) lmax = lo(n)
+  enddo
+
+  nrc = 4
+  if(lmax > 3) nrc = lmax+1
+
+  if(nrc > 9) then
+    write(6,*)
+    write(6,*) '   Stopped in atom_atm_write_sub, lmax = ',lmax
+
+    stop
+
+  endif
+
+  write(cline,'(9f10.5)') (rcval(l),l=0,nrc-1)
+  write(cline(10*nrc+1:10*nrc+30),'(3f10.5)') ONE, ZERO, ONE
+  write(ioread,'(a128)') cline
 
 ! for back-compatibility you need to finish with an empty line
 

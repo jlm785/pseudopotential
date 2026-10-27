@@ -1,8 +1,8 @@
 !>  reads calculation parameters, by default from atom.dat (set by ioread)
 !>
 !>  \author       Sverre Froyen, Jose Luis Martins
-!>  \version      6.0.2
-!>  \date         4 August 2021
+!>  \version      6.1.0
+!>  \date         4 August 2021, 27 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_test_read_input(nameat, ititle, icorr, ispp,          &
@@ -14,6 +14,7 @@ subroutine atom_kb_test_read_input(nameat, ititle, icorr, ispp,          &
 ! cleanup and new interface, July 2019. JLM
 ! minor cleanup, new name, 22 June 2021. JLM
 ! jlm adapted from atm_input.f90.  zsh, rsh deprecated
+! checks the valence orbitals (atom_atm_check_valence). 27 October 2026. claude
 
 
   implicit none
@@ -107,6 +108,11 @@ subroutine atom_kb_test_read_input(nameat, ititle, icorr, ispp,          &
       read(ioread,'(2i5,4f10.3)') ni(i),li(i),zd(i),zu(i),evd(i)
 
     enddo
+
+!   pseudopotential calculation, no core orbitals
+
+    call atom_atm_check_valence(0, ni, li, nval, ni, li,                 &
+        'atom_kb_test_read_input')
 
   endif
 
