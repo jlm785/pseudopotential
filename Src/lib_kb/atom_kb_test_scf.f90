@@ -2,7 +2,7 @@
 !>
 !>  \author       Norm Troullier, Jose Luis Martins
 !>  \version      6.1.0
-!>  \date         22 June 2021, 13 August 2021. 25 May 2022, 28 October 2026.
+!>  \date         22 June 2021, 28 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_test_scf(etotal,                                      &
@@ -18,7 +18,7 @@ subroutine atom_kb_test_scf(etotal,                                      &
 ! psdtitle, 19 May 2022. JLM
 ! initialize itype. 25 May 2022. JLM
 ! absolute values in the convergence criterion (as atom_atm_scf),
-! first NSKIP points not tested (GGA noise). 28 October 2026. JLM+claude
+! convergence test on min(1,r)*v (GGA noise at small r). 28 October 2026. JLM+claude
 
 
   implicit none
@@ -144,7 +144,6 @@ subroutine atom_kb_test_scf(etotal,                                      &
 
   real(REAL64), parameter    ::  ONE = 1.0_REAL64, ZERO = 0.0_REAL64
   real(REAL64), parameter    ::  TOL = 1.0E-8_REAL64
-  integer, parameter         ::  NSKIP = 10                              !  first points (stencil of the GGA derivatives, 2*NN in atom_xc) not in the convergence test
 
 
   call zesec(t1)
@@ -283,14 +282,12 @@ subroutine atom_kb_test_scf(etotal,                                      &
     if (iconv > 0) exit
 
 !   the GGA potential (atom_xc) has some noise at the first grid points,
-!   where the volume element vanishes.  They are not tested.
-
-!   THIS IS AN HACK.  NEED TO FIGURE OUT WHAT IS THE PROBLEM WITH GGA NOISE
+!   where the volume element vanishes.  The test is on min(1,r)*v.
 
     dvmax = ZERO
     do j = -1,1
-    do i = NSKIP+1,nr
-      dv = (vhxc_in(i,j)-vhxc_out(i,j)) /                                &
+    do i = 1,nr
+      dv = min(ONE,r(i))*(vhxc_in(i,j)-vhxc_out(i,j)) /                  &
                         (ONE+abs(vhxc_in(i,j))+abs(vhxc_out(i,j)))
       if (abs(dv) > dvmax) dvmax = abs(dv)
     enddo
