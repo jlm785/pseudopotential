@@ -2,7 +2,7 @@
 !>
 !>  \author       Norm Troullier, J.L.Martins
 !>  \version      6.1.0
-!>  \date         November 90, May 2012, July 2021, 2 February 2026.
+!>  \date         November 90, May 2012, 2 February 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
@@ -38,6 +38,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 ! tauc, 7 January 2026. JLM
 ! fileparsec -> filereal, 26 January 2026. JLM
 ! confined orbitals moved to atom_kb_orbitals, up to 4 zeta. 24 October 2026. JLM+claude
+! psml file. 28 October 2026. claude
 ! rpsi(:,:,0) to atom_kb_plot, rpsi initialized. 24 October 2026. JLM+claude
 
 
@@ -97,6 +98,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   character(len=30)                 ::  filekb                           !  name of default tape for writing pseudopotential in KB format
   character(len=30)                 ::  fileupf                          !  name of default tape for writing pseudopotential in upf format
   character(len=30)                 ::  filepsp8                         !  name of default tape for writing pseudopotential in psp8 format
+  character(len=30)                 ::  filepsml                         !  name of default tape for writing pseudopotential in psml format
 
 ! variables from the output file of psd_gen
 
@@ -485,14 +487,17 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
     filekb = nameat(2:2)//sfilekb
     fileupf = nameat(2:2)//scorr//sfileupf
     filepsp8 = nameat(2:2)//sfilepsp8
+    filepsml = nameat(2:2)//'.psml'
   elseif(nameat(2:2) == ' ') then
     filekb = nameat(1:1)//sfilekb
     fileupf = nameat(1:1)//scorr//sfileupf
     filepsp8 = nameat(1:1)//sfilepsp8
+    filepsml = nameat(1:1)//'.psml'
   else
     filekb = nameat//sfilekb
     fileupf = nameat//scorr//sfileupf
     filepsp8 = nameat//sfilepsp8
+    filepsml = nameat//'.psml'
   endif
 
   call atom_kb_psd_out_four(iokb, filekb,                                &
@@ -512,6 +517,12 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
          nameat, icorr, irel, nicore, irvers, psdtitle,                  &
          nr, r,  zion, vlocal, cdc, cdv,                                 &
          llocal, lmax_pot, vkbproj, inorm, lmax_pot, rpsi,               &
+         mxdl, mxdnr)
+
+  call atom_kb_psd_out_psml(ioupf, filepsml,                             &
+         nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,  &
+         nr, r, drdi, zion, npot, lo, vionic, rc,                        &
+         vlocal, llocal, vkbproj, inorm, ev, rpsi, zo, cdc, cdv,         &
          mxdl, mxdnr)
 
   call atom_kb_plot(ioplot, fileplot, irel, nr, r, vlocal,               &
