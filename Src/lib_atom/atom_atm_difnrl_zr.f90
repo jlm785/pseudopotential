@@ -5,8 +5,8 @@
 !>  or for scattering states ev ~ 0.
 !>
 !>  \author       J.L.Martins
-!>  \version      6.0.7
-!>  \date         September 2021.
+!>  \version      6.1.0
+!>  \date         September 2021, 28 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_atm_difnrl_zr(nr, r, drdi, d2rodr, v, rpsi, drpsidr,     &
@@ -15,6 +15,7 @@ subroutine atom_atm_difnrl_zr(nr, r, drdi, d2rodr, v, rpsi, drpsidr,     &
 
 ! uses a different method (secant+bissection) than old difnrl
 ! exits if bracketing energy range is small. 11 December 2021. JLM
+! bisection if f1 = f2, converged if x does not change (precision limit). 28 October 2026. claude
 
   implicit none
 
@@ -59,6 +60,7 @@ subroutine atom_atm_difnrl_zr(nr, r, drdi, d2rodr, v, rpsi, drpsidr,     &
 
   real(REAL64)             ::  dev, dev0
   real(REAL64)             ::  x, x1, x2, f, f1, f2
+  real(REAL64)             ::  fscale                     !  initial size of the boundary value
 
   real(REAL64)             ::  xmin, xmax
   real(REAL64)             ::  fmin, fmax
@@ -72,6 +74,7 @@ subroutine atom_atm_difnrl_zr(nr, r, drdi, d2rodr, v, rpsi, drpsidr,     &
 ! constants
 
   real(REAL64), parameter    ::  ONE = 1.0_REAL64, ZERO = 0.0_REAL64
+  real(REAL64), parameter    ::  SMALLF = 1.0E-6_REAL64   !  relative boundary value accepted at the precision limit
 
 ! counters
 
@@ -219,11 +222,18 @@ subroutine atom_atm_difnrl_zr(nr, r, drdi, d2rodr, v, rpsi, drpsidr,     &
 
 ! secant method with some bissection
 
+    fscale = max(abs(f1),abs(f2))
     lfind3 = .FALSE.
     do j = 1,100
 
 
-      x = x2 - f2*(x1 - x2) / (f1 -f2)
+!     f1 = f2 would give 0/0 (repeated x at the precision limit)
+
+      if(f1 /= f2) then
+        x = x2 - f2*(x1 - x2) / (f1 -f2)
+      else
+        x = (xmin + xmax) / 2
+      endif
       if(x < xmin .or. x > xmax) then
         if(f2*fmin < ZERO) then
           x = (xmin + x2) / 2
@@ -256,6 +266,14 @@ subroutine atom_atm_difnrl_zr(nr, r, drdi, d2rodr, v, rpsi, drpsidr,     &
       endif
 
       if(abs(f) < tol .OR. abs(xmin - xmax)/max(abs(xmin),abs(xmax)) < tol) then
+        lfind3 = .TRUE.
+        exit
+      endif
+
+!     no change of the energy, machine precision reached
+!     (accepted only if the boundary value is small)
+
+      if(x == x2 .and. abs(f) < SMALLF*fscale) then
         lfind3 = .TRUE.
         exit
       endif

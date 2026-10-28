@@ -5,8 +5,8 @@
 !>  functional' method of White & Bird, prb 50, 4954 (1994).
 !>
 !>  \author       L.C.Balbas, J.M.Soler, Jose Luis Martins
-!>  \version      6.013
-!>  \date         22 June 2021
+!>  \version      6.1.0
+!>  \date         22 June 2021, 28 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_xc(functl, author, irel,                                 &
@@ -40,6 +40,8 @@ subroutine atom_xc(functl, author, irel,                                 &
 ! converted to f90, April 2018. JLM
 ! cleanup, new interface, July 2019. JLM
 ! dvmin, 9 April 2026. JLM
+! dvmin removed (it changed the volume elements near the origin),
+! potential at r = 0 extrapolated. 28 October 2026. JLM+claude
 
 
   implicit none
@@ -101,10 +103,6 @@ subroutine atom_xc(functl, author, irel,                                 &
 !                   EUNIT=0.03674903 => ev
 
   real(REAL64), parameter   ::  EUNIT = 0.5_REAL64
-
-! dvmin is added to differential of volume to avoid division by zero
-
-  real(REAL64), parameter   ::  DVMIN = 1.0E-12_REAL64
 
 ! counters
 
@@ -188,9 +186,6 @@ subroutine atom_xc(functl, author, irel,                                 &
 
     dvol = 4 * pi * rmesh(ir)*rmesh(ir) * drdm
 
-!   dvmin is a small number added to avoid a division by zero
-
-    dvol = dvol + dvmin
     if (ir == 1 .or. ir == nr) dvol = dvol / 2
     if (gga) aux(ir) = dvol
 
@@ -252,14 +247,23 @@ subroutine atom_xc(functl, author, irel,                                 &
 
   enddo
 
-! divide by volume element to obtain the potential (per electron)
+! divide by volume element to obtain the potential (per electron).
+! The volume element vanishes at r = 0, there the potential is
+! extrapolated (quadratic) from the next three points.
 
   if (gga) then
     do is = 1,nspin
       do ir = 1,nr
-        dvol = aux(ir)
-        vxc(ir,is) = vxc(ir,is) / dvol
+        if(aux(ir) > ZERO) vxc(ir,is) = vxc(ir,is) / aux(ir)
       enddo
+      if(aux(1) <= ZERO .and. nr > 3) then
+        vxc(1,is) = vxc(2,is) * (rmesh(1)-rmesh(3))*(rmesh(1)-rmesh(4)) /        &
+                              ((rmesh(2)-rmesh(3))*(rmesh(2)-rmesh(4)))          &
+                  + vxc(3,is) * (rmesh(1)-rmesh(2))*(rmesh(1)-rmesh(4)) /        &
+                              ((rmesh(3)-rmesh(2))*(rmesh(3)-rmesh(4)))          &
+                  + vxc(4,is) * (rmesh(1)-rmesh(2))*(rmesh(1)-rmesh(3)) /        &
+                              ((rmesh(4)-rmesh(2))*(rmesh(4)-rmesh(3)))
+      endif
     enddo
   endif
 
