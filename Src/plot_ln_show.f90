@@ -31,6 +31,8 @@ program plot_ln_show
   integer                           ::  ioplot                           !  tape number for plots
   integer                           ::  iotmp                            !  tape number for temporary command files
 
+  logical, external                 ::  atom_plot_gnuplot_ok             !  checks if gnuplot is installed
+
 ! other variables
 
   logical                           ::  lkb                              !  If KB results are included in the plots
@@ -68,6 +70,14 @@ program plot_ln_show
 
   ioplot = 18
   iotmp = 19
+
+  if(.not. atom_plot_gnuplot_ok(iotmp)) then
+    write(6,*) '  plot_ln_show needs gnuplot.  Stopping.'
+    write(6,*)
+
+    stop
+
+  endif
 
   call atom_psd_print_info(iowrite, iodata, datafile, nameat)
 

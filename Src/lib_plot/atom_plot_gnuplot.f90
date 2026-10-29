@@ -2,7 +2,7 @@
 !>
 !>  \author       Manuel Maria Alemany, Jose Luis Martins
 !>  \version      6.1.0
-!>  \date         January 2000, 25 October 2026
+!>  \date         January 2000, 25 October 2026, 29 October 2026
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_gnuplot(iotmp, sfname, task)
@@ -10,6 +10,7 @@ subroutine atom_plot_gnuplot(iotmp, sfname, task)
 ! adapted from outdis. 9 August 2021. JLM
 ! removes fig_*.dat. 25 October 2026. claude
 ! kill: own processes (pgrep), no crash if none, pid longer than 6. 25 October 2026. claude
+! run: nothing (one warning) if gnuplot is not installed. 29 October 2026. JLM+claude
 
   implicit none
 
@@ -26,9 +27,15 @@ subroutine atom_plot_gnuplot(iotmp, sfname, task)
   character(len=12)   ::  c_pid
   integer             ::  ios
 
+! external function
+
+  logical, external   ::  atom_plot_gnuplot_ok
+
   fname = 'command_'//sfname//'.gp'
 
   if(trim(task) == 'run') then
+
+    if(.not. atom_plot_gnuplot_ok(iotmp)) return
 
     open(unit=iotmp, file='tmp_mmga_x', status='unknown', form='formatted')
     write(iotmp,'("gnuplot  ",a16," 1> /dev/null 2>&1 &")') fname

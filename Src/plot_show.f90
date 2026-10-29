@@ -11,6 +11,8 @@ program plot_show
   integer                           ::  iocomm                           !  tape number for gnuplot command file
   integer                           ::  iotmp                            !  tape number for temporary files
 
+  logical, external                 ::  atom_plot_gnuplot_ok             !  checks if gnuplot is installed
+
   logical                           ::  lint                             !  interactive run
 
   lint = .TRUE.
@@ -22,6 +24,14 @@ program plot_show
   iost = 30
   iocomm = 21
   iotmp = 23
+
+  if(.not. atom_plot_gnuplot_ok(iotmp)) then
+    write(6,*) '  plot_show needs gnuplot.  Stopping.'
+    write(6,*)
+
+    stop
+
+  endif
 
 ! asking for outputfile to be used
 
