@@ -37,7 +37,6 @@
 \hrulefill
 
 {\Large Jos\'e Lu\'{\i}s Martins \\
-Departamento de F\'{\i}sica, Instituto Superior T\'ecnico, Lisboa, Portugal
 
 INESC MN, Lisboa, Portugal
 
@@ -46,8 +45,8 @@ INESC MN, Lisboa, Portugal
 \texttt{jose.l.martins@tecnico.ulisboa.pt}
 
 \vspace{1cm}
-Section~\ref{sec:atomdat} adapted from the \textsc{ATOM} documentation of \textsc{SIESTA}
-by Alberto Garc\'{\i}a, Universidad del Pa\'{\i}s Vasco, Bilbao, Spain
+Section~\ref{sec:atomdat} adapted from \textsc{SIESTA} documentation
+by Alberto Garc\'{\i}a
 }
 \vfill
 \end{center}
@@ -63,28 +62,28 @@ by Alberto Garc\'{\i}a, Universidad del Pa\'{\i}s Vasco, Bilbao, Spain
 \label{sec:intro}
 
 This is a modernized version of a old code that generates and tests pseudopotentials to be
-used in electronic structure theory calculations.
+used in Density Functional Theory (DFT) calculations of electronic structure of molecules, solids, etc$\ldots$
 
 The original code was written by Sverre Froyen at the University of California Berkeley.
-Phys. Rev. B 26, 1738 (1982), https://doi.org/10.1103/PhysRevB.26.1738
-
+Phys. Rev. B 26, 1738 (1982), https://doi.org/10.1103/PhysRevB.26.1738.  A 1985
+version of the code can be found in \texttt{Doc/Historic/atomsve.f},
+it can still be compiled and run!
 That code had major enhancements by Norman J. Troullier at the University of Minnesota, Minneapolis.
 Phys. Rev. B 43, 1993 (1991), https://doi.org/10.1103/PhysRevB.43.1993
-
 Since then the code has been maintained and improved by Jos\'e Lu\'{\i}s Martins.  Peter Schuster and Manuel Maria Alemany
 wrote new plotting packages.  GGA were introduced by Carlos Balbas and José Soler in a collaboration
 with the SIESTA code.
 
-The present code is a "translation" from old FORTRAN (Fortran 70) to modern Fortran (90 $\rightarrow$ present)
-with more detailed documentation by Jos\'e Lu\'{\i}s Martins, who added a few enhancements.
-In \texttt{Doc/Historic} one can find the almost original code, that still compiles and runs!
-
-A version used by the \textsc{SIESTA} code (\texttt{https://siesta-project.org/siesta/})
+The present version is a ``translation'' from old FORTRAN (Fortran 70) to modern Fortran (90 $\rightarrow$ present),
+with detailed documentation and added enhancements by Jos\'e Lu\'{\i}s Martins, who added a few enhancements.
+Another modernized version of the original Sverre Froyen code can be found
+\texttt{https://siesta-project.org/siesta/Documentation/Pseudopotentials},
 is maintained by Alberto Garc\'{\i}a, who added some features and made substantial
 structural changes to the April 1990 (5.0) Minnesota version.
 Both versions can use the same input file as the original 1982 code.
-The description of that file, Section~\ref{sec:atomdat}, was written mostly by Alberto Garc\'{\i}a
-for the \textsc{SIESTA} documentation (version 3.2.2, January 2006) and adapted to the present code.
+
+\subsection{What the code does}
+\label{sec:capabilities}
 
 The program's basic capabilities are:
 
@@ -103,106 +102,174 @@ results for the valence complex.
 
 \end{itemize}
 
+\subsection{Resources for ab-initio DFT and pseudopotentials}
+\label{sec:primer}
+
+We will not review here the background of density functional pseudopotentials.
+But, in this case more than ever,
+there is a lot to be gained from reading the original literature,
+for both the basics, ans what is implemented in the code.
+Here are a few basic references:
+
+\begin{itemize}
+
+\item
+
+The book by Richard Martin
+``Electronic Structure: Basic Theory and Practical Methods''
+(Cambridge University Press) reviews the field
+and has a chapter on pseudopotentials.
+
+\item Some seminal papers on ab-initio pseudopotentials, (but certainly
+not an exaustive or historic list of the development of the key concepts.):
+
+Hamann, Schluter, Chiang, Phys. Rev. Lett. 43, 1494 (1979)
+Kerker, J. Phys. C 13, L189-94 (1980)\\
+Bachelet, Hamann, Schluter, Phys. Rev. B 26, 4199 (1982)
+
+\item Troullier-Martins elaboration of Kerker method:
+
+Troullier, Martins, Phys. Rev. B 43, 1993 (1991)\\
+
+\item Partial core corrections:
+
+Louie, Froyen, Cohen, Phys. Rev. B 26, 1738 (1982)
+
+\item Reviews of plane-wave pseudopotential ab-initio calculations:
+
+W. E. Pickett, ``Pseudopotential Methods in Condensed Matter
+Applications'', Computer Physics Reports 9, 115 (1989)
+
+M. C. Payne, M. P. Teter, D. C. Allan, T. A. Arias and
+J. D. Joannopoulos, ``Iterative minimization techniques for ab initio
+total-energy calculations: molecular dynamics and conjugate
+gradients'', Rev. Mod. Phys. 64, 1045, (1992)
+
+
+
+
 \section{Installation}
 \label{sec:install}
 
 \subsection{Step 1: Downloading and extracting the archive}
 \label{sec:step1}
 
-The code is available from Jos\'e Lu\'{\i}s Martins home page:
+The code is available from Jos\'e Lu\'{\i}s Martins GitHub:
 
-\noindent\texttt{https://fenix.tecnico.ulisboa.pt/homepage/ist13146/pseudopotential}
+\noindent\texttt{https://github.com/jlm785/pseudopotential}
 
-and from GitHub
-
-\noindent\texttt{https://github.com/jlm785/}
-
-If you downloaded the \texttt{atom-6.x.y.tgz} file (where \texttt{x} and \texttt{y}
+If you downloaded the \texttt{pseudopotential-6.x.y.tgz} file (where \texttt{x} and \texttt{y}
 are major and minor version numbers) just extract it,
 
-\noindent\texttt{\$ tar xzf atom-6.x.y.tgz}
+\noindent\texttt{\$ tar xzf pseudopotential-6.x.y.tgz}
 
-and you will have a \texttt{atom-6.x.y} directory
-
+and you will have the code in a \texttt{pseudopotential-6.x.y} directory
 If you cloned the git you already have the relevant code in the main directory.
+As always releases are stable, git clones are just snapshots.  Do not clone
+if you notice active modifications.
 
 \subsection{Step 2: Generating the documentation}
 \label{sec:step2}
 
-The documentation is in the \texttt{atom-6.x.y/Doc} directory.
-It includes this file, \texttt{user\_guide.tex}, with a description of the key input file
-\texttt{atom.dat} in Section~\ref{sec:atomdat};
-a setup to generate a detailed
-description of the whole code for developers in the \texttt{Doc/doxy}.
+The documentation is in the \texttt{atom/Doc} directory, where \texttt{atom/}
+stands for \texttt{pseudopotential-6.x.y}.
+It includes this file, \texttt{user\_guide.tex} in \texttt{atom/Doc/UserGuide}, with a description of the key input file
+\texttt{atom.dat} and key output and intermediate files.
+To get the pdf just run
 
+\noindent\texttt{atom/Doc/UserGuide\$ pdflatex user\_guide.tex}
+
+and repeat to have the correct references,
+
+\noindent\texttt{atom/Doc/UserGuide\$ pdflatex user\_guide.tex}
+
+to get a \texttt{user\_guide.pdf} file.
+
+A navigable description of the whole code for developers
+can be generated from the information in the folder \texttt{Doc/doxy}.
 For that detailed description you need doxygen (\texttt{https://www.doxygen.nl}) and
-graphviz (\texttt{https://graphviz.org/}), both are
+graphviz (\texttt{https://graphviz.org/}).  Both are
 available on most distributions.  To check that your computer has doxygen and graphviz installed
 run the commands
 
-\noindent\texttt{atom-6.x.y/Doc\$ dpkg -s doxygen}
+\noindent\texttt{atom/Doc\$ dpkg -s doxygen}
 
-\noindent\texttt{atom-6.x.y/Doc\$ dpkg -s graphviz}
+\noindent\texttt{atom/Doc\$ dpkg -s graphviz}
 
-on a Debian based distribution (Ubuntu et al), or use equivalent tools (yum, rpm, dnf zypper,...) or the relevant GUI.
+on a Debian based distribution (Ubuntu et al), in other distributions
+use equivalent tools (yum, rpm, dnf, zypper,...) or the relevant GUI.
 
 If they are not available just install them
 
-\noindent\texttt{atom-6.x.y/Doc\$ sudo apt install doxygen}
+\noindent\texttt{atom/Doc\$ sudo apt install doxygen}
 
-\noindent\texttt{atom-6.x.y/Doc\$ sudo apt install graphviz}
+\noindent\texttt{atom/Doc\$ sudo apt install graphviz}
 
-again for Debian based distros, or use equivalent tools (yum, rpm, dnf zypper,...) or the relevant GUI.
-
+again for Debian based distros, use equivalent tools (yum, rpm, dnf, zypper,...) or the relevant GUI.
 Finally run doxyfile in the doxy directory
 
-\noindent\texttt{atom-6.x.y/Doc/doxy\$ doxygen Doxyfile}
+\noindent\texttt{atom/Doc/doxy\$ doxygen Doxyfile}
 
-If you know what you are doing you can edit \texttt{atom-6.x.y/Doc/doxy/Doxyfile}.
+You will get two folders \texttt{atom/Doc/html} and \texttt{atom/Doc/latex}
+If you know what you are doing you can edit \texttt{atom/Doc/doxy/Doxyfile}
+to change the defaults.
+Finally it is useful to create a link to the file \texttt{atom/Doc/html/index.html}
 
-Finally it is useful to create a link to the file \texttt{atom-6.x.y/Doc/html/index.html}
+\noindent\texttt{atom/Doc\$ ln -s html/index.html documentation.html}
 
-\noindent\texttt{atom-6.x.y/Doc\$ ln -s html/index.html documentation.html}
-
-Opening that link in your browser will allow you to see the documentation for every file in the present code.
+Opening that link in your browser will allow you to see the documentation for every file in the present code,
+with the relevant call tree and a short description of all the arguments of the subroutines.
 
 \subsection{Step 3: Compiling the code}
 \label{sec:step3}
 
-The code has been tested with several Fortran compilers, \texttt{ifort} (from Intel oneAPI),
-\texttt{gfortran} (from gnu),
-\texttt{pgfortran} (from Portland), and even LLVM (experimental Intel compiler).
-
+The code is regularly tested with several Fortran compilers, \texttt{ifx} (from Intel oneAPI),
+\texttt{gfortran} (from gnu).  Once in a while it also tested with other compilers, such as
+\texttt{pgfortran}.
 As the performance is not an issue for these ``simple'' one-dimensional (radial Schrödinger) calculations
 just use the compiler that is more familiar for you.
 
-The choice of compiler is in the \texttt{atom-6.x.y/Src/make.inc} file.  You may edit it for your convenience,
-but in principle you have to make just two choices.  The first is to identify which CPU you are using,
+The good news is that the code is self-contained, it just needs the compiler,
+
+\noindent\texttt{atom\$ cd Src}
+
+\noindent\texttt{atom/Src\$ gfortran atom\_all.f90 lib\_*/*.f90 lib\_blas\_pack/*.f -o atom\_all.exe}
+
+will work out of the box.  But you may want to change the compilation flags,
+for example to optinize for your computer.  That is easily
+achieved with \texttt{make}.  All the folders have an appropriate
+\texttt{Makefile} you just need edit the preamble file \texttt{atom/Src/make.inc}.
+In principle you have to make just two choices.  The first is to identify which CPU you are using,
 as it narrows the choice of possible compilers.  This is done by commenting/uncommenting
 the lines below \texttt{\#   compiler for the job}.
-
 The second is the compiler you want, and is the key decision.  Again comment/uncomment the lines below
 \texttt{\#   Suggestions for compilers}.
+For any other modifications of the file it is assumed you know what you are doing...
+The \textsc{cpw2000}, \texttt{elk} and \textsc{Wannier90} use a \texttt{make.inc} file
+so you can find plenty of examples in those codes for specific
+combinations of computers and compilers.
 
-For any other modification of the file it is assumed you know what you are doing...
+To compile just go to \texttt{atom/Src} and type make
 
-To compile just go to \texttt{atom-6.x.y/Src} and type make
-
-\noindent\texttt{atom-6.x.y\$ cd Src}
-
-\noindent\texttt{atom-6.x.y/Src\$ make}
+\noindent\texttt{atom/Src\$ make}
 
 In a few seconds you should have the main library \texttt{libatom{\_}}\textit{compiler}\texttt{.a}
 and a few executables \texttt{atom{\_}}\textit{compiler}\texttt{.exe}, etc...
 where \textit{compiler} is the name of the chosen compiler.
-As you probably are not interested in comparing compilers, modify
-the script \texttt{copyit} to simplify the names and relocate the executables.  In my case
-I just copy them to \texttt{atom-6.x.y} removing the compiler name.
+As you probably are not interested in comparing compilers you can create links,
+for example
 
-The code relies on gnuplot (\texttt{http://www.gnuplot.info}) to produce graphics.  Just install it
-on your machine (apt, yum, rpm, dnf zypper,...) if you want to see them.  Otherwise you will
-have to adapt the code to your favorite function plotter.  \texttt{gnuplot} is simple and old,
-just send me your modifications for inclusion in a later release.
+\noindent\texttt{atom\$ ln -s Src/atom\_all\_gfortran.exe atom\_all.exe}
+
+\noindent\texttt{atom\$ ln -s Src/atom\_gfortran.exe atom.exe}
+
+etc$\ldots$
+
+The code relies on \texttt{gnuplot} (\texttt{http://www.gnuplot.info}) to produce graphics interactively.  Just install it
+on your machine (apt, yum, rpm, dnf, zypper,...) if you want to see them as the code runs.
+If \texttt{gnuplot} is not installed, there is no problem,
+you will have in your folder the data required to make plots with \texttt{gnuplot}
+or with \texttt{matplotlib}on another machine.
 
 
 
@@ -211,29 +278,45 @@ just send me your modifications for inclusion in a later release.
 \label{sec:run}
 
 I assume you have a working directory separate from the source.  In the following I will call it
-\texttt{atom-6.x.y/WORK}
+\texttt{atom/WORK}, and assume you created the links in texttt{atom/}
 
-This is a code with a long history.  Keeping it back-compatible (the original code still runs fine!)
-makes it easier to check that modifications did not introduce bugs, at the cost of some compromises,
-mainly in the number and format of files.
-
-The old code and new additions communicated through files.  The new code still uses the same file formats
-of several decades ago.
-The good news about the present version, is that except for their presence in the working directory
+This is a code with a long history.  Keeping it back-compatible (the original code still runs)
+made it easier to check that modifications did not introduced bugs, at the cost of some compromises,
+mainly in the number and constraints on the format of files.
+The old code and its additions communicated through files.  The new version of the
+code still uses those file formats of several decades ago.
+The good news about the present version, is tha,t except for their presence in the working directory,
 you do not have to worry about them in most cases.
 
 You can run the whole pseudopotential generation and testing procedure at once, or run step by step.
 As the code uses intermediary files you can go back and repeat the steps you want, for example
 to modify the default values of parameters or generate new graphics.
 
+\textbf{WARNING:} the defaults of the code are ``educated guesses'' for the majority of atoms.
+Any pseudopotential should be thoroughly tested before being used.
 
-\subsection{Running all of it at once}
+\subsection{Validation}
+\label{sec:valid}
+
+The compiled code should be tested. go to the \texttt{Validation} folder and run the
+validation script,
+
+\noindent\texttt{atom\$ cd Validation}
+
+\noindent\texttt{atom/Validation\$ ./run.sh}
+
+go for a coffee and you return you should have the pseudopotentials for all atoms
+with the default choices.   \textbf{WARNING:} the defaults of the code are ``educated guesses''
+for the majority of atoms, in particular transition metals, Lanthanides, and Actinides.
+Any pseudopotential should be thoroughly tested before being used!
+
+\subsection{Running with all tests and plots}
 \label{sec:run-all}
 
 Assuming you have gnuplot installed and you copied the executables to the code root, you can run
 the whole pseudopotential generation and testing with a simple command:
 
-\noindent\texttt{atom-6.x.y/WORK\$ ../atom{\_}all.exe}
+\noindent\texttt{atom/WORK\$ ../atom{\_}all.exe}
 
 \noindent
 the code will check if there is a \texttt{atom.dat} file in the working directory.
@@ -242,14 +325,16 @@ is described in Section~\ref{sec:atomdat}.
 If the file is present it will use it, otherwise
 the program will ask for the chemical symbol of the element you want,
 write a \texttt{atom.dat} file with default values.  In both cases it will then proceed with
-the pseudopotential generation and testing.
+the reference all-electron calculation, the pseudopotential generation,
+finding atomic orbitals basis set and non-local projectors, generate plots and perform tests on the pseudopotential.
 
 After running the code you will find many files on your working directory.
 These are described in more detail in the next subsections.
 Briefly, you get the ``input'' file \texttt{atom.dat} and the detailed output file
 \texttt{atom.out}.  The most important files are those that are read by other codes,
-\texttt{*\_LDA\_\_TM.UPF} for quantum-espresso, \texttt{*\_POTKB\_F.DAT} for cpw2000,
-\texttt{pseudo.dat} for SIESTA, and \texttt{psd.pot} for PARSEC.
+\textit{Xy}\texttt{\_LDA\_\_TM.UPF} for quantum-espresso, where \textit{Xy} is the chemical symbol,
+\textit{Xy}\texttt{\_POTKB\_F.DAT} for \textsc{cpw2000},
+\texttt{pseudo.dat} for \textsc{SIESTA}, and \texttt{psd.pot} for \textsc{PARSEC}.  MAKE A TABLE?
 Finally you get many graphics related files, \texttt{*.pdf} and \texttt{*.gp},
 and a few \texttt{*.dat} internal data files.
 
@@ -257,26 +342,27 @@ and a few \texttt{*.dat} internal data files.
 
 You can pass arguments in the command line, for example
 
-\noindent\texttt{atom-6.x.y/WORK\$ ../atom{\_}all.exe -h}
+\noindent\texttt{atom/WORK\$ ../atom{\_}all.exe -h}
 
 \noindent
 will print a short help text and stop.
 
 You can also run in a full interactive mode
 
-\noindent\texttt{atom-6.x.y/WORK\$ ../atom{\_}all.exe -x}
+\noindent\texttt{atom/WORK\$ ../atom{\_}all.exe -x}
 
 \noindent
 where you are asked to override the default values, and therefore can be cumbersome.
-Overriding the defaults is easier by running only the relevant sections of the code.
+Overriding the defaults is easier by running sequentialy the relevant sections of the code.
 
 The most useful first argument is the chemical symbol,
 
-\noindent\texttt{atom-6.x.y/WORK\$ ../atom{\_}all.exe Si}
+\noindent\texttt{atom/WORK\$ ../atom{\_}all.exe Si}
 
 where you can swap ``Si'' for the chemical symbol of any element
 that interests you from Hydrogen to Oganesson (https://doi.org/10.1103/PhysRevB.26.4199).
 All the work will be done with default values without prompting the user.
+Read the \textbf{Warning} above about default values.
 
 \subsubsection{Second and third command line arguments}
 
@@ -287,20 +373,20 @@ be altered in that way, it is easier to do it by the second argument of the
 command line, that takes the values \texttt{yes/no} force using or not using the
 partial core correction.
 
-The code generates ``SIESTA-like'' atomic orbitals.  The third argument
+The code generates ``\textsc{SIESTA}-like'' atomic orbitals.  The third argument
 that can take the values \texttt{SZ/DZ/DZP} for single-zeta, double zeta or
 double-zeta with polarization, indicates the quality of atomic orbitals
 that are included in the \texttt{*\_POTKB\_F.DAT} file.
+THIS IS NO LONGER CORRECT.
 
 
-
-\subsection{The all-electron structure}
+\subsection{The all-electron calculation}
 \label{sec:run-ae}
 
 The starting point of a pseudopotential construction is an all-electron calculation.
 This is done by running the ``atom'' code:
 
-\noindent\texttt{atom-6.x.y/WORK\$ ../atom.exe}
+\noindent\texttt{atom/WORK\$ ../atom.exe}
 
 the program searches for a file \texttt{atom.dat} in the \texttt{WORK} directory with the information on the atomic
 configuration and options of the calculation such as the exchange and correlation model.
@@ -311,9 +397,11 @@ writes a \texttt{atom.dat} file with the default values and runs the calculation
 The user may edit the \texttt{atom.dat} file to change the default choices, taking into account that the
 file is for fixed format read (back-compatibility).
 
-In \texttt{atom-6.x.y/Doc/atom{\_}table.dat} the user can find an example of input file for elements H to Pu.
+If the validation step of Section~\ref{sec:valid} was run, the user can find \texttt{atom.dat}
+for all atoms in the folders \texttt{Validation/res\_}\textit{Xy} where \textit{Xy}
+the chemical symbol.  It is the starting point for the construction a good pseudopotential.
 
-At the end of the calculation a file \texttt{datafile.dat} is written with the information of the
+At the end of the \texttt{atom.exe} calculation a file \texttt{datafile.dat} is written with the information of the
 atomic configuration and self-consistent potential.
 
 
@@ -323,10 +411,11 @@ atomic configuration and self-consistent potential.
 The key operation is the construction of the pseudopotential.  To generate the Troullier-Martins
 pseudopotential run
 
-\noindent\texttt{atom-6.x.y/WORK\$ ../psd{\_}gen.exe}
+\noindent\texttt{atom/WORK\$ ../psd{\_}gen.exe}
 
 The program reads the all-electron results from the \texttt{datafile.dat}, suggested core radii from the
-\texttt{atom.dat} file, and presents that information plus data on maxima and last node of the
+\texttt{atom.dat} file and from an internal table of defaukt values,
+and presents that information plus data on maxima and last node of the
 valence wave-functions to the user and ask if it accepts the defaults.  In the negative case the user
 chooses new core radii.
 
@@ -334,7 +423,7 @@ At the end of the calculation the user has three new files (back compatibility),
 \texttt{pseudo.dat} file used later in tests and compatible with SIESTA,
 a \texttt{plot.dat} file used for later plotting, and
 a formatted \texttt{psd.pot} file compatible with parsec and used for the Kleinman-Bylander transformation.
-This last file is therefore the key output file of the program.
+This last file is therefore the key output file of the program.  IT IS NOW DIFFERENT
 
 
 \subsection{Visualizing the pseudopotential}
@@ -343,18 +432,19 @@ This last file is therefore the key output file of the program.
 If \texttt{gnuplot} is installed the user can compare pseudo and all-electron wave-functions,
 observe the pseudopotential and respective Fourier transforms by running
 
-\noindent\texttt{atom-6.x.y/WORK\$ ../plot{\_}show.exe}
+\noindent\texttt{atom/WORK\$ ../plot{\_}show.exe}
 
 The program will read \texttt{plot.dat} (or another file chosen by the user) and allow
 the user to change the range of the axis of the plots, and save a \texttt{pdf} version of
 the plots.  If the user doesn't clean the \texttt{*.gp} files at the last question,
-the \texttt{WORK} directory will have several \texttt{command{\_}}{\it name}\texttt{.gp} and
-{\it name}\texttt{.gp} files.  The user can see the plots again with gnuplot
+the \texttt{WORK} directory will have several \texttt{command{\_}}\textit{name}\texttt{.gp} and
+\textit{name}\texttt{.gp} files.  The user can see the plots again with gnuplot
 
-\noindent\texttt{atom-6.x.y/WORK\$ command{\_}}{\it name}\texttt{.gp}
+\noindent\texttt{atom/WORK\$ command{\_}}\textit{name}\texttt{.gp}
 
-and can edit the command file to change the plot.  The user can also use the data in {\it name}\texttt{.gp} files
-to generate plots with other software, including xmgrace.
+and can edit the command file to change the plot.  The user can also use the data in \textit{name}\texttt{.gp} files
+to generate plots with other software, including xmgrace and matplotlib.
+If gnuplot is not installed, the program just quits.
 
 
 \subsection{Applying the Kleinman-Bylander transformation.}
@@ -363,7 +453,7 @@ to generate plots with other software, including xmgrace.
 In plane-wave codes the pseudopotential is used in its Kleinman-Bylander form.  That transformation
 plus the generation of an efficient atomic basis set can be achieved by
 
-\noindent\texttt{atom-6.x.y/WORK\$ ../kb{\_}conv.exe}
+\noindent\texttt{atom/WORK\$ ../kb{\_}conv.exe}
 
 the program will read the \texttt{psd.pot} file and ask the users if he accepts the defaults and
 in the negative case allows the choice of new parameters.
@@ -374,7 +464,7 @@ can introduce ``ghost states'' and the code will check if they appear.
 At the end of the calculation the program writes three new files (back compatibility), an unformatted
 \texttt{pseudo{\_}kb.dat} used later in tests,
 a \texttt{plot{\_}kb.dat} file used for later plotting, and
-a formatted {\it Xy}\texttt{{\_}POTKB{\_}F.DAT} file compatible with the \texttt{cpw2000 code} where  {\it Xy}
+a formatted \textit{Xy}\texttt{{\_}POTKB{\_}F.DAT} file compatible with the \texttt{cpw2000 code} where  \textit{Xy}
 is the chemical symbol of the relevant element.
 
 The program also suggests the range of energy cutoffs for the plane-wave calculations.  It is a range because
@@ -388,7 +478,7 @@ If \texttt{gnuplot} is installed the user can compare the pseudo wave-functions 
 observe the KB operators and respective Fourier transforms, and have an estimate of the rate
 of convergence of the total energy with plane-wave basis size by running
 
-\noindent\texttt{atom-6.x.y/WORK\$ ../plot{\_}kb{\_}show.exe}
+\noindent\texttt{atom/WORK\$ ../plot{\_}kb{\_}show.exe}
 
 The program will read the \texttt{plot{\_}kb.dat} file or another file specified by the user.  See the section on
 visualizing the pseudopotential for dealing with the files generated by the program.
@@ -400,7 +490,7 @@ visualizing the pseudopotential for dealing with the files generated by the prog
 If \texttt{gnuplot} is installed the user can generate the plots of the logarithmic derivatives of the
 wave-functions with respect to energy for a given radius with
 
-\noindent\texttt{atom-6.x.y/WORK\$ ../plot{\_}ln{\_}show.exe}
+\noindent\texttt{atom/WORK\$ ../plot{\_}ln{\_}show.exe}
 
 The program will read the \texttt{pseudo.dat}, \texttt{pseudo{\_}kb.dat} and \texttt{datafile.dat} files (or the files specified
 by the user).   See the section on
@@ -412,21 +502,21 @@ visualizing the pseudopotential for dealing with the files generated by the prog
 
 By editing the \texttt{atom.dat} file and running
 
-\noindent\texttt{atom-6.x.y/WORK\$ ../atom.exe}
+\noindent\texttt{atom/WORK\$ ../atom.exe}
 
 the user can either see the all electron results for a
 different configuration (\texttt{ae} keyword on the first line and deleting the second line, back-compatibility
 as you should have guessed) or see the result of a different configuration on the pseudopotential
 described in \texttt{pseudo.dat}.  Running
 
-\noindent\texttt{atom-6.x.y/WORK\$ ../atom{\_}kb.exe}
+\noindent\texttt{atom/WORK\$ ../atom{\_}kb.exe}
 
 the user achieves the same type of test for the KB pseudopotential described by \texttt{pseudo{\_}kb.dat}.
 
 A series of tests of ionization and promotion energies can be done with the original \texttt{atom.dat}
 by running
 
-\noindent\texttt{atom-6.x.y/WORK\$ ../atom{\_}test.exe}
+\noindent\texttt{atom/WORK\$ ../atom{\_}test.exe}
 
 At the end the program will print a comparison of the ionization energies and promotion energies
 with all- electrons pseudopotential and pseudopotential in KB form.
@@ -438,6 +528,9 @@ may indicate a bad pseudopotential.
 
 \section{The atom.dat input file}
 \label{sec:atomdat}
+The description of that file, Section~\ref{sec:atomdat}, was mostly written by Alberto Garc\'{\i}a
+for the \textsc{SIESTA} documentation (version 3.2.2, January 2006) and adapted to
+describe the present code.
 
 \subsection{All-electron calculations}
 \label{sec:atomdat-ae}
@@ -602,7 +695,7 @@ radius is then computed using the fifth number in that line ({\tt
 rcore\_flag}, see the example input file above)
 and the following criterion: at $r_{pc}$ the core charge density
 equals {\tt rcore\_flag}*(valence charge density).
-It is {\it highly recommended} to set an explicit value for the pseudocore
+It is \textit{highly recommended} to set an explicit value for the pseudocore
 radius $r_{pc}$, rather than letting the program provide a default.
 
 If {\tt rcore\_flag} is input as negative, the full core charge is used.
@@ -843,53 +936,6 @@ This completes the discussion of the more common features of the input
 file.
 
 
-\section{A primer on ab-initio pseudopotentials}
-\label{sec:primer}
-
-We will not review here the background of density functional pseudopotentials.
-But, in this case more than ever,
-there is a lot to be gained from reading the original literature.
-Here are a few basic references:
-
-\begin{itemize}
-\item Some seminal papers on ab-initio pseudopotentials:
-
-Kerker, J. Phys. C 13, L189-94 (1980)\\
-Hamann, Schluter, Chiang, Phys. Rev. Lett. 43, 1494 (1979)
-
-\item More on HSC scheme:
-
-Bachelet, Schluter, Phys. Rev. B 25, 2103 (1982)\\
-Bachelet, Hamann, Schluter, Phys. Rev. B 26, 4199 (1982)
-
-\item Troullier-Martins elaboration of Kerker method:
-
-Troullier, Martins, Phys. Rev. B 43, 1993 (1991)\\
-
-\item Core corrections:
-
-Louie, Froyen, Cohen, Phys. Rev. B 26, 1738 (1982)
-
-\item The full picture of plane-wave pseudopotential ab-initio calculations:
-
-W. E. Pickett, ``Pseudopotential Methods in Condensed Matter
-Applications'', Computer Physics Reports 9, 115 (1989)
-
-M. C. Payne, M. P. Teter, D. C. Allan, T. A. Arias and
-J. D. Joannopoulos, ``Iterative minimization techniques for ab initio
-total-energy calculations: molecular dynamics and conjugate
-gradients'', Rev. Mod. Phys. 64, 1045, (1992)
-
-Also, the book by Richard Martin
-``Electronic Structure: Basic Theory and Practical Methods''
-(Cambridge University Press) has a chapter on pseudopotentials.
-
-\item Use in \textsc{SIESTA}:
-
-J.M. Soler, E. Artacho, J.D. Gale, A. Garcia, J. Junquera, P. Ordejon,
-D. Sanchez-Portal, ``The SIESTA method for ab initio O(N)
-materials simulation'', Jour. Phys.: Condens. Matter, 14, 2745-2779
-(2002).
 
 \end{itemize}
 
