@@ -4,7 +4,7 @@
 !>
 !>  \author       Sverre Froyen, Norm troullier, Carlos Balbas, Jose Luis Martins
 !>  \version      6.1.0
-!>  \date         1980's, 22 June 2021,12 September 2021, 25 October 2026.
+!>  \date         1980's, 22 June 2021, 29 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_atm_velect(iter, iconv, icorr, ispp, ifcore,             &
@@ -21,8 +21,7 @@ subroutine atom_atm_velect(iter, iconv, icorr, ispp, ifcore,             &
 ! cleanup and new interface, July 2019. JLM
 ! cdv, 12 September 2021. JLM
 ! r intent(in), r(1) no longer set here (callers define it). 25 October 2026. JLM+claude
-! The first grid point is treated as the origin (y(1) = 0, extrapolations
-! to r = 0), so r(1) must be zero, as in the standard mesh.  Warns otherwise.
+! density at r = 0 extrapolated quadratically. 29 October 2026. JLM+claude
 
 
   implicit none
@@ -88,7 +87,7 @@ subroutine atom_atm_velect(iter, iconv, icorr, ispp, ifcore,             &
 
 ! counters
 
-  integer     ::  i
+  integer     ::  i, is
 
 ! constants
 
@@ -253,8 +252,11 @@ subroutine atom_atm_velect(iter, iconv, icorr, ispp, ifcore,             &
 
 ! Extrapolate the density at r=0
 
-  dens(1,1) = dens(2,1) - (dens(3,1)-dens(2,1))*r(2)/(r(3)-r(2))
-  dens(1,2) = dens(2,2) - (dens(3,2)-dens(2,2))*r(2)/(r(3)-r(2))
+  do is = 1,2
+    dens(1,is) = dens(2,is) * (r(1)-r(3))*(r(1)-r(4)) / ((r(2)-r(3))*(r(2)-r(4)))  &
+               + dens(3,is) * (r(1)-r(2))*(r(1)-r(4)) / ((r(3)-r(2))*(r(3)-r(4)))  &
+               + dens(4,is) * (r(1)-r(2))*(r(1)-r(3)) / ((r(4)-r(2))*(r(4)-r(3)))
+  enddo
 
 ! Define 'irel' and 'nspin' for the interface ATOMXC
 

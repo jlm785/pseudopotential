@@ -6,7 +6,7 @@
 !>
 !>  \author       L.C.Balbas, J.M.Soler, Jose Luis Martins
 !>  \version      6.1.0
-!>  \date         22 June 2021, 28 October 2026.
+!>  \date         22 June 2021, 28 October 2026, 29 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_xc(functl, author, irel,                                 &
@@ -40,8 +40,8 @@ subroutine atom_xc(functl, author, irel,                                 &
 ! converted to f90, April 2018. JLM
 ! cleanup, new interface, July 2019. JLM
 ! dvmin, 9 April 2026. JLM
-! dvmin removed (it changed the volume elements near the origin),
-! potential at r = 0 extrapolated. 28 October 2026. JLM+claude
+! dvmin removed 28 October 2026. JLM+claude
+! GGA potential at the first 2*NN points. 29 October 2026. JLM+claude
 
 
   implicit none
@@ -87,6 +87,10 @@ subroutine atom_xc(functl, author, irel,                                 &
   real(REAL64)         ::  epsc, epsx
   real(REAL64)         ::  f1, f2, gd(3,2)
   real(REAL64)         ::  pi
+  real(REAL64)         ::  dfdd(2*NN,2)                                     !  df/drho at the first 2*NN points
+  real(REAL64)         ::  gflux(3*NN,2)                                    !  G = df/d(grad rho) at the first 3*NN points
+  real(REAL64)         ::  wder(-NN:NN,2*NN)                                !  weights of the derivative at the first 2*NN points
+  real(REAL64)         ::  dgdr                                             !  dG/dr
 
   external ggaxc, ldaxc
 
@@ -196,6 +200,14 @@ subroutine atom_xc(functl, author, irel,                                 &
       do in = in1,in2
         dgidfj(in) = dgdm(in) / drdm
       enddo
+      if (ir <= 2*NN) then
+        do in = -NN,NN
+          wder(in,ir) = ZERO
+        enddo
+        do in = in1,in2
+          wder(in,ir) = dgidfj(in)
+        enddo
+      endif
     endif
 
 !   find density and gradient of density at this point
@@ -233,6 +245,8 @@ subroutine atom_xc(functl, author, irel,                                 &
       dx = dx + dvol * d(is) * (epsx - dexdd(is))
       dc = dc + dvol * d(is) * (epsc - decdd(is))
       if (gga) then
+        if (ir <= 2*NN) dfdd(ir,is) = dexdd(is) + decdd(is)
+        if (ir <= 3*NN) gflux(ir,is) = dexdgd(3,is) + decdgd(3,is)
         vxc(ir,is) = vxc(ir,is) + dvol * ( dexdd(is) + decdd(is) )
         do in = in1,in2
           dx= dx - dvol * dens(ir+in,is) * dexdgd(3,is) * dgidfj(in)
@@ -248,6 +262,12 @@ subroutine atom_xc(functl, author, irel,                                 &
   enddo
 
 ! divide by volume element to obtain the potential (per electron).
+
+! At the first 2*NN points the transposed (one-sided) derivative
+! stencils of the mesh functional are not a consistent approximation
+! of the divergence (errors of order G/r), so the potential is
+! calculated there from v = df/drho - 2 G/r - dG/dr.
+
 ! The volume element vanishes at r = 0, there the potential is
 ! extrapolated (quadratic) from the next three points.
 
@@ -256,6 +276,17 @@ subroutine atom_xc(functl, author, irel,                                 &
       do ir = 1,nr
         if(aux(ir) > ZERO) vxc(ir,is) = vxc(ir,is) / aux(ir)
       enddo
+      if (nr > 3*NN) then
+        do ir = 1,2*NN
+          if (rmesh(ir) > ZERO) then
+            dgdr = ZERO
+            do in = max(1,ir-NN)-ir,NN
+              dgdr = dgdr + wder(in,ir) * gflux(ir+in,is)
+            enddo
+            vxc(ir,is) = dfdd(ir,is) - 2*gflux(ir,is)/rmesh(ir) - dgdr
+          endif
+        enddo
+      endif
       if(aux(1) <= ZERO .and. nr > 3) then
         vxc(1,is) = vxc(2,is) * (rmesh(1)-rmesh(3))*(rmesh(1)-rmesh(4)) /        &
                               ((rmesh(2)-rmesh(3))*(rmesh(2)-rmesh(4)))          &
@@ -283,4 +314,4 @@ subroutine atom_xc(functl, author, irel,                                 &
     deallocate(aux)
   endif
 
-  end subroutine atom_xc
+end subroutine atom_xc
