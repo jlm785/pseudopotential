@@ -3,7 +3,7 @@
 !>
 !>  \author       Norm Troullier, Manuel Maria Alemany, J.L.Martins
 !>  \version      6.1.0
-!>  \date         1990s, 30 August 2021, 25 October 2026.
+!>  \date         1990s, 30 August 2021, 25 October 2026, 30 October 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_ln_outpdf(ioplot, iotmp, lkb,                       &
@@ -16,6 +16,7 @@ subroutine atom_plot_ln_outpdf(ioplot, iotmp, lkb,                       &
 ! mxdsc. 25 September 2021. JLM
 ! label format, figure description for matplotlib. 25 October 2026. claude
 ! files written by atom_plot_ln_write, failed points as NaN. 25 October 2026. claude
+! no open of the command file (atom_plot_command opens it), flang. 30 October 2026. JLM+claude
 
   implicit none
 
@@ -48,7 +49,6 @@ subroutine atom_plot_ln_outpdf(ioplot, iotmp, lkb,                       &
 
 ! local variables
 
-  character(len=15)                ::  fname
 
   real(REAL64)                     ::  x_min, x_max, y_min, y_max
 
@@ -92,10 +92,6 @@ subroutine atom_plot_ln_outpdf(ioplot, iotmp, lkb,                       &
 
     write(iowrite,*)
     write(iowrite,*)
-
-    fname='command_'//c_val(i)//'.gp'
-
-    open (unit=ioplot,file=fname,status='unknown',form='formatted')
 
     x_min = evlow
     x_max = evhi

@@ -1,7 +1,7 @@
 
 include make.inc
 
-all: atom.exe  atom_all.exe  psd_gen.exe  kb_conv.exe  plot_show.exe  plot_kb_show.exe  plot_ln_show.exe atom_test.exe
+all: atom.exe  atom_all.exe  psd_gen.exe  kb_conv.exe  plot_show.exe  plot_kb_show.exe  plot_ln_show.exe atom_test.exe kb_test.exe
 
 atom.exe:  libatom  atom.f90
 	$(F77) -o atom$(SUFFIX).exe $(FCOPTS) atom.f90 libatom$(SUFFIX).a
@@ -26,6 +26,9 @@ plot_ln_show.exe:  libatom  plot_ln_show.f90
 
 atom_test.exe:  libatom  atom_test.f90
 	$(F77) -o atom_test$(SUFFIX).exe $(FCOPTS) atom_test.f90 libatom$(SUFFIX).a
+
+kb_test.exe:  libatom  kb_test.f90
+	$(F77) -o kb_test$(SUFFIX).exe $(FCOPTS) kb_test.f90 libatom$(SUFFIX).a
 
 
 

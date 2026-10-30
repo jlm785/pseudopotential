@@ -21,14 +21,14 @@ CPU=Intel
 
 ifeq ($(CPU),Intel)
    F77=ifx
-   # F77=ifort
    # F77=gfortran
-   # F77=pgfortran
+   # F77=nvfortran
+   # F77=flang-new
 else
    ifeq ($(CPU),AMD)
       F77=gfortran
-      # F77=ifort
-      # F77=pgfortran
+      # F77=ifx
+      # F77=nvfortran
    else
       F77=gfortran
    endif
@@ -149,6 +149,20 @@ ifeq ($(F77),pgfortran)
 endif
 
 
+ifeq ($(F77),flang-new)
+
+   #   Never tried profiling or debugging
+
+   PROF=
+
+
+   #   Compiling options and libraries.  Must have the chosen library installed.
+
+   FCOPTS=-Ofast
+
+endif
+
+
 
 #  OpenMP flags (also used when linking)
 
@@ -157,7 +171,7 @@ ifeq ($(OPENMP),true)
       FCOPTS+= -fopenmp
    else ifeq ($(F77),pgfortran)
       FCOPTS+= -mp
-   else
+   else ifeq ($(F77),ifx)
       FCOPTS+= -qopenmp
    endif
 endif

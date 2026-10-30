@@ -3,12 +3,13 @@
 !>
 !>  \author       claude
 !>  \version      6.1.0
-!>  \date         29 October 2026
+!>  \date         29 October 2026, 30 October 2026
 !>  \copyright    GNU Public License v2
 
 logical function atom_plot_gnuplot_ok(iotmp)
 
 ! written 29 October 2026. claude
+! call system replaced by the standard execute_command_line. 30 October 2026. JLM+claude
 
   implicit none
 
@@ -23,12 +24,14 @@ logical function atom_plot_gnuplot_ok(iotmp)
 
   character(len=12)   ::  cpath
   integer             ::  ios
+  integer             ::  iexit, icmd                      !  exit and command status of execute_command_line (not used)
 
   if(lfirst) then
 
     lfirst = .FALSE.
 
-    call system('command -v gnuplot > tmp_mmga_c 2> /dev/null')
+    call execute_command_line('command -v gnuplot > tmp_mmga_c 2> /dev/null', &
+        exitstat=iexit, cmdstat=icmd)
 
     open(unit=iotmp, file='tmp_mmga_c', status='unknown', form='formatted')
 
