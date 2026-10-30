@@ -132,10 +132,11 @@ endif
 
 
 
-#  For portland group pgfortran compiler, it is much less used than the previous, so beware.
+#  For NVIDIA nvfortran compiler (formerly Portland Group pgfortran),
+#  it is much less used than the previous, so beware.
 
 
-ifeq ($(F77),pgfortran)
+ifneq ($(filter $(F77),nvfortran pgfortran),)
 
    #   Never tried profiling or debugging
 
@@ -149,6 +150,10 @@ ifeq ($(F77),pgfortran)
 endif
 
 
+#  For LLVM flang-new compiler, used to double check the code.
+#  -Ofast (-O3 -ffast-math) may change the results with respect to other compilers.
+
+
 ifeq ($(F77),flang-new)
 
    #   Never tried profiling or debugging
@@ -158,7 +163,7 @@ ifeq ($(F77),flang-new)
 
    #   Compiling options and libraries.  Must have the chosen library installed.
 
-   FCOPTS=-Ofast
+   FCOPTS=-O3
 
 endif
 
@@ -169,9 +174,11 @@ endif
 ifeq ($(OPENMP),true)
    ifeq ($(F77),gfortran)
       FCOPTS+= -fopenmp
-   else ifeq ($(F77),pgfortran)
+   else ifeq ($(F77),flang-new)
+      FCOPTS+= -fopenmp
+   else ifneq ($(filter $(F77),nvfortran pgfortran),)
       FCOPTS+= -mp
-   else ifeq ($(F77),ifx)
+   else ifneq ($(filter $(F77),ifx ifort),)
       FCOPTS+= -qopenmp
    endif
 endif
