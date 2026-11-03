@@ -339,7 +339,7 @@ These are described in more detail in the next subsections.
 Briefly, you get the ``input'' file \texttt{atom.dat} and the detailed output file
 \texttt{atom.out}.  The most important files are those that are read by other codes,
 listed in Table~\ref{tab:outfiles}, where \textit{Xy} is the chemical symbol.
-Notice that the
+
 
 \begin{table}[htb]
 \centering
@@ -354,14 +354,14 @@ file & code \\
 \textit{Xy}\texttt{.psml} & \textsc{SIESTA} and other codes that use libpsml \\
 \textit{Xy}\texttt{.psf}  & \textsc{SIESTA} \\
 \textit{Xy}\texttt{\_POTKB\_F.DAT} & \textsc{cpw2000} \\
-\texttt{Xy}\texttt{\_POTRE.DAT} & \textsc{PARSEC} \\
+\textit{Xy}\texttt{\_POTRE.DAT} & \textsc{PARSEC} \\
 \texttt{psd.pot} & This code \\
 \hline
 \end{tabular}
 \end{table}
 
-Notice that \textit{Xy}\texttt{.psf} and \texttt{Xy}\texttt{\_POTRE.DAT} are very similar.
-The first part of the file \texttt{psd.pot} is similar to those, but then it includes the added information
+Notice that \textit{Xy}\texttt{.psf} and \textit{Xy}\texttt{\_POTRE.DAT} are very similar.
+The first part of the internal file \texttt{psd.pot} is similar to those, however it includes at the end the information
 about the partial core kinetic energy density.
 
 Finally you get many graphics related files, \texttt{*.pdf} and \texttt{*.gp},
@@ -406,7 +406,17 @@ The code generates ``\textsc{SIESTA}-like'' atomic orbitals.  By default two
 basis sets are built and written to the \textit{Xy}\texttt{\_POTKB\_F.DAT} file
 (and to \texttt{basis\_orbitals.dat}): set 1 is double-zeta with polarization (DZP)
 and set 2 is single-zeta (SZ).  The second zeta is the relaxed energy derivative
-$\phi$ of the first one.  The third argument, which takes the values
+$\phi$ of the first one.
+The atomic orbitals have angular momenta $l = 0, \ldots, l_a$, where $l_a$ is the larger
+of the highest occupied $l$ and $l_{\max}-1$, $l_{\max}$ being the highest angular momentum
+of the pseudopotential, and the polarization orbitals have $l_a+1$ (not above $f$).
+The cutoff radius of an atomic orbital is $r_c = \min(\max(F_l\, r_S(l), 6), 9)$~bohr,
+where $r_S(l)$ is the \textsc{SIESTA} radius for an energy shift of 0.02~Ry,
+$F_0 = 1.45$ and $F_l = 1.15$ for $l > 0$.  The polarization orbitals use
+$r_c = \min(\max(\max(r_S(0), r_S(1)), 6), 9)$~bohr.  These constants minimize the
+difference between the atomic-orbital and plane-wave total energies of the elemental
+solids calculated with \texttt{cpw}, and are parameters in \texttt{atom\_kb\_basis\_rule.f90}.
+The third argument, which takes the values
 \texttt{SZ/SZP/DZ/DZP} (lower case is accepted), replaces the two default sets
 by a single set of that kind; any other value stops the program.
 As the arguments are positional, the second one must be given to use the third,
@@ -519,11 +529,11 @@ valence wave-functions to the user and ask if it accepts the defaults.  In the n
 chooses new core radii.
 
 At the end of the calculation the user has five new files (back compatibility), an unformatted
-\texttt{pseudo.dat} file used later in tests and compatible with SIESTA,
+\texttt{pseudo.dat} file used later in tests,
 a \texttt{plot.dat} file used for later plotting,
-a formatted \texttt{psd.pot} file used for the Kleinman-Bylander transformation,
-and the files \textit{Xy}\texttt{\_POTRE.DAT} for PARSEC and \textit{Xy}\texttt{.psf} for SIESTA.
-The file \texttt{psd.pot} is therefore the key output file of the program.  IT IS NOW DIFFERENT
+a formatted \texttt{psd.pot} file used to pass the information for the Kleinman-Bylander transformation,
+and the files \textit{Xy}\texttt{\_POTRE.DAT} for PARSEC and \textit{Xy}\texttt{.psf} for \textsc{SIESTA}.
+The file \texttt{psd.pot} is therefore the key output file of the program.
 
 
 \subsection{Visualizing the pseudopotential}

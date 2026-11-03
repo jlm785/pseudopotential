@@ -1,9 +1,10 @@
 !>  Chooses the cut-off for the atomic basis functions
-!>  based on the SIESTA recipes
+!>  based on the SIESTA radii (energy shift ESHIFT) and
+!>  the rule in atom_kb_basis_rule
 !>
 !>  \author       J.L.Martins+claude
 !>  \version      6.1.0
-!>  \date         30 August 2021, 19 May 2022, 26 January 2026.
+!>  \date         30 August 2021, 3 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
@@ -17,6 +18,7 @@ subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
 ! fileparsec -> filereal. 26 January 2026. JLM
 ! highest available l potential instead of l = 0. 24 October 2026. JLM+claude
 ! second zeta is the relaxed energy derivative (r_bas = 0), up to 4 zeta. 24 October 2026. JLM+claude
+! r_siesta for all bound l, eshift parameter, basis from atom_kb_basis_rule. 3 November 2026. claude+JLM
 
   implicit none
 
@@ -109,7 +111,7 @@ subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
   integer                           ::  iflag                            !  iflag = 0: success; iflag = 1: failed to converge, iflag > 3: major error
   integer                           ::  nrevi                            !  wave-functions was calculated up to r(nrevi)
 
-  real(REAL64)                      ::  eshift
+  integer                           ::  l_occ                            !  highest l of a bound occupied orbital
 
   real(REAL64)                      ::  factor
   integer                           ::  ll
@@ -117,7 +119,12 @@ subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
 
 ! constants
 
-  real(REAL64), parameter           ::  ZERO = 0.0_REAL64, SMALL = 1.0E-6_REAL64
+  real(REAL64), parameter           ::  ZERO = 0.0_REAL64
+  real(REAL64), parameter           ::  SMALL = 1.0E-6_REAL64
+
+! Hard coded constants
+
+  real(REAL64), parameter           ::  ESHIFT = 0.02_REAL64             !  energy shift (Ry) of the SIESTA recipe
 
 ! counters
 
@@ -253,24 +260,25 @@ subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
     write(iowrite,'(i6,i6,4x,f14.6)') lo(i,0)+1,lo(i,0),ev(lo(i,0),0)
   enddo
 
-! loop over angular momentum  of bound occupied orbitals
+! highest angular momentum of a bound occupied orbital
 
   allocate(veff(mxdnr))
   allocate(rpsib(mxdnr))
   allocate(drpsibdr(mxdnr))
 
-
-  lmax_bas(:) = 0
+  l_occ = 0
   do l = lmax_pot,0,-1
     if( ev(l,0) < -SMALL .and. zo(l) > SMALL) then
-      lmax_bas(:) = l
+      l_occ = l
 
       exit
 
     endif
   enddo
 
-  do l = 0,lmax_bas(1)
+! r_99 and r_siesta for all l of the potential (r_siesta only for bound orbitals)
+
+  do l = 0,lmax_pot
 
     factor = ZERO
     ll = 4
@@ -282,6 +290,8 @@ subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
        if(factor > 0.99) exit
 
     enddo
+
+    if(ev(l,0) >= -SMALL) cycle
 
 !   uses the highest available l in the case potential is not available
 
@@ -300,12 +310,11 @@ subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
     enddo
     veff(1) = veff(2)
 
-!   siesta recipe: default value for PAO
+!   siesta recipe: last node of the solution at energy ev + ESHIFT
 
-    eshift = 0.02
     revi = 1.5*r_99(l)
     call atom_atm_difnrl_one(nr, r, drdi, d2rodr, veff, rpsib, drpsibdr,   &
-        l, ev(l,0)+eshift, revi, nrevi, iflag,                             &
+        l, ev(l,0)+ESHIFT, revi, nrevi, iflag,                             &
         iowrite, mxdnr)
 
     do j = 2,nrevi-1
@@ -316,54 +325,11 @@ subroutine atom_kb_basis_cutoff(n_bsets, tbasis, lmax_pot, nameat,       &
 
   enddo
 
-! loop over atomic basis sets
+! angular momenta and cutoff radii of the atomic basis sets
 
-  do i = 1,n_bsets
-
-    ch_temp = tbasis(i)
-    call chrcap(ch_temp,3)
-
-    if(ch_temp(1:2) == 'SZ') then
-
-      do l = 0,lmax_bas(i)
-        n_bas(l,i) = 1
-        r_bas(1,l,i) = 1.1*r_siesta(l)
-      enddo
-
-    elseif(ch_temp(1:2) == 'DZ') then
-
-!     second zeta is the relaxed energy derivative of the first (r_bas = 0)
-
-      do l = 0,lmax_bas(i)
-        if(l > 1 .and. abs(zo(l) - 2*(2*l+1)) < 0.01) then
-          n_bas(l,i) = 2
-          r_bas(1,l,i) = 1.1*r_siesta(l)
-          r_bas(2,l,i) = ZERO
-        else
-          n_bas(l,i) = 2
-          r_bas(1,l,i) = 1.0*r_siesta(l)
-          r_bas(2,l,i) = ZERO
-        endif
-      enddo
-
-    endif
-
-    if(ch_temp(3:3) == 'P') then
-
-      lmax_bas(i) = lmax_bas(i) + 1
-      l = lmax_bas(i)
-      if(ch_temp(1:2) == 'SZ') then
-        n_bas(l,i) = 1
-        r_bas(1,l,i) = max(1.1*r_siesta(1),1.1*r_siesta(0))
-      elseif(ch_temp(1:2) == 'DZ') then
-        n_bas(l,i) = 2
-        r_bas(1,l,i) = max(1.0*r_siesta(1),1.0*r_siesta(0))
-        r_bas(2,l,i) = ZERO
-      endif
-
-    endif
-
-  enddo
+  call atom_kb_basis_rule(n_bsets, tbasis, lmax_pot, l_occ,              &
+      r_siesta, lmax_bas, n_bas, r_bas, nz_bas,                          &
+      iowrite, mxdl, mxdset)
 
   deallocate(r)
   deallocate(lo)

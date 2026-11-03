@@ -6,14 +6,10 @@
 !>  A basis function with r_bas = 0 is the "relaxed" energy derivative phi
 !>  of the previous (confined) basis function psi, in the spirit of LAPW
 !>  linearization, but short ranged:
-!>  phi solves (H - E) phi = psi - w psi / <psi|w|psi>,  phi(r_c) = 0,
-!>  <psi|phi> = 0, where w(r) vanishes for r < r_w.  It is obtained as
-!>  phi = (d psi / d alpha) / <psi|w|psi> for the confined eigenfunction
-!>  of H + alpha w.  For r < r_w, phi = d psi / d E + c psi.
 !>
 !>  \author       claude+J.L.Martins
 !>  \version      6.1.0
-!>  \date         24 October 2026, 25 October 2026.
+!>  \date         24 October 2026, 3 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
@@ -25,7 +21,16 @@ subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
 ! split from atom_kb_sub. 24 October 2026. claude+JLM
 ! highest available l potential if l has none. 24 October 2026. JLM+claude
 ! relaxed energy derivative phi as basis function (r_bas = 0). 24 October 2026. claude+JLM
+! RWFAC = 0 (was 0.5) from atomic orbital vs plane-wave total energies. 3 November 2026. claude+JLM
 
+
+
+! For r_bas = 0, phi is the solution of (H - E) phi = psi - w psi / <psi|w|psi>,  phi(r_c) = 0,
+! <psi|phi> = 0, with w(r) = exp(-(r_c-r_w)/(r-r_w)) for r_w < r < r_c,
+! r_w = RWFAC r_c.  It is obtained as phi = (d psi / d alpha) / <psi|w|psi>
+! for the confined eigenfunction of H + alpha w.  For r < r_w,
+! phi = d psi / d E + c psi.  RWFAC = 0 (w = exp(-r_c/r)) gives the
+! lowest total energies in atomic orbital calculations.
 
 ! The relaxed energy derivative phi follows the spirit of the
 ! linearization with u and du/dE of LAPW/LMTO:
@@ -125,15 +130,18 @@ subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
 
 ! constants
 
-  real(REAL64), parameter           ::  ZERO = 0.0_REAL64
+  real(REAL64), parameter           ::  ZERO = 0.0_REAL64, UM = 1.0_REAL64
   real(REAL64), parameter           ::  SMALL = 1.0E-6_REAL64
   real(REAL64), parameter           ::  TOL = 1.0E-10_REAL64
   real(REAL64), parameter           ::  EPS = 1.0E-9_REAL64
+  real(REAL64), parameter           ::  ZP9 = 0.9_REAL64
+
+! Hard coded values
 
   integer, parameter                ::  IWTYPE = 2                       !  type of w(r):  1  ((r-rw)/(rc-rw))**NWPOW
                                                                          !                 2  exp(-(rc-rw)/(r-rw))  (smooth onset)
   integer, parameter                ::  NWPOW = 4                        !  power for IWTYPE = 1
-  real(REAL64), parameter           ::  RWFAC = 0.5_REAL64               !  rw = RWFAC * r_c
+  real(REAL64), parameter           ::  RWFAC = 0.0_REAL64               !  rw = RWFAC * r_c
   real(REAL64), parameter           ::  HALPHA = 1.0E-2_REAL64           !  step (Ry) in alpha for d psi / d alpha
 
   integer, parameter                ::  IOORB = 12                       !  tape for plotting the basis functions
@@ -214,8 +222,8 @@ subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
 
         do j = 2,nr
           veff_b(j) = (vionic(j,lpot,0)  + (l*(l+1))/r(j)) / r(j)  + vscreen(j)
-          if(r(j) > 0.9*revi .and. r(j) < revi) then
-            vsiesta = 40*( exp(-0.1*revi/(r(j)-0.9*revi)) / (revi- r(j) + SMALL) )
+          if(r(j) > ZP9*revi .and. r(j) < revi) then
+            vsiesta = 40*( exp(-(UM-ZP9)*revi/(r(j)-ZP9*revi)) / (revi- r(j) + SMALL) )
             veff_b(j) = veff_b(j) + vsiesta
           endif
 !         if(r(j) > 0.8*revi .and. r(j) < revi) then
