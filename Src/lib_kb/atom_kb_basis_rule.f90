@@ -4,7 +4,7 @@
 !>
 !>  \author       claude+J.L.Martins
 !>  \version      6.1.0
-!>  \date         3 November 2026.
+!>  \date         3 November 2026, 5 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_basis_rule(n_bsets, tbasis, lmax_pot, l_occ,          &
@@ -12,6 +12,7 @@ subroutine atom_kb_basis_rule(n_bsets, tbasis, lmax_pot, l_occ,          &
          iowrite, mxdl, mxdset)
 
 ! written 3 November 2026 from the rules in atom_kb_basis_cutoff. claude+JLM
+! one perturbative polarization function (SIESTA) for SZP and DZP. 5 November 2026. claude+JLM
 
 
 ! Angular momenta:  atomic orbitals for l = 0,...,la with
@@ -24,10 +25,13 @@ subroutine atom_kb_basis_rule(n_bsets, tbasis, lmax_pot, l_occ,          &
 ! Cutoff radii:
 !   atomic orbitals       r_c(l) = min( max( F_l r_siesta(l), RMIN ), RMAX )
 !                         F_l = FAC_S for l = 0, FAC_L for l > 0
-!   polarization          r_c = min( max( FAC_POL max(r_siesta(0),r_siesta(1)), RMIN ), RMAX )
+!   polarization          r_c(la) (the cutoff of the polarized orbital)
 !
 ! SZ: one function for each l.  DZ: the second function is the relaxed
 ! energy derivative of the first (r_bas = 0).
+! P: one polarization function (SZP and DZP), the perturbative
+! polarization of the first function of la (nz_bas = -1), as in SIESTA,
+! with its cutoff.
 !
 ! The constants were chosen comparing the atomic orbital (DZP) and
 ! plane-wave total energies with cpw for the elemental solids of
@@ -63,7 +67,6 @@ subroutine atom_kb_basis_rule(n_bsets, tbasis, lmax_pot, l_occ,          &
   integer                           ::  la                               !  highest l of the atomic (not polarization) orbitals
   integer                           ::  nzeta                            !  1 (SZ) or 2 (DZ)
   real(REAL64)                      ::  rc_l(0:mxdl)                     !  cutoff of the atomic orbitals
-  real(REAL64)                      ::  rc_pol                           !  cutoff of the polarization orbitals
   character(len=3)                  ::  ch_temp
 
 ! constants
@@ -72,7 +75,6 @@ subroutine atom_kb_basis_rule(n_bsets, tbasis, lmax_pot, l_occ,          &
 
   real(REAL64), parameter           ::  FAC_S = 1.45_REAL64              !  r_c / r_siesta for l = 0
   real(REAL64), parameter           ::  FAC_L = 1.15_REAL64              !  r_c / r_siesta for l > 0
-  real(REAL64), parameter           ::  FAC_POL = 1.0_REAL64             !  r_c / max(r_siesta(0),r_siesta(1)) for polarization
   real(REAL64), parameter           ::  RMIN = 6.0_REAL64                !  smallest cutoff (bohr)
   real(REAL64), parameter           ::  RMAX = 9.0_REAL64                !  largest cutoff (bohr)
   integer, parameter                ::  LPOLMAX = 3                      !  no polarization orbitals above f
@@ -100,12 +102,6 @@ subroutine atom_kb_basis_rule(n_bsets, tbasis, lmax_pot, l_occ,          &
     endif
   enddo
 
-  if(lmax_pot > 0) then
-    rc_pol = min( max( FAC_POL*max(r_siesta(0),r_siesta(1)), RMIN ), RMAX )
-  else
-    rc_pol = min( max( FAC_POL*r_siesta(0), RMIN ), RMAX )
-  endif
-
   do i = 1,n_bsets
 
     ch_temp = tbasis(i)
@@ -127,8 +123,9 @@ subroutine atom_kb_basis_rule(n_bsets, tbasis, lmax_pot, l_occ,          &
     if(ch_temp(3:3) == 'P') then
       if(la+1 <= LPOLMAX .and. la+1 <= mxdl) then
         lmax_bas(i) = la+1
-        n_bas(la+1,i) = nzeta
-        r_bas(1,la+1,i) = rc_pol
+        n_bas(la+1,i) = 1
+        r_bas(1,la+1,i) = rc_l(la)
+        nz_bas(1,la+1,i) = -1
       else
         write(iowrite,'(/,"   No polarization orbitals (l = ",i2,          &
             &   ") in basis set ",i3)') la+1, i
@@ -145,7 +142,7 @@ subroutine atom_kb_basis_rule(n_bsets, tbasis, lmax_pot, l_occ,          &
     write(iowrite,'(i5,2f11.4)') l, r_siesta(l), rc_l(l)
   enddo
   if(la+1 <= LPOLMAX) then
-    write(iowrite,'(i5,11x,f11.4,"   polarization")') la+1, rc_pol
+    write(iowrite,'(i5,11x,f11.4,"   perturbative polarization of l = ",i2)') la+1, rc_l(la), la
   endif
 
   return

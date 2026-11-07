@@ -2,7 +2,7 @@
 !>
 !>  \author       J.L.Martins+claude
 !>  \version      6.1.0
-!>  \date         14 January 2026, 25 October 2026.
+!>  \date         14 January 2026, 5 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
@@ -12,6 +12,7 @@ subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
 ! split from atom_kb_setup. 14 January 2026. JLM
 ! up to 4 zeta, r_bas = 0 for relaxed energy derivative of previous function. 24 October 2026. JLM+claude
 ! range of number of basis sets in prompt. 25 October 2026. claude
+! perturbative polarization (nz_bas = -1, radius -1 in the input). 5 November 2026. claude+JLM
 
   implicit none
 
@@ -116,7 +117,9 @@ subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
       do l = 0,lmax_bas(j)
         write(6,'(i5,2(3x,f10.3),3x)', advance='no') l, r_siesta(l), r_99(l)
         do i = 1,n_bas(l,j)
-          if(r_bas(i,l,j) > EPS) then
+          if(nz_bas(i,l,j) < 0) then
+            write(6,'(3x,f10.3,2x,a)', advance='no') r_bas(i,l,j), 'pol'
+          elseif(r_bas(i,l,j) > EPS) then
             write(6,'(3x,f10.3,2x,i2)', advance='no') r_bas(i,l,j), nz_bas(i,l,j)
           else
             write(6,'(a)', advance='no') '          phi    '
@@ -126,6 +129,8 @@ subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
       enddo
       write(6,*)
       write(6,*) '  phi: relaxed energy derivative of the previous function'
+      write(6,*) '  pol: perturbative polarization of the first l-1 function',  &
+                 ' (its cutoff)'
       write(6,*)
 
       write(6,*)
@@ -208,9 +213,15 @@ subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
             write(6,'("  Enter the cutoff radius for basis functions l = ",  &
               &    i2," n = ",i3)') l, i
             if(i > 1) then
-              if(r_bas(i-1,l,j) > EPS) then
+              if(r_bas(i-1,l,j) > EPS .and. nz_bas(i-1,l,j) >= 0) then
                 write(6,*) '  (or 0 for the energy derivative of the ',     &
                            'previous function, recommended)'
+              endif
+            elseif(l > 0) then
+              if(r_bas(1,l-1,j) > EPS .and. nz_bas(1,l-1,j) >= 0) then
+                write(6,*) '  (or -1 for the perturbative polarization of ', &
+                           'the first l-1 function, recommended for ',       &
+                           'polarization)'
               endif
             endif
             write(6,*)
@@ -219,10 +230,18 @@ subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
             if(r_in > SMALL) then
               lvalid = .TRUE.
               if(r_in < 1.0 .or. r_in > 15.0) write(6,*) '  Strange value...'
+              if(nz_bas(i,l,j) < 0) nz_bas(i,l,j) = 0
             elseif(abs(r_in) <= SMALL .and. i > 1) then
-              if(r_bas(i-1,l,j) > EPS) then
+              if(r_bas(i-1,l,j) > EPS .and. nz_bas(i-1,l,j) >= 0) then
                 lvalid = .TRUE.
                 r_in = ZERO
+                nz_bas(i,l,j) = 0
+              endif
+            elseif(r_in < -SMALL .and. i == 1 .and. l > 0) then
+              if(r_bas(1,l-1,j) > EPS .and. nz_bas(1,l-1,j) >= 0) then
+                lvalid = .TRUE.
+                r_in = r_bas(1,l-1,j)
+                nz_bas(i,l,j) = -1
               endif
             endif
 
@@ -230,7 +249,8 @@ subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
 
             write(6,*)
             if(i == 1) then
-              write(6,*) '  The cutoff radius must be > 0'
+              write(6,*) '  The cutoff radius must be > 0, or -1 for ',    &
+                         'polarization if l-1 starts with a confined orbital'
             else
               write(6,*) '  The cutoff radius must be > 0, or 0 if the ',   &
                          'previous function is not an energy derivative'
@@ -242,8 +262,12 @@ subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
           else
             if(i == 1) then
               if(r_bas(i,l,j) <= EPS) r_bas(i,l,j) = max(r_siesta(l),r_siesta(0))
-            elseif(r_bas(i-1,l,j) > EPS) then
+              nz_bas(i,l,j) = max(nz_bas(i,l,j),0)
+            elseif(r_bas(i-1,l,j) > EPS .and. nz_bas(i-1,l,j) >= 0) then
               r_bas(i,l,j) = ZERO
+            elseif(nz_bas(i-1,l,j) < 0) then
+              r_bas(i,l,j) = r_bas(i-1,l,j)
+              nz_bas(i,l,j) = 0
             else
               r_bas(i,l,j) = 1.2*r_bas(i-2,l,j)
             endif
@@ -272,9 +296,9 @@ subroutine atom_kb_setup_basis(n_bsets, tbasis,                          &
         do l = 0,lmax_bas(j)
           do i = 1,n_bas(l,j)
 
-!           not used for energy derivatives
+!           not used for energy derivatives or polarization functions
 
-            if(r_bas(i,l,j) > EPS) then
+            if(r_bas(i,l,j) > EPS .and. nz_bas(i,l,j) >= 0) then
 
               write(6,*)
               write(6,*) '  Enter the number of non-trivial nodes for ',   &

@@ -18,6 +18,7 @@
 \parskip 5pt
 
 \usepackage{tikz}
+\usepackage{amsmath}
 \usetikzlibrary{arrows.meta}
 
 \begin{document}
@@ -293,8 +294,10 @@ code still uses those file formats of several decades ago.
 The good news about the present version, is that, except for their presence in the working directory,
 you do not have to worry about them in most cases.
 
-You can run the whole pseudopotential generation and testing procedure at once, or run step by step.
-As the code uses intermediary files you can go back and repeat the steps you want, for example
+You can run the whole pseudopotential generation and testing procedure at once, or run step by step.  Each step is one of the rectangular boxes in Fig.~\ref{fig:diagram},
+the whole generation and testing procedure runs in a single shot all the steps.
+As the code uses intermediary files you can go back and repeat
+each of the steps you want, for example
 to modify the default values of parameters or generate new graphics.
 
 \textbf{WARNING:} the defaults of the code are ``educated guesses'' for the majority of atoms.
@@ -316,7 +319,7 @@ with the default choices.   \textbf{WARNING:} the defaults of the code are ``edu
 for the majority of atoms, in particular transition metals, Lanthanides, and Actinides.
 Any pseudopotential should be thoroughly tested before being used!
 
-\subsection{Running with all tests and plots}
+\subsection{Running pseudopotential construction with all tests and plots}
 \label{sec:run-all}
 
 Assuming you have gnuplot installed and you copied the executables to the code root, you can run
@@ -355,7 +358,6 @@ file & code \\
 \textit{Xy}\texttt{.psf}  & \textsc{SIESTA} \\
 \textit{Xy}\texttt{\_POTKB\_F.DAT} & \textsc{cpw2000} \\
 \textit{Xy}\texttt{\_POTRE.DAT} & \textsc{PARSEC} \\
-\texttt{psd.pot} & This code \\
 \hline
 \end{tabular}
 \end{table}
@@ -363,9 +365,9 @@ file & code \\
 Notice that \textit{Xy}\texttt{.psf} and \textit{Xy}\texttt{\_POTRE.DAT} are very similar.
 The first part of the internal file \texttt{psd.pot} is similar to those, however it includes at the end the information
 about the partial core kinetic energy density.
-
 Finally you get many graphics related files, \texttt{*.pdf} and \texttt{*.gp},
 and a few \texttt{*.dat} internal data files.
+For details see the description of running the code step by step below.
 
 \subsubsection{First command line argument}
 
@@ -382,7 +384,13 @@ You can also run in a full interactive mode
 
 \noindent
 where you are asked to override the default values, and therefore can be cumbersome.
-Overriding the defaults is easier by running sequentially the relevant sections of the code.
+Overriding the defaults is easier by running individually each main
+component of the code.
+The interactive mode is described below in the section for the step by step run.
+In the interactive mode a "wrong answer" will cause the program to ignore it and proceed
+with the default value, eventually giving a second chance to the user to enter an
+answer in the accepted range.
+
 
 The most useful first argument is the chemical symbol,
 
@@ -402,7 +410,7 @@ be altered in that way, it is easier to do it by the second argument of the
 command line, that takes the values \texttt{yes/no} force using or not using the
 partial core correction.
 
-The code generates ``\textsc{SIESTA}-like'' atomic orbitals.  By default two
+The code generates ``\textsc{SIESTA}-like'' confined atomic orbitals.  By default two
 basis sets are built and written to the \textit{Xy}\texttt{\_POTKB\_F.DAT} file
 (and to \texttt{basis\_orbitals.dat}): set 1 is double-zeta with polarization (DZP)
 and set 2 is single-zeta (SZ).  The second zeta is the relaxed energy derivative
@@ -410,24 +418,21 @@ $\phi$ of the first one.
 The atomic orbitals have angular momenta $l = 0, \ldots, l_a$, where $l_a$ is the larger
 of the highest occupied $l$ and $l_{\max}-1$, $l_{\max}$ being the highest angular momentum
 of the pseudopotential, and the polarization orbitals have $l_a+1$ (not above $f$).
-The cutoff radius of an atomic orbital is $r_c = \min(\max(F_l\, r_S(l), 6), 9)$~bohr,
-where $r_S(l)$ is the \textsc{SIESTA} radius for an energy shift of 0.02~Ry,
-$F_0 = 1.45$ and $F_l = 1.15$ for $l > 0$.  The polarization orbitals use
-$r_c = \min(\max(\max(r_S(0), r_S(1)), 6), 9)$~bohr.  These constants minimize the
-difference between the atomic-orbital and plane-wave total energies of the elemental
-solids calculated with \texttt{cpw}, and are parameters in \texttt{atom\_kb\_basis\_rule.f90}.
+There is a single polarization orbital (in SZP and DZP), the perturbative polarization
+of the first $l_a$ orbital $\psi$ as in \textsc{SIESTA}.
 The third argument, which takes the values
 \texttt{SZ/SZP/DZ/DZP} (lower case is accepted), replaces the two default sets
 by a single set of that kind; any other value stops the program.
 As the arguments are positional, the second one must be given to use the third,
 for example \texttt{../atom\_all.exe Si no DZ}.
+See section~\ref{sec:orbital} for the details on how these orbitals are constructed.
 
 
 \subsection{Running step by step}
 \label{sec:run-steps}
 
-\texttt{atom\_all} runs everything at once.  The same work can be done by a few
-smaller programs that communicate through files, described in the next subsections.
+While \texttt{atom\_all} runs everything at once, the same results can be obtained by a few
+smaller programs that communicate through files as described in the next subsections.
 Running them step by step makes it easy to repeat one of the steps, for example
 with other core radii or another local component, without repeating the others.
 Figure~\ref{fig:diagram} shows the programs and the files each of them reads
@@ -499,19 +504,109 @@ file is for fixed format read (back-compatibility).
 
 If the validation step of Section~\ref{sec:valid} was run, the user can find \texttt{atom.dat}
 for all atoms in the folders \texttt{Validation/res\_}\textit{Xy} where \textit{Xy}
-is the chemical symbol.  It is the starting point for the construction of a good pseudopotential.
+is the chemical symbol.  Modifying this file is the starting point for the construction of a good pseudopotential.
 
 At the end of the \texttt{atom.exe} calculation a file \texttt{datafile.dat} is written with the information of the
-atomic configuration and self-consistent potential.
+atomic configuration and self-consistent potential to be used by the pseudopotential generation code.
+In the interactive mode the output goes to the default output, in contrast to the non-interactive
+all at once mode where the output goes to the \texttt{atom.out} file.
+The output is largely self-explanatory.  All energies are in Rydberg
+unless explicitly stated, and all lengths in Bohr radii.
+At the top of the example of the output shown below, 
+we have: the information on the date the code was run;
+the choice of the correlation functional, ``ca'' meaning the LDA based on Ceperley-Alder
+homogeneous electron gas results; The core and electronic charge, and
+the atomic configuration with quantum numbers and occupation (\texttt{occ})
+\begin{verbatim}
+ atom-LDAca04-Nov-26           Si      file generated by atm_write 04-Nov-26
+*********************
 
-The output file \texttt{atom.out} is largely self-explanatory.  All energies are in Rydberg
-unless explicitly stated, and all lengths in Bohr radii.  For each orbital it lists
+ Si pseudopotential generation
+ -----------------------------
+
+ correlation = ca   nonspin-polarized
+
+ nuclear charge             = 14.000000
+ number of core orbitals    =  3
+ number of valence orbitals =  3
+ electronic charge          = 14.000000
+ ionic charge               =  0.000000
+
+
+ input data for orbitals
+
+  i    n    l    s     j     occ
+
+  1    1    0   0.0   0.0    2.0000
+  2    2    0   0.0   0.0    2.0000
+  3    2    1   0.0   0.0    6.0000
+  4    3    0   0.0   0.0    2.0000
+  5    3    1   0.0   0.0    2.0000
+  6    3    2   0.0   0.0    0.0000
+\end{verbatim}
+Next we have the description of the radial mesh used in the calculation,
+\begin{verbatim}
+ radial grid parameters
+
+ r(1) = .0 , r(2) =  0.887E-06 , ... , r(2686) = 119.814
+ a =  6.000  b = 200.000
+\end{verbatim}
+indicating that we have 2686 points on the grid, the first being the origin, 
+the second $r(2)$ at $0.887\times 10^{-6}$~bohr, and the last at almost 120~bohr.
+See subsection\ref{sec:radial} for how the radial grid is constructed using
+the values of $a$ and $b$.
+
+For each orbital we have a list
 \begin{itemize}
 \item \texttt{a extr}, the value of the wave-function $\psi$ where $|r\psi|$ has an extremum;
 \item \texttt{r extr}, the radius of that extremum;
 \item \texttt{r zero}, the radii where $\psi = 0$ (nodes);
 \item \texttt{r 90/99 \%}, the radii that contain 90\% and 99\% of the charge of the orbital.
 \end{itemize}
+For the $3p$ orbital of Si one obtains
+\begin{verbatim}
+ n = 3  l = 1  s = 0.0
+        a extr         0.264  -0.620
+        r extr         0.316   2.146
+        r zero         0.718
+        r 90/99 %      4.463   6.726
+\end{verbatim}
+showing extrema at 0.316 and 2.146~bohr, and a node at 0.718~bohr.  It also shows that
+90\% of the electron density in that orbital is within a 4.463 radius and 99\% within 6.726~bohr.
+
+Next we have the eigenvalues, kinetic energy and Coulomb potential energy of the orbitals (in Rydberg),
+\begin{verbatim}
+Total number of iterations needed for electron screening potential is 16
+ 
+
+
+ Si output data for orbitals
+ ----------------------------
+
+ nl    s      occ         eigenvalue    kinetic energy      pot energy
+
+ 1s   0.0    2.0000    -130.36911374     183.01377674    -378.73491523
+ 2s   0.0    2.0000     -10.14892755      25.89954327     -71.62102263
+ 2p   0.0    6.0000      -7.02876330      24.42537956     -68.74331327
+ 3s   0.0    2.0000      -0.79662747       3.23745219     -17.68692632
+ 3p   0.0    2.0000      -0.30705182       2.06135800     -13.62572590
+ 3d   0.0    0.0000       0.00231324       0.00232980      -0.38199473
+\end{verbatim}
+and finally a control of the virial theorem.  For non-relativistic
+calculations the viria sum should be zero.  For relativistic
+calculations the theorem does hold.  In this case we see that
+the virial sum is close to zero (within 2 meV).
+\begin{verbatim}
+virial theorem(nonrelativistic)
+ --------------
+
+ kinetic energy  *  2      =     1149.95307571
+ potential energy          =    -1151.36048794
+ virial correction         =        1.40722738
+ ---------------------------------------------
+ virial sum                =       -0.00018485
+\end{verbatim}
+
 
 
 \subsection{Constructing the pseudopotential}
@@ -522,11 +617,143 @@ pseudopotential run
 
 \noindent\texttt{atom/WORK\$ ../psd{\_}gen.exe}
 
-The program reads the all-electron results from the \texttt{datafile.dat}, suggested core radii from the
+The program reads the all-electron results from the \texttt{datafile.dat},
+presents a short resume of the results of the all-electrons calculation
+and the current values for core radii, and asks the user if they should
+be modified.
+\begin{verbatim}
+
+   Found a file with all-electron results for Si
+
+
+   Calculation was done with Ceperley-Alder LDA
+
+
+   Based on a non-spin-polarized and non-relativistic calculation
+
+
+   Calculation was run on 04-Nov-26 with code version 6.1.0
+
+
+
+   The current value of core radii are:
+
+   l =  0  rc =        1.800
+   l =  1  rc =        1.800
+   l =  2  rc =        1.800
+
+   Do you want ot modify them? (y/n)
+\end{verbatim}
+if you answer yes you will be presented with
+suggested core radii from the
 \texttt{atom.dat} file and from an internal table of default values,
-and presents that information plus data on maxima and last node of the
-valence wave-functions to the user and ask if it accepts the defaults.  In the negative case the user
-chooses new core radii.
+plus data on maxima and last node of the
+valence wave-functions.  It then asks for the maximum angular momentum
+of the pseudopotential channels, and indicates the accepted range.
+If you give a value out of the accepted range, the program will proceed with the default
+value.
+
+The next question is about the partial core correction for the exchange and correlation,
+the user is presented with the current situation, and is asked if he wants to change it.
+Next the user is asked if he wants to change the radius where the partial core sets in.
+The reference radius is the outermost point $r_\text{ref}$ where the core and valence electron densities
+are equal, $\rho_\text{core}(r_\text{ref}) = \rho_\text{valence}(r_\text{ref})$.
+The radius for the partial core correction is $r_\text{pcc} = c_\text{fac} r_\text{ref}$,
+the default value is $c_\text{fac} = 1$ (\texttt{cfac} in the question).
+For more details see the section\ref{sec:cc}
+
+The code will next ask if the user wants to change the radius for the partial
+core kinetic energy density, $r_{\text{pc}\tau} = c_{\text{fac}\tau} r_\text{ref}$,
+and in case of an affirmative answer, the user would enter $c_{\text{fac}\tau}$ (cfactau).
+
+Once the question are answered, the code will print the
+parameters that describe the Troullier-Martins pseudopotential,
+and the the truncated (partial) kinetic energy,
+\begin{verbatim}
+Si pseudopotential generation using the Improved Troullier and Martins method
+ ------------------------------------------------------------
+
+ nl    s    eigenvalue      rc          cdrc       delta       gamma       alpha_j
+
+ 1s   0.0   -0.796627    1.796507    0.369768   -1.387513    0.708147   -0.100295   -0.135680    0.064070   -0.011350    0.000743
+ 2p   0.0   -0.307052    1.796507    0.206765   -0.943628   -0.236975   -0.008022    0.021175   -0.012269    0.002763   -0.000219
+ 3d   0.0    0.002313    1.796507    0.000000   -8.732549   -0.883722   -0.086774    0.195276   -0.074053    0.012337   -0.000790
+ core kinetic energy =    564.38
+
+ kinetic energy density truncated
+ inside r =  1.204
+ ac =  6.954 bc = -4.133 cc =  0.491
+
+ truncated core kinetic energy =     63.31
+\end{verbatim}
+it will then list the caracteristics of the pseudo-wavefunctions, as described in the previous section,
+\begin{verbatim}
+n = 1  l = 0  s = 0.0
+        a extr         0.737
+        r extr         1.778
+        r zero
+        r 90/99 %      3.306   4.835
+
+ n = 2  l = 1  s = 0.0
+        a extr         0.620
+        r extr         2.146
+        r zero
+        r 90/99 %      4.463   6.726
+
+ n = 3  l = 2  s = 0.0
+        a extr         0.150
+        r extr        80.446
+        r zero
+        r 90/99 %     99.081 111.157
+\end{verbatim}
+and the core radii (bohr), binding energy (Rydberg),
+and pseudopotential values at origin and minimum (more negative) values.
+\begin{verbatim}
+ test of eigenvalues
+
+ rcut =  s   1.80  p   1.80  d   1.80
+ eval =  -0.79661  -0.30704   0.00231
+
+
+
+ l    vps(0)    vpsmin      at r
+
+ s     0.065    -5.501     1.392
+ p    -6.064    -6.064     0.000
+ d   -15.757   -15.757     0.000
+\end{verbatim}
+Next it will show the eigenvalue, kinetic energy and bare potential energy of the pseudo-wavefunctions,
+\begin{verbatim}
+Si output data for orbitals
+ ----------------------------
+
+ nl    s      occ         eigenvalue    kinetic energy      pot energy
+
+ 1s   0.0    2.0000      -0.79661328       0.51034020      -3.73919585
+ 2p   0.0    2.0000      -0.30703675       0.76934634      -3.25652725
+ 3d   0.0    0.0000       0.00231324       0.00232980      -0.10914135
+\end{verbatim}
+the eigenvalues should be the same as the all-electron calculation.
+Finally it will show the energy contributions for the pseudo-atom.
+\begin{verbatim}
+ total energies
+ --------------
+
+ sum of eigenvalues        =       -2.20730006
+ kinetic energy from ek    =        2.55937308
+ el-ion interaction energy =      -13.99144619
+ el-el  interaction energy =        5.86809482
+ vxc    correction         =       -2.51140668
+ virial correction         =        0.17637063
+ exchange + corr energy    =       -1.92764767
+ kinetic energy from ev    =        2.55936317
+ potential energy          =      -10.05099904
+ ---------------------------------------------
+ total energy              =       -7.49163587
+\end{verbatim}
+
+
+
 
 At the end of the calculation the user has five new files (back compatibility), an unformatted
 \texttt{pseudo.dat} file used later in tests,
@@ -1078,5 +1305,98 @@ Pseudopotentials are generated up to $g$ ($l = 4$).
 
 This completes the discussion of the more common features of the input
 file.
+
+\section{Computational details}
+
+\subsection{Radial grid}
+\label{sec:radial}
+
+The radial grid points are given by
+\begin{equation}
+   r(n) = \frac{\exp(-a)}{Z}\Bigl(\exp\bigl((n-1)/b\bigr)-1\Bigr),\qquad n = 1,\ldots,n_\text{max}
+\end{equation}
+where $a$ and $b$ are constants that can be modified in \texttt{atom.dat},
+$Z$ is the atomic number,
+and $n_\text{max}$ is chosen such that $r(n_\text{max}) < r_\text{max}$,
+the maximum extension of the radial grid, which can also be set in \texttt{atom.dat}.
+Near the origin the grid is almost linear,
+\begin{equation}
+   r(n) \simeq (n-1)\frac{\exp(-a)}{b Z},
+\end{equation}
+with spacing inversely proportional to $Z$ as required by the first (1s) orbital.
+For large radii it is logarithmic,
+\begin{equation}
+   \frac{r(n)}{r(n-1)} \simeq 1 - \frac{1}{b},
+\end{equation}
+so doubling $r_\text{max}$ requires a number of points proportional
+and of the order of $b$.
+
+\subsection{Solving radial equations}
+\label{sec:solveq}
+
+The radial equations for the relativistic and non-relativistic wave-functions
+are solved on the radial grid with a predictor-corrector algorithm.
+The predictor is the 5-th order Adams-Bashfort and the corrector
+is the 5-th order Adams-Moulton.
+To start the integration the wave-functions are expanded near the origin.
+It has been checked that with increased radial grid quality, the eigenvalues
+converge to the analytical known values.
+
+\subsection{Atomic orbitals}
+\label{sec:orbital}
+
+The code produces atomic orbitals that are used by the \textsc{cpw2000} code,
+for both producing very good starting guesses for the plane-wave iterative
+diagonalization and for the modified tight-binding (MTB) interpolation.
+These orbitals are almost the same as used in the \textsc{siesta} code,
+and are of one of three types:
+\begin{itemize}
+  \item
+    A basic confined orbital, identical to the siesta first orbital,
+    as a cutoff radius beyond which it is zero.
+    For an angular momentum $l$, the radial equation is solved
+    with an energy shift $\delta E$ above the eigenvalue of the
+    valence state, this will have a node at $r_{S(l)}$,
+    the ``\textsc{siesta} radius''. In the code $\delta E=0.02$~Ry,
+    in recent \textsc{siesta} code it is slightly smaller, $\delta E=0.2$~eV,
+    and can be modified by the user.
+    The cutoff radius of an atomic orbital with that angular momentum
+    will be $r_c = \min(\max(F_l\, r_{S(l)}, 6), 9)$~bohr,
+    $F_0 = 1.45$ and $F_l = 1.15$ for $l > 0$.
+    The atomic orbital is then the solution of the Schr\"odinger
+    equation with a confining potential,
+    \begin{equation}
+       W(r) = \begin{cases}
+                A \exp\Bigl(-\frac{(1-f)r_c}{r - f F_c}\Bigr) \frac{1}{r_c-r}, & \text{if} f r_c < r < r_c \\
+                0, & \text{otherwise}
+              \end{cases}
+    \end{equation}
+    with $A = 40$~Ry and $f = 0.9$.
+  \item
+    The second confined orbital for angular momentum $l$ is different from the
+    \textsc{SIESTA} recipe, it attempts to be similar to the energy derivative of the first confined orbital, $psi(r)$.  It is the solution of the equation
+    \begin{equation}
+      (H-E) \phi(r) = \psi(r) - W(r) \psi(r) \frac{1}{\langle \psi \mid W \mid \psi \rangle},
+      \qquad \langle \psi \mid \phi \rangle =0, \qquad \phi(r_c) = 0,
+    \end{equation}
+    with in this case $W(r) = \exp(-r_c/r)$.
+  \item
+    The polarization orbitals use
+    $r_c = \min(\max(\max(r_S(0), r_S(1)), 6), 9)$~bohr.  These constants minimize the
+    difference between the atomic-orbital and plane-wave total energies of the elemental
+    solids calculated with \textsc{cpw2000}, and are parameters in
+    \texttt{atom\_kb\_basis\_rule.f90}.
+    The perturbative polarization
+    of the first $l_a$ orbital $\psi$ as in \textsc{SIESTA}, the solution of
+    $(H_{l_a+1} - \epsilon)\, u = - r^{p}\, u_\psi$ that vanishes at the cutoff radius of $\psi$,
+    with the confinement and eigenvalue $\epsilon$ of $\psi$ ($u = rR$).
+    The \textsc{SIESTA} papers write the source with $p = 1$ (the response to an electric field),
+    but the \textsc{SIESTA} code (version 5.4.2) effectively uses $p = -1/2$, which gives a more
+    compact orbital and lower total energies; $p = -1/2$ is the default (parameter
+    \texttt{POLPOW} in \texttt{atom\_kb\_polarization.f90}).
+
+\end{itemize}
+
+
 
 \end{document}

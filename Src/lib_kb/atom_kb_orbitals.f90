@@ -7,9 +7,13 @@
 !>  of the previous (confined) basis function psi, in the spirit of LAPW
 !>  linearization, but short ranged:
 !>
+!>  A basis function with nz_bas < 0 (first function of l > 0) is the
+!>  perturbative polarization (as in SIESTA) of the first function of l-1,
+!>  with its cutoff, confinement and energy (atom_kb_polarization).
+!>
 !>  \author       claude+J.L.Martins
 !>  \version      6.1.0
-!>  \date         24 October 2026, 3 November 2026.
+!>  \date         24 October 2026, 5 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
@@ -22,6 +26,7 @@ subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
 ! highest available l potential if l has none. 24 October 2026. JLM+claude
 ! relaxed energy derivative phi as basis function (r_bas = 0). 24 October 2026. claude+JLM
 ! RWFAC = 0 (was 0.5) from atomic orbital vs plane-wave total energies. 3 November 2026. claude+JLM
+! perturbative polarization orbitals (nz_bas < 0). 5 November 2026. claude+JLM
 
 
 
@@ -125,8 +130,10 @@ subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
   real(REAL64)                      ::  phide                            !  <phi|H-E|phi> / <phi|phi>
   real(REAL64)                      ::  phimax                           !  max |phi|
   integer                           ::  nodes
-  character(len=3)                  ::  kind_b                           !  psi (confined) or phi (energy derivative)
+  character(len=3)                  ::  kind_b                           !  psi (confined), phi (energy derivative) or pol (perturbative polarization)
   integer                           ::  ll
+  integer                           ::  nsrc                             !  index of the source of a polarization function
+  integer, allocatable              ::  nfirst(:)                        !  index of the first function of l in the current set
 
 ! constants
 
@@ -161,6 +168,7 @@ subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
   allocate(dpsi_h(mxdnr))
   allocate(wrel(mxdnr))
   allocate(veff_w(mxdnr))
+  allocate(nfirst(0:mxdl))
 
   rpsi_b = ZERO
   lo_b = 0
@@ -173,6 +181,8 @@ subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
   write(iowrite,'("   psi: confined orbital, E is its eigenvalue (Ry)")')
   write(iowrite,'("   phi: relaxed energy derivative of the previous psi, ",  &
        &   "E = <phi|H|phi> (Ry)")')
+  write(iowrite,'("   pol: perturbative polarization of the first function ", &
+       &   "of l-1, E = <pol|H|pol> (Ry)")')
   if(IWTYPE == 1) then
     write(iowrite,'("        w(r) = ((r-r_w)/(r_c-r_w))**",i2,                &
        &   ",  r_w = ",f6.3," r_c")') NWPOW, RWFAC
@@ -186,15 +196,88 @@ subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
   do nb = 1, n_bsets
 
     n = 0
+    nfirst(:) = 0
 
     do l = 0,lmax_bas(nb)
     do i = 1,n_bas(l,nb)
       n = n+1
       lo_b(n,nb) = l
+      if(i == 1) nfirst(l) = n
 
       errphi = ZERO
 
-      if(r_bas(i,l,nb) > EPS) then
+      if(nz_bas(i,l,nb) < 0) then
+
+!       perturbative polarization of the first function of l-1,
+!       with its cutoff revi, confinement and energy evl
+
+        kind_b = 'pol'
+
+        nsrc = 0
+        if(i == 1 .and. l > 0) nsrc = nfirst(l-1)
+        if(nsrc == 0) then
+          write(6,*)
+          write(6,*) '  Stopped in atom_kb_orbitals:'
+          write(6,*) '  Polarization function must be the first function ',  &
+                     'of l > 0 with functions for l-1, l = ',l,' zeta = ',i, &
+                     ' set ',nb
+          write(6,*)
+
+          STOP
+
+        endif
+        if(r_bas(1,l-1,nb) <= EPS .or. nz_bas(1,l-1,nb) < 0) then
+          write(6,*)
+          write(6,*) '  Stopped in atom_kb_orbitals:'
+          write(6,*) '  Polarization of a function that is not a confined ',  &
+                     'orbital, l = ',l,' set ',nb
+          write(6,*)
+
+          STOP
+
+        endif
+
+        evl = ev_b(nsrc)
+        revi = r_bas(1,l-1,nb)
+
+        lpot = -1
+        do k = 1,npot(0)
+          if(lo(k,0) == l) lpot = l
+        enddo
+        if(lpot < 0) then
+          do k = 1,npot(0)
+            if(lo(k,0) > lpot) lpot = lo(k,0)
+          enddo
+          write(iowrite,'("   No potential for l = ",i2," in basis set ",i3, &
+              &   ", using the l = ",i2," potential")') l, nb, lpot
+        endif
+
+        do j = 2,nr
+          veff_b(j) = (vionic(j,lpot,0)  + (l*(l+1))/r(j)) / r(j)  + vscreen(j)
+          if(r(j) > ZP9*revi .and. r(j) < revi) then
+            vsiesta = 40*( exp(-(UM-ZP9)*revi/(r(j)-ZP9*revi)) / (revi- r(j) + SMALL) )
+            veff_b(j) = veff_b(j) + vsiesta
+          endif
+        enddo
+        veff_b(1) = veff_b(2)
+
+        nrc_b(n) = nrc_b(nsrc)
+
+        call atom_kb_polarization(nr, r, drdi, d2rodr, veff_b, evl,      &
+            rpsi_b(:,nsrc,nb), nrc_b(n), rpsi_b(:,n,nb), ev_b(n), iflag, &
+            mxdnr)
+
+        if(iflag /= 0) then
+          write(6,*)
+          write(6,*) '  Stopped in atom_kb_orbitals:'
+          write(6,*) '  Could not get polarization function, iflag = ',iflag
+          write(6,*)
+
+          STOP
+
+        endif
+
+      elseif(r_bas(i,l,nb) > EPS) then
 
 !       confined orbital
 
@@ -273,6 +356,17 @@ subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
           write(6,*)
           write(6,*) '  Stopped in atom_kb_orbitals:'
           write(6,*) '  Energy derivative of an energy derivative ',      &
+                     'requested for l = ',l,' zeta = ',i,' in set ',nb
+          write(6,*)
+
+          STOP
+
+        endif
+
+        if(nz_bas(i-1,l,nb) < 0) then
+          write(6,*)
+          write(6,*) '  Stopped in atom_kb_orbitals:'
+          write(6,*) '  Energy derivative of a polarization function ',   &
                      'requested for l = ',l,' zeta = ',i,' in set ',nb
           write(6,*)
 
@@ -404,7 +498,7 @@ subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
         endif
       enddo
 
-      if(kind_b == 'psi') then
+      if(kind_b /= 'phi') then
         write(iowrite,'(3x,i3,i3,i5,3x,a3,i6,f11.4,f13.6)')                  &
             nb, l, i, kind_b, nodes, r(nrc_b(n)), ev_b(n)
       else
@@ -444,6 +538,7 @@ subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
   deallocate(dpsi_h)
   deallocate(wrel)
   deallocate(veff_w)
+  deallocate(nfirst)
 
   return
 
