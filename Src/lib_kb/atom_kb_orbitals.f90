@@ -29,7 +29,7 @@ subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
 ! RWFAC = 0 (was 0.5) from atomic orbital vs plane-wave total energies. 3 November 2026. claude+JLM
 ! perturbative polarization orbitals (nz_bas < 0). 5 November 2026. claude+JLM
 ! kind, nodes, r_c and energy as output (for plot_kb.dat), basis_orbitals.dat
-! only for debugging (!dbg), its tape and name as arguments. 7 November 2026. claude+JLM
+! only for debugging (!dbg, tape and name set locally). 7 November 2026. claude+JLM
 
 
 

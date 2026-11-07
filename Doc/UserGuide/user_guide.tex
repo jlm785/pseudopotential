@@ -795,16 +795,144 @@ plus the generation of an efficient atomic basis set can be achieved by
 
 \noindent\texttt{atom/WORK\$ ../kb{\_}conv.exe}
 
-the program will read the \texttt{psd.pot} file and ask the user if they accept the defaults and
+the program will read the \texttt{psd.pot} and print the orbital energies,
+the default values of basis cutoff radii, which is the
+default local pseudopotential and default grid.
+\begin{verbatim}
+   Orbital energies
+
+     n     l             e
+
+     1     0         -0.796617
+     2     1         -0.307040
+     3     2          0.002313
+
+   Basis cutoff radii (bohr)
+
+    l    r_siesta      r_c
+    0     4.9746     7.2132
+    1     6.1764     7.1028
+    2                7.1028   perturbative polarization of l =  1
+
+   The current parameters for the Kleiman-Bylander
+   non-local pseudopotential transformation are:
+
+   The maximum of all potentials will be used as local
+
+   The Fourier grid will range from q = 0.0000 to   40.0000  with steps of     0.0100
+   Enough for a cutoff of    200.000 Ha.
+\end{verbatim}
+The code will ask the user if they accept the defaults and
 in the negative case allows the choice of new parameters.
 
-The key decision here is the choice of the local component of the pseudopotential.  A bad choice
-can introduce ``ghost states'' and the code will check if they appear, with the method of
-Gonze, K\"ackell and Scheffler, Phys.\ Rev.\ B 41, 12264 (1990).  If a ghost state is found
-you are strongly warned in the output.  As a rule of thumb, choose the least attractive potential
-as the local part; if you still have trouble, try larger core radii.
+The first decision asked from the user, and a key decision
+is the choice of the local component of the pseudopotential.
+A bad choice can introduce ``ghost states''
+and the code will check if they appear, with the method of
+Gonze, K\"ackell and Scheffler, Phys.\ Rev.\ B 41, 12264 (1990).
+If a ghost state is found you are strongly warned in the output.
+A first rule of thumb is that the ``best'' local pseudopotential would be the one with highest
+angular momentum $l_\text{max}$, as it would reduce the number of projectors,
+and in most cases an eventual $l_\text{max}+1$ pseudopotential is more similar to the
+$l_\text{max}$ than to $l < l_\text{max}$ pseudopotentials.
+A second rule of thumb is that the smoothed maximum of all the pseudopotentials
+makes the projectors atractives and therefore dramaticaly reduces the possibility
+of having ghost states.
 
-At the end of the calculation the program writes an unformatted
+The next question is about the grid.  Unless you have a good reason, the default
+gris is good enough.
+
+The third question is about the confined atomic orbital basis.
+read the section~\ref{sec:orbital} for details of those basis sets
+before answering the questions.
+
+The code than prints basic information about the calculation,
+\begin{verbatim}
+  Constructing KB operator and basis functions
+
+   Kleinman-Bylander pseudopotential conversion
+   and Bessel/Fourier transform program. Version  6.1.0
+
+   Run on  07-Nov-26
+
+   Size of arrays:   lmax =     2    mxdnr =     2686
+
+   The semi-local pseudopotential for Si was created on 05-Nov-26
+   with atomic program version atom 6.1.0
+   Pseudopotential type:   Improved Troullier - Martins potential
+
+   Pseudo parameters:
+   3s(  2.00)  rc= 1.803p(  2.00)  rc= 1.803d(  0.00)  rc= 1.80
+
+
+   The Fourier grid will range from q = 0.0000 to   40.0000  with steps of     0.0100
+
+   Total valence electrons =       4.000000
+
+   Orbital energies
+
+     n     l             e
+
+     1     0         -0.796617
+     2     1         -0.307040
+     3     2          0.002313
+\end{verbatim}
+The code than prints a \textbf{suggestion} for the energy cutoff
+in the plane-wave code,
+\begin{verbatim}
+   Suggested range of kinetic energy cutoff
+   for plane-wave calculations:
+
+   lower  cutoff (bands)             12  Ha
+   higher cutoff (pressure)          20  Ha
+\end{verbatim}
+and then it will
+show the ratio $\int p(r) dr / \int |p(r)| dr$ for the projector $p(r)$.
+\begin{verbatim}
+   ratio for l=   0          is      -1.0000
+   ratio for l=   1          is      -1.0000
+   ratio for l=   2          is      -1.0000
+\end{verbatim}
+a negative value indicates an atractive projector.
+In this case all values are -1 due to the choice of
+the smoothed maximum of the pseudopotentials.
+A rule of thumb is that a small absolute value
+may indicate trouble with ghost states.
+The real test for ghost states is shown next,
+\begin{verbatim}
+  Ghost State Test (X. Gonze et al)
+
+  l     j    0-node-eigen    1-node-eigen       True-eigen   inorm
+
+  0            -0.743217       -0.024325       -0.796617    -1
+  1            -0.244156        0.001389       -0.307040    -1
+  2             0.002313        0.005753        0.002313    -1
+\end{verbatim}
+if there is a problem a warning will be displayed.
+
+The final part of the output gives the information about the
+confined atomic orbitals,
+\begin{verbatim}
+   Atomic basis functions
+
+   psi: confined orbital, E is its eigenvalue (Ry)
+   phi: relaxed energy derivative of the previous psi, E = <phi|H|phi> (Ry)
+   pol: perturbative polarization of the first function of l-1, E = <pol|H|pol> (Ry)
+        w(r) = exp(-(r_c-r_w)/(r-r_w)),  r_w =  0.000 r_c
+
+   set  l  zeta  kind  nodes     r_c          E         err
+     1  0    1   psi     0     7.2132    -0.795849
+     1  0    2   phi     1     7.2132     0.259734   1.29E-06
+     1  1    1   psi     0     7.1058    -0.297367
+     1  1    2   phi     1     7.1058     0.492662   1.09E-06
+     1  2    1   pol     0     7.1058     0.314735
+     2  0    1   psi     0     7.2132    -0.795849
+     2  1    1   psi     0     7.1058    -0.297367
+\end{verbatim}
+where the first set (DZP) has 5 functions and the second set
+has 2 functions.
+
+At the end of the KB transformation the program writes an unformatted
 \texttt{pseudokb.dat} used later in tests,
 a \texttt{plot{\_}kb.dat} file used for later plotting (which also contains the atomic
 basis functions),
@@ -813,9 +941,6 @@ and the files for other codes:
 \textit{Xy}\texttt{\_LDA\_TM.UPF} (or \texttt{\_GGA\_}) for \textsc{Quantum ESPRESSO},
 \textit{Xy}\texttt{.psp8} for \textsc{ABINIT} and \textit{Xy}\texttt{.psml} for \textsc{SIESTA},
 where \textit{Xy} is the chemical symbol of the relevant element.
-
-The program also suggests the range of energy cutoffs for the plane-wave calculations.  It is a range because
-different properties converge at different rates.
 
 
 \subsection{Visualizing the KB operators.}
