@@ -20,8 +20,8 @@ program plot_kb_show
 
   iowrite = 6
 
-  ioplot = 8
-  iost = 10
+  ioplot = 17
+  iost = 30
   iocomm = 21
   iotmp = 23
 

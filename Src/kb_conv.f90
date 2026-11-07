@@ -2,15 +2,17 @@
 !>
 !>  \author       Jose Luis Martins
 !>  \version      6.1.0
-!>  \date         June 2021. 26 January 2026.
+!>  \date         June 2021. 7 November 2026.
 !>  \copyright    GNU Public License v2
 
 
 program kb_conv
 
+! Written June 2021. JLM
 ! name of input file, 26 January 2026. JLM
 ! up to quadruple zeta basis, 24 October 2026. JLM+claude
 ! tbasis, lmax_bas allocated with mxdset, 24 October 2026. JLM+claude
+! tapes >= 10 consistent with the other programs. 7 November 2026. claude+JLM
 
   implicit none
 
@@ -66,20 +68,20 @@ program kb_conv
 
   iowrite = 6
 
-  ioreal = 7
+  ioreal = 14
   filereal = 'psd.pot'
 
-  iokb = 9
+  iokb = 18
   sfilekb = '_POTKB_F.DAT'
 
-  ioupf = 9
+  ioupf = 19
   sfileupf = 'TM.UPF'
   sfilepsp8 = '.psp8'
 
-  iopsdkb = 10
+  iopsdkb = 16
   filepsdkb = 'pseudokb.dat   '
 
-  ioplotkb = 11
+  ioplotkb = 17
   fileplotkb = 'plot_kb.dat    '
 
   llocal = -1

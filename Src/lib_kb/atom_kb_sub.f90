@@ -2,7 +2,7 @@
 !>
 !>  \author       Norm Troullier, J.L.Martins
 !>  \version      6.1.0
-!>  \date         November 90, May 2012, 2 February 2026.
+!>  \date         November 90, May 2012, 7 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
@@ -40,6 +40,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 ! confined orbitals moved to atom_kb_orbitals, up to 4 zeta. 24 October 2026. JLM+claude
 ! psml file. 28 October 2026. claude
 ! rpsi(:,:,0) to atom_kb_plot, rpsi initialized. 24 October 2026. JLM+claude
+! basis function labels to plot_kb.dat. 7 November 2026. claude+JLM
 
 
   implicit none
@@ -69,7 +70,6 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 
   integer, intent(in)               ::  ioplot                           !<  tape for later plotting
   character(len=*), intent(in)      ::  fileplot                         !<  name of file with plot information
-
 
   integer, intent(in)               ::  llocal                           !<  angular momentum for local potential (negative: maximum of l-dependent)
   integer, intent(in)               ::  nql                              !<  number of points for the Fourier grid of local potential and densities
@@ -156,6 +156,10 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   real(REAL64), allocatable         ::  rpsi_b(:,:,:)                    !  basis wavefunctions (r(i),n).
 
   integer, allocatable              ::  lo_b(:,:)                        !  angular momentum of basis function
+  character(len=3), allocatable     ::  kind_bas(:,:)                    !  psi, phi or pol
+  integer, allocatable              ::  nodes_bas(:,:)                   !  number of nodes of basis function
+  real(REAL64), allocatable         ::  rc_bas(:,:)                      !  cutoff radius of basis function
+  real(REAL64), allocatable         ::  ev_bas(:,:)                      !  energy of basis function (Ry)
 
 ! variables for Fourier transform of wavefunctions and potentials
 
@@ -442,12 +446,15 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 
   allocate(rpsi_b(mxdnr,mxdbas,mxdset))
   allocate(lo_b(mxdbas,mxdset))
+  allocate(kind_bas(mxdbas,mxdset), nodes_bas(mxdbas,mxdset))
+  allocate(rc_bas(mxdbas,mxdset), ev_bas(mxdbas,mxdset))
 
   call atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,        &
          npot, lo,                                                       &
          n_bsets, lmax_bas, n_bas, r_bas, nz_bas,                        &
-         rpsi_b, lo_b,                                                   &
-         iowrite, mxdnr, mxdl, mxdbas, mxdset)
+         rpsi_b, lo_b, kind_bas, nodes_bas, rc_bas, ev_bas,              &
+         iowrite,                                                        &
+         mxdnr, mxdl, mxdbas, mxdset)
 
 ! calculates the Fourier transforms
 
@@ -528,6 +535,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   call atom_kb_plot(ioplot, fileplot, irel, nr, r, vlocal,               &
       rpsi(:,:,0), rpsi_b, nqbas, delqbas, ektot,                               &
       npot, lo, n_bsets, norbas, lo_b,                                   &
+      kind_bas, nodes_bas, rc_bas, ev_bas,                               &
       inorm, vkbproj, nqnl, delql, vkbprft,                              &
       mxdnr, nqmax, mxdl, mxdbas, mxdset)
 
@@ -557,6 +565,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 
   deallocate(rpsi_b)
   deallocate(lo_b)
+  deallocate(kind_bas, nodes_bas, rc_bas, ev_bas)
 
   deallocate(vlocft)
   deallocate(vkbprft)

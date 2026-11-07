@@ -2,7 +2,7 @@
 !>
 !>  \author       Sverre Froyen, Norm Troullier, Jose Luis Martins, Emmi Gareis
 !>  \version      6.1.0
-!>  \date         22 June 2021, 9 April 2026
+!>  \date         22 June 2021, 7 November 2026
 !>  \copyright    GNU Public License v2
 
 subroutine atom_atm_scf(etotal,                                          &
@@ -18,6 +18,7 @@ subroutine atom_atm_scf(etotal,                                          &
 ! deallocate vhxc_in. 18 May 2022. JLM
 ! Calculation of tauc_total by Emmi Gareis moved from atom_atm_etotal. 6 January 2026. JLM
 ! Absolute value in convergence criteria. 9 April 2026. JLM
+! TAUC files only for debugging (in atom_atm_datout). 7 November 2026. claude+JLM
 
 
   implicit none
@@ -68,10 +69,6 @@ subroutine atom_atm_scf(etotal,                                          &
 
   integer, intent(in)               ::  ncore_in                         !<  number of orbitals treated as core
   integer, intent(in)               ::  nval_in                          !<  number of valence orbitals
-
-! "local" file for orbital kinetic energy density output
-
-  CHARACTER(LEN=8)                   ::  FILETAU                          !<  NAME OF DEFAULT TAPE FOR CORE KINETIC ENERGY DENSITY FILE
 
 ! used array dimensions
 
@@ -408,15 +405,11 @@ subroutine atom_atm_scf(etotal,                                          &
 
 !  call atom_atm_rhoan(nr, r, cdv, 0, mxdnr)
 
-! Writes file for later pseudopotential generation (and in case _tau(..) file that includes core kinetic energy density fo metaGGA
+! Writes file for later pseudopotential generation (includes the core kinetic energy density for meta-GGA)
 
   if(ioae /= 0) then
 
-!   name of core energy density file
-
-    FILETAU = 'TAUC'
-
-    call atom_atm_datout(ioae, fileae, filetau,                          &
+    call atom_atm_datout(ioae, fileae,                                   &
         itype, icorr, ispp,                                              &
         nr, a, b, r, drdi,                                               &
         nameat, norb, ncore, no, lo, iso, zo, znuc, zel,                 &

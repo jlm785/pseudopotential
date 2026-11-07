@@ -17,10 +17,10 @@ program kb_test
 
   iowrite = 6
 
-  ioread = 3
+  ioread = 11
   filein = 'atom.dat'
 
-  iopsd = 2
+  iopsd = 16
   filepsd = 'pseudokb.dat'
 
   if(iowrite /= 6) then

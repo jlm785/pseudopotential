@@ -12,6 +12,7 @@ subroutine atom_plot_kb_sub(iowrite, ioplot, fname, iost, iocomm, iotmp, lint)
 ! kinetic, 9 October 2021. JLM
 ! nump, nftp can be zero. 18 and 28 October 2021. JLM
 ! printing. 21 October 2021. JLM
+! xmaxwb, x range of the wave-function and basis plots. 7 November 2026. claude+JLM
 
   implicit none
 
@@ -77,6 +78,7 @@ subroutine atom_plot_kb_sub(iowrite, ioplot, fname, iost, iocomm, iotmp, lint)
 
   integer                           ::  iwsave, ibsave
   real(REAL64)                      ::  yminwp, ymaxwp
+  real(REAL64)                      ::  xmaxwb
   real(REAL64)                      ::  yminp, ymaxp
   real(REAL64)                      ::  yminq, ymaxq
   real(REAL64)                      ::  xmaxek, yminek, ymaxek
@@ -166,7 +168,7 @@ subroutine atom_plot_kb_sub(iowrite, ioplot, fname, iost, iocomm, iotmp, lint)
      iq, labelq, numbq,       qx, qy,                                    &
      labelek, numbek, qek, ek,                                           &
      labelv, numbv, vr, vk,                                              &
-     yminwp, ymaxwp, yminp, ymaxp, yminq, ymaxq,                         &
+     yminwp, ymaxwp, xmaxwb, yminp, ymaxp, yminq, ymaxq,                 &
      xmaxek, yminek, ymaxek, yminv, ymaxv)
 
   iw = iwsave
@@ -182,7 +184,7 @@ subroutine atom_plot_kb_sub(iowrite, ioplot, fname, iost, iocomm, iotmp, lint)
      iq, labelq,                                                         &
      labelek,                                                            &
      labelv,                                                             &
-     yminwp, ymaxwp, yminp, ymaxp, yminq, ymaxq,                         &
+     yminwp, ymaxwp, xmaxwb, yminp, ymaxp, yminq, ymaxq,                 &
      xmaxek, yminek, ymaxek, yminv, ymaxv)
 
   else
@@ -194,7 +196,7 @@ subroutine atom_plot_kb_sub(iowrite, ioplot, fname, iost, iocomm, iotmp, lint)
      iq, labelq,                                                         &
      labelek,                                                            &
      labelv,                                                             &
-     yminwp, ymaxwp, yminp, ymaxp, yminq, ymaxq,                         &
+     yminwp, ymaxwp, xmaxwb, yminp, ymaxp, yminq, ymaxq,                 &
      xmaxek, yminek, ymaxek, yminv, ymaxv)
 
   endif

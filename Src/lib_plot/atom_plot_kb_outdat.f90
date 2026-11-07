@@ -13,7 +13,7 @@ subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
      iq, labelq, numbq,       qx, qy,                                    &
      labelek, numbek, qek, ek,                                           &
      labelv, numbv, vr, vk,                                              &
-     yminwp, ymaxwp, yminp, ymaxp, yminq, ymaxq,                         &
+     yminwp, ymaxwp, xmaxwb, yminp, ymaxp, yminq, ymaxq,                 &
      xmaxek, yminek, ymaxek, yminv, ymaxv)
 
 ! adapted from all-electron+pseudopotential plot code.
@@ -21,6 +21,7 @@ subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
 ! nump can be zero. 18 October 2021. JLM
 ! es format and min/max indices for basis functions. 25 October 2026. claude
 ! es format for projectors, kinetic energy, local potential. 25 October 2026. claude
+! xmaxwb, largest radius of wave-functions and basis functions. 7 November 2026. claude+JLM
 
   implicit none
 
@@ -69,6 +70,7 @@ subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
 ! output
 
   real(REAL64), intent(out)         ::  yminwp, ymaxwp                   !<  min and max
+  real(REAL64), intent(out)         ::  xmaxwb                           !<  largest radius of wave-functions and basis functions
   real(REAL64), intent(out)         ::  yminp, ymaxp                     !<  min and max
   real(REAL64), intent(out)         ::  yminq, ymaxq                     !<  min and max
   real(REAL64), intent(out)         ::  xmaxek, yminek, ymaxek           !<  min and max
@@ -108,6 +110,14 @@ subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
 
   yminwp = ZERO
   ymaxwp = ZERO
+
+  xmaxwb = ZERO
+  do i = 1,iw
+    xmaxwb = max(xmaxwb, wx(numbw(i),i))
+  enddo
+  do i = 1,ib
+    xmaxwb = max(xmaxwb, bx(numbb(i),i))
+  enddo
 
   yminp = ZERO
   ymaxp = ZERO

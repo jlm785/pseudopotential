@@ -9,6 +9,7 @@ program plot_ln_show
 
 
 ! Initializes lkb. 25 May 2022. JLM
+! tapes >= 10 consistent with the other programs. 7 November 2026. claude+JLM
 
   implicit none
 
@@ -60,16 +61,16 @@ program plot_ln_show
 
   iowrite = 6
 
-  iodata = 7
+  iodata = 12
   datafile = 'datafile.dat   '
 
-  iopsd = 8
+  iopsd = 13
   pseudo = 'pseudo.dat     '
-  iokb = 9
+  iokb = 16
   pseudokb = 'pseudokb.dat   '
 
-  ioplot = 18
-  iotmp = 19
+  ioplot = 30
+  iotmp = 23
 
   if(.not. atom_plot_gnuplot_ok(iotmp)) then
     write(6,*) '  plot_ln_show needs gnuplot.  Stopping.'

@@ -32,13 +32,13 @@ program atom
 
   iowrite = 6
 
-  iopsd = 2
+  iopsd = 13
   filepsd = 'pseudo.dat'
 
-  ioread = 3
+  ioread = 11
   filein = 'atom.dat'
 
-  ioae = 7
+  ioae = 12
   fileae = 'datafile.dat'
 
 

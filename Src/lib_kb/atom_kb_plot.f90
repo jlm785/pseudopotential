@@ -1,13 +1,14 @@
 !>  writes the file with data fot later plotting with plot_kb_show
 !>
 !>  \author       Norm Troullier, Jose Luis Martins
-!>  \version      6.0.4
-!>  \date         4 September 2021. 6 October 2021.
+!>  \version      6.1.0
+!>  \date         4 September 2021. 7 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_plot(itplot, filename, irel, nr, r, vlocal,           &
                     rpsi_ps, rpsi_b, nqbas, delqbas, ektot,              &
                     npot, lo, n_bsets, norbas, lo_b,                     &
+                    kind_bas, nodes_bas, rc_bas, ev_bas,                 &
                     inorm, vkbproj, nqnl, delql, vkbprft,                &
                     mxdnr, nqmax, mxdl, mxdbas, mxdset)
 
@@ -24,6 +25,9 @@ subroutine atom_kb_plot(itplot, filename, irel, nr, r, vlocal,           &
 !   marker 'zio' for latter plotting
 
 ! kinetic (ektot). 6 October 2021. JLM
+! set, zeta, kind, nodes, r_c and energy appended to the basis markers (read by
+! Tools/plot_basis.py, ignored by the Fortran readers that read columns 9-17),
+! radius max(RMAX, largest r_c). 7 November 2026. claude+JLM
 
   implicit none
 
@@ -60,6 +64,10 @@ subroutine atom_kb_plot(itplot, filename, irel, nr, r, vlocal,           &
   integer, intent(in)               ::  n_bsets                          !<  number of atomic basis sets
   integer, intent(in)               ::  norbas(mxdset)                   !<  number of basis functions
   integer, intent(in)               ::  lo_b(mxdbas,mxdset)              !<  angular momentum of basis function
+  character(len=3), intent(in)      ::  kind_bas(mxdbas,mxdset)          !<  psi (confined), phi (energy derivative) or pol (polarization)
+  integer, intent(in)               ::  nodes_bas(mxdbas,mxdset)         !<  number of nodes of basis function
+  real(REAL64), intent(in)          ::  rc_bas(mxdbas,mxdset)            !<  cutoff radius of basis function
+  real(REAL64), intent(in)          ::  ev_bas(mxdbas,mxdset)            !<  eigenvalue or <phi|H|phi> (Ry)
 
   integer, intent(in)               ::  inorm(0:mxdl,-1:1)               !<  sign of denominator of KB operator
   real(REAL64), intent(in)          ::  vkbproj(mxdnr,0:mxdl,-1:1)       !<  kb-projector
@@ -72,6 +80,10 @@ subroutine atom_kb_plot(itplot, filename, irel, nr, r, vlocal,           &
 
   integer        ::  nrplot, nrp_v, nqp
   integer        ::  l                                 !  angular momentum
+  real(REAL64)   ::  rplot                             !  largest radius in the plots
+  integer        ::  izeta                             !  index of basis function for given l
+  character(len=200)  ::  line                         !  marker line
+  character(len=80)   ::  info                         !  information on basis function
 
   real(REAL64), allocatable         ::  q(:)                             !  wave-vector
   real(REAL64), allocatable         ::  ekdif(:)                         !  kinetic energy difference
@@ -90,16 +102,25 @@ subroutine atom_kb_plot(itplot, filename, irel, nr, r, vlocal,           &
 
 ! counter
 
-  integer     ::  i, j, nb
+  integer     ::  i, j, k, nb
 
 
   open(unit=itplot, file=trim(filename), form='FORMATTED', status='UNKNOWN')
+
+! plots up to RMAX, or the largest cutoff radius of the basis functions
+
+  rplot = RMAX
+  do nb = 1,n_bsets
+    do i = 1,norbas(nb)
+      rplot = max(rplot, rc_bas(i,nb))
+    enddo
+  enddo
 
 ! plot local potential
 
   do j = 1,nr
     nrplot = j
-    if(r(j) > RMAX) exit
+    if(r(j) > rplot) exit
   enddo
 
   allocate(vk(nrplot))
@@ -129,6 +150,20 @@ subroutine atom_kb_plot(itplot, filename, irel, nr, r, vlocal,           &
     l = lo_b(i,nb)
     call atom_plot_one(1, nrplot, r, rpsi_b(:,i,nb), RSTEP, l, 1,           &
            'bas ','    ', .TRUE., itplot, mxdnr)
+
+!   appends the information to the marker line (columns 1-18 unchanged)
+
+    izeta = 0
+    do k = 1,i
+      if(lo_b(k,nb) == l) izeta = izeta + 1
+    enddo
+    write(info,'("set",i3,"  zeta",i2,"  kind ",a3,"  nodes",i2,          &
+       &   "  r_c",f9.4,"  E",f13.6)') nb, izeta, kind_bas(i,nb),          &
+           nodes_bas(i,nb), rc_bas(i,nb), ev_bas(i,nb)
+    backspace(itplot)
+    read(itplot,'(a)') line
+    backspace(itplot)
+    write(itplot,'(a18,1x,a)') line(1:18), trim(info)
 
     enddo
   enddo

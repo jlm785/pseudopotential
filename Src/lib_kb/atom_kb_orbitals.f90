@@ -13,20 +13,23 @@
 !>
 !>  \author       claude+J.L.Martins
 !>  \version      6.1.0
-!>  \date         24 October 2026, 5 November 2026.
+!>  \date         24 October 2026, 7 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
          npot, lo,                                                       &
          n_bsets, lmax_bas, n_bas, r_bas, nz_bas,                        &
-         rpsi_b, lo_b,                                                   &
-         iowrite, mxdnr, mxdl, mxdbas, mxdset)
+         rpsi_b, lo_b, kind_bas, nodes_bas, rc_bas, ev_bas,              &
+         iowrite,                                                        &
+         mxdnr, mxdl, mxdbas, mxdset)
 
 ! split from atom_kb_sub. 24 October 2026. claude+JLM
 ! highest available l potential if l has none. 24 October 2026. JLM+claude
 ! relaxed energy derivative phi as basis function (r_bas = 0). 24 October 2026. claude+JLM
 ! RWFAC = 0 (was 0.5) from atomic orbital vs plane-wave total energies. 3 November 2026. claude+JLM
 ! perturbative polarization orbitals (nz_bas < 0). 5 November 2026. claude+JLM
+! kind, nodes, r_c and energy as output (for plot_kb.dat), basis_orbitals.dat
+! only for debugging (!dbg), its tape and name as arguments. 7 November 2026. claude+JLM
 
 
 
@@ -98,6 +101,10 @@ subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
 
   real(REAL64), intent(out)         ::  rpsi_b(mxdnr,mxdbas,mxdset)      !<  basis wavefunctions (r(i),n).
   integer, intent(out)              ::  lo_b(mxdbas,mxdset)              !<  angular momentum of basis function
+  character(len=3), intent(out)     ::  kind_bas(mxdbas,mxdset)          !<  psi (confined), phi (energy derivative) or pol (polarization)
+  integer, intent(out)              ::  nodes_bas(mxdbas,mxdset)         !<  number of nodes of basis function
+  real(REAL64), intent(out)         ::  rc_bas(mxdbas,mxdset)            !<  cutoff radius of basis function
+  real(REAL64), intent(out)         ::  ev_bas(mxdbas,mxdset)            !<  eigenvalue or <phi|H|phi> (Ry)
 
 ! local allocatable arrays
 
@@ -135,6 +142,9 @@ subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
   integer                           ::  nsrc                             !  index of the source of a polarization function
   integer, allocatable              ::  nfirst(:)                        !  index of the first function of l in the current set
 
+!dbg  integer                           ::  iobas                            !  tape for basis_orbitals.dat (debugging)
+!dbg  character(len=18)                 ::  filebas                          !  name of that file
+
 ! constants
 
   real(REAL64), parameter           ::  ZERO = 0.0_REAL64, UM = 1.0_REAL64
@@ -150,9 +160,6 @@ subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
   integer, parameter                ::  NWPOW = 4                        !  power for IWTYPE = 1
   real(REAL64), parameter           ::  RWFAC = 0.0_REAL64               !  rw = RWFAC * r_c
   real(REAL64), parameter           ::  HALPHA = 1.0E-2_REAL64           !  step (Ry) in alpha for d psi / d alpha
-
-  integer, parameter                ::  IOORB = 12                       !  tape for plotting the basis functions
-  character(len=*), parameter       ::  FILEORB = 'basis_orbitals.dat'   !  file for plotting the basis functions
 
 ! counters
 
@@ -172,8 +179,14 @@ subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
 
   rpsi_b = ZERO
   lo_b = 0
+  kind_bas = '   '
+  nodes_bas = 0
+  rc_bas = ZERO
+  ev_bas = ZERO
 
-  open(unit=IOORB, file=FILEORB, form='FORMATTED', status='UNKNOWN')
+!dbg  iobas = 20
+!dbg  filebas = 'basis_orbitals.dat'
+!dbg  open(unit=iobas, file=filebas, form='FORMATTED', status='UNKNOWN')
 
   write(iowrite,*)
   write(iowrite,'("   Atomic basis functions")')
@@ -506,28 +519,33 @@ subroutine atom_kb_orbitals(nr, r, drdi, d2rodr, vionic, vscreen, ev,    &
             nb, l, i, kind_b, nodes, r(nrc_b(n)), ev_b(n), errphi
       endif
 
-!     writes the functions for plotting (gnuplot index blocks)
+      kind_bas(n,nb) = kind_b
+      nodes_bas(n,nb) = nodes
+      rc_bas(n,nb) = r(nrc_b(n))
+      ev_bas(n,nb) = ev_b(n)
 
-      write(IOORB,'("# set ",i3,"  l ",i3,"  zeta ",i3,"  kind ",a3,       &
-          &   "  nodes ",i3,"  r_c ",f10.4,"  E (Ry) ",f14.6)')               &
-          nb, l, i, kind_b, nodes, r(nrc_b(n)), ev_b(n)
-      write(IOORB,'("#        r            rpsi")')
-      do j = 1,nrc_b(n)
-        write(IOORB,'(f12.6,es16.7)') r(j), rpsi_b(j,n,nb)
-      enddo
-      write(IOORB,*)
-      write(IOORB,*)
+!     debugging:  full radial grid (gnuplot index blocks)
+
+!dbg      write(iobas,'("# set ",i3,"  l ",i3,"  zeta ",i3,"  kind ",a3,       &
+!dbg          &   "  nodes ",i3,"  r_c ",f10.4,"  E (Ry) ",f14.6)')               &
+!dbg          nb, l, i, kind_b, nodes, r(nrc_b(n)), ev_b(n)
+!dbg      write(iobas,'("#        r            rpsi")')
+!dbg      do j = 1,nrc_b(n)
+!dbg        write(iobas,'(f12.6,es16.7)') r(j), rpsi_b(j,n,nb)
+!dbg      enddo
+!dbg      write(iobas,*)
+!dbg      write(iobas,*)
 
     enddo
     enddo
 
   enddo
 
-  write(iowrite,*)
-  write(iowrite,'("   Basis functions written to ",a)') FILEORB
-  write(iowrite,*)
+!dbg  write(iowrite,*)
+!dbg  write(iowrite,'("   Basis functions written to ",a)') filebas
+!dbg  write(iowrite,*)
 
-  close(unit=IOORB)
+!dbg  close(unit=iobas)
 
   deallocate(drpsidr_b)
   deallocate(veff_b)

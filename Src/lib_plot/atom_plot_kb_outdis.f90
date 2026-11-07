@@ -14,13 +14,14 @@ subroutine atom_plot_kb_outdis(iowrite, iocomm, iotmp,                   &
      iq, labelq,                                                         &
      labelek,                                                            &
      labelv,                                                             &
-     yminwp, ymaxwp, yminp, ymaxp, yminq, ymaxq,                         &
+     yminwp, ymaxwp, xmaxwb, yminp, ymaxp, yminq, ymaxq,                 &
      xmaxek, yminek, ymaxek, yminv, ymaxv)
 
 ! adapted from all-electron+pseudopotential plot code.
 ! kinetic, 9 October 2021. JLM
 ! nump can be zero. 18 October 2021. JLM
 ! printing. iowrite. NEW interface. 21 October 2021. JLM
+! xmaxwb, x range of the wave-function and basis plots. 7 November 2026. claude+JLM
 
 
   implicit none
@@ -58,6 +59,7 @@ subroutine atom_plot_kb_outdis(iowrite, iocomm, iotmp,                   &
   character(len=12), intent(in)     ::  labelv                           !<  label local potential
 
   real(REAL64), intent(in)          ::  yminwp, ymaxwp                   !<  min and max
+  real(REAL64), intent(in)          ::  xmaxwb                           !<  largest radius of wave-functions and basis functions
   real(REAL64), intent(in)          ::  yminp, ymaxp                     !<  min and max
   real(REAL64), intent(in)          ::  yminq, ymaxq                     !<  min and max
   real(REAL64), intent(in)          ::  xmaxek, yminek, ymaxek           !<  min and max
@@ -102,7 +104,7 @@ subroutine atom_plot_kb_outdis(iowrite, iocomm, iotmp,                   &
   write(iowrite,*)
 
   x_min = ZERO
-  x_max = 10*ONE
+  x_max = max(10*ONE, real(ceiling(xmaxwb - ONE/5),REAL64))
 
   y_min = HALF*floor(2*yminwp)
   y_max = HALF*(floor(2*ymaxwp)+1)

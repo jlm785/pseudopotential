@@ -8,6 +8,7 @@
 program psd_gen
 
 ! names files, bit rot of files. 26 January 2026. JLM
+! tapes >= 10 consistent with the other programs. 7 November 2026. claude+JLM
 
   implicit none
 
@@ -61,21 +62,21 @@ program psd_gen
 
   iowrite = 6
 
-  ioread = 3
+  ioread = 11
   filein = 'atom.dat'
 
-  iopsd = 2
+  iopsd = 13
   filepsd = 'pseudo.dat'
 
-  ioae = 7
+  ioae = 12
   fileae = 'datafile.dat'
 
-  ioreal = 4
+  ioreal = 14
   filereal = 'psd.pot'
   sfileparsec = '_POTRE.DAT'
   sfilesiesta = '.psf'
 
-  ioplot = 8
+  ioplot = 15
   fileplot = 'plot.dat'
 
 

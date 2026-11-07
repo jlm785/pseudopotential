@@ -3,10 +3,10 @@
 !>
 !>  \author       Norm Troullier, Jose Luis Martins
 !>  \version      6.0.3
-!>  \date         May 1, 1991, 22 June 2021, 12 September 2021.
+!>  \date         May 1, 1991, 22 June 2021, 7 November 2026.
 !>  \copyright    GNU Public License v2
 
-subroutine atom_atm_datout(iotape, fileae, filetau,                      &
+subroutine atom_atm_datout(iotape, fileae,                               &
          itype, icorr, ispp,                                             &
          nr, a, b, r, drdi,                                              &
          nameat, norb, ncore, no, lo, iso, zo, znuc, zel,                &
@@ -27,6 +27,7 @@ subroutine atom_atm_datout(iotape, fileae, filetau,                      &
 ! cleanup and new interface, July 2019. JLM
 ! added date and version, 27 August 2021. JLM
 ! vionic, so->iso. 12 September 2021. JLM
+! TAUC files only for debugging (!dbg), filetau removed. 7 November 2026. claude+JLM
 
 
   implicit none
@@ -38,7 +39,6 @@ subroutine atom_atm_datout(iotape, fileae, filetau,                      &
 
   integer, intent(in)               ::  iotape                           !<  default tape for writing
   character(len=*), intent(in)      ::  fileae                           !<  name of default tape for all-electron results
-  character(len=*), intent(in)      ::  filetau                          !<  name of default tape for core kinetic energy density file
 
   integer, intent(in)               ::  mxdorb                           !<  dimension of the number of orbitals
   integer, intent(in)               ::  mxdnr                            !<  dimension of the number of radial points
@@ -98,7 +98,8 @@ subroutine atom_atm_datout(iotape, fileae, filetau,                      &
 
 ! counter
 
-  integer       ::  i, l, j
+  integer       ::  i, l
+!dbg  integer       ::  j
 
 
   if(iotape == 0) RETURN
@@ -151,46 +152,49 @@ subroutine atom_atm_datout(iotape, fileae, filetau,                      &
   close (unit=iotape)
 
 
-! Open and write out core kinetic energy density in PARSEC-pseudopotential format to tauc.dat
+! debugging output, TAUC.dat and TAUC_orbitals.dat (uncomment the !dbg lines to use).
+! The core kinetic energy density is also the last record of datafile.dat.
 
-  open(unit = iotape, file = adjustl(trim(filetau)) // ".dat",           &
-       status = 'unknown', form = 'formatted')
+!dbg! Open and write out core kinetic energy density in PARSEC-pseudopotential format to tauc.dat
 
-  write(iotape,'(" #Radial grid follows")')
-  write(iotape,'(4(g20.12))') (r(j),j=2,nr)
+!dbg  open(unit = iotape, file = 'TAUC.dat',                             &
+!dbg       status = 'unknown', form = 'formatted')
 
-  ! Write the core kinetic energy density
-  write(iotape,'(" #Core kinetic energy density follows")')
-  write(iotape,'(4(g20.12))') (tauc_total(i),i=2,nr)
+!dbg  write(iotape,'(" #Radial grid follows")')
+!dbg  write(iotape,'(4(g20.12))') (r(j),j=2,nr)
 
-  close(unit = iotape)
+!dbg  ! Write the core kinetic energy density
+!dbg  write(iotape,'(" #Core kinetic energy density follows")')
+!dbg  write(iotape,'(4(g20.12))') (tauc_total(i),i=2,nr)
 
-! Open and write out eigenvalues ek and core kinetic energy density per orbital in tauc_orbitals.dat
+!dbg  close(unit = iotape)
 
-  open(unit = iotape, file = adjustl(trim(filetau)) // "_orbitals.dat",  &
-       status = 'unknown', form = 'formatted')
+!dbg! Open and write out eigenvalues ek and core kinetic energy density per orbital in tauc_orbitals.dat
 
-  if (ispp == "r") then
-    write(iotape,*) "#", (ek(i), i=1, norb)
-    do i = 2,nr
-      write (iotape,"(g20.12)", advance="no") r(i)
-      do j = 1, norb
-        write(iotape,"(g20.12)", advance="no") tauc(i, j)
-      enddo
-      write(iotape, *) ""
-    enddo
-  else
-    write(iotape,*) "#", (ek(i), i=1, norb)
-    do i = 2,nr
-      write (iotape,"(g20.12)", advance="no") r(i)
-      do j = 1, norb
-        write(iotape,"(g20.12)", advance="no") (zo(j)/(2*lo(j)+1))*tauc(i,j)
-      enddo
-      write(iotape, *) ""
-    enddo
-  endif
+!dbg  open(unit = iotape, file = 'TAUC_orbitals.dat',                    &
+!dbg       status = 'unknown', form = 'formatted')
 
-  close(unit = iotape)
+!dbg  if (ispp == "r") then
+!dbg    write(iotape,*) "#", (ek(i), i=1, norb)
+!dbg    do i = 2,nr
+!dbg      write (iotape,"(g20.12)", advance="no") r(i)
+!dbg      do j = 1, norb
+!dbg        write(iotape,"(g20.12)", advance="no") tauc(i, j)
+!dbg      enddo
+!dbg      write(iotape, *) ""
+!dbg    enddo
+!dbg  else
+!dbg    write(iotape,*) "#", (ek(i), i=1, norb)
+!dbg    do i = 2,nr
+!dbg      write (iotape,"(g20.12)", advance="no") r(i)
+!dbg      do j = 1, norb
+!dbg        write(iotape,"(g20.12)", advance="no") (zo(j)/(2*lo(j)+1))*tauc(i,j)
+!dbg      enddo
+!dbg      write(iotape, *) ""
+!dbg    enddo
+!dbg  endif
+
+!dbg  close(unit = iotape)
 
   return
 

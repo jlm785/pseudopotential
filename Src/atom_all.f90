@@ -12,6 +12,7 @@ program atom_all
 ! Several real space pseudopotential formats, 26 January 2026. JLM
 ! up to quadruple zeta basis, 24 October 2026. JLM+claude
 ! tbasis, lmax_bas allocated with mxdset, 24 October 2026. JLM+claude
+! tapes >= 10 consistent with the other programs. 7 November 2026. claude+JLM
 
   implicit none
 
@@ -135,36 +136,36 @@ program atom_all
 
 ! only warnings go to default output
 ! iowrite = 6
-  iowrite = 1
+  iowrite = 10
 
-  iopsd = 2
+  iopsd = 13
   filepsd = 'pseudo.dat'
 
-  ioread = 3
+  ioread = 11
   filein = 'atom.dat'
 
-  ioae = 7
+  ioae = 12
   fileae = 'datafile.dat'
 
-  ioreal = 4
+  ioreal = 14
   filereal = 'psd.pot'
   sfileparsec = '_POTRE.DAT'
   sfilesiesta = '.psf'
 
-  ioplot = 8
+  ioplot = 15
   fileplot = 'plot.dat'
 
-  iokb = 9
+  iokb = 18
   sfilekb = '_POTKB_F.DAT'
 
-  ioupf = 9
+  ioupf = 19
   sfileupf = 'TM.UPF'
   sfilepsp8 = '.psp8'
 
-  iopsdkb = 10
+  iopsdkb = 16
   filepsdkb = 'pseudokb.dat   '
 
-  ioplotkb = 11
+  ioplotkb = 17
   fileplotkb = 'plot_kb.dat    '
 
   iost = 30

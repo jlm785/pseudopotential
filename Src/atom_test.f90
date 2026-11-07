@@ -27,13 +27,13 @@ program atom_test
 
   iowrite = 6
 
-  iopsd = 2
+  iopsd = 13
   filepsd = 'pseudo.dat'
 
-  ioread = 3
+  ioread = 11
   filein = 'atom.dat'
 
-  iopsdkb = 10
+  iopsdkb = 16
   filepsdkb = 'pseudokb.dat   '
 
   if(iowrite /= 6) then

@@ -49,7 +49,7 @@ subroutine atom_psd_change_radii(lpmax, rc, rc_tab, rz, rx)
     write(6,'("   l = ",i2,"  rc = ",f12.3)') lp, rc(lp)
   enddo
   write(6,*)
-  write(6,*) '  Do you want ot modify them? (y/n)'
+  write(6,*) '  Do you want to modify them? (y/n)'
   write(6,*)
   read(5,*) yesno
 
