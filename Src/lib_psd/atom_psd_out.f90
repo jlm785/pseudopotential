@@ -21,6 +21,7 @@ subroutine atom_psd_out(itpars, filename, nameat, cftype,                &
 ! rpsi_ps. 2 November 2021. JLM
 ! psdtitle, 18 May 2022. JLM
 ! psd.pot with 17 significant digits (es24.16e3), read list-directed. 8 November 2026. claude+JLM
+! a30 for the 30 characters of ' nl nls nr a b zion cfac rcfac'. 8 November 2026. claude+JLM
 
   implicit none
 
@@ -141,11 +142,11 @@ subroutine atom_psd_out(itpars, filename, nameat, cftype,                &
   if(cftype == 'SI' .or. cftype == 'PA') then
     fmtr = '(4(g20.12))'
     fmth3 = '(1x,2i3,i5,3g20.12,a20)'
-    fmth5 = '(1x,2i3,i5,5g20.12,a29)'
+    fmth5 = '(1x,2i3,i5,5g20.12,a30)'
   else
     fmtr = '(4(1x,es24.16e3))'
     fmth3 = '(1x,2i3,i5,3(1x,es24.16e3),a20)'
-    fmth5 = '(1x,2i3,i5,5(1x,es24.16e3),a29)'
+    fmth5 = '(1x,2i3,i5,5(1x,es24.16e3),a30)'
   endif
 
   write(itpars,'(1x,a2,1x,a2,1x,a3,1x,a4)') nameat, icorr, irel, nicore

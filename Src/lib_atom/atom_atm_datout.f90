@@ -10,7 +10,8 @@ subroutine atom_atm_datout(iotape, fileae,                               &
          itype, icorr, ispp,                                             &
          nr, a, b, r, drdi,                                              &
          nameat, norb, ncore, no, lo, iso, zo, znuc, zel,                &
-         cdc, vionic, vhxc, ev, ek, tauc_total, tauc,                    &
+         cdc, vionic, vhxc, ev, tauc_total,                              &
+!dbg         ek, tauc,                                                   &
          mxdnr, mxdorb, mxdl)
 
 !  ***********************************************************
@@ -28,6 +29,7 @@ subroutine atom_atm_datout(iotape, fileae,                               &
 ! added date and version, 27 August 2021. JLM
 ! vionic, so->iso. 12 September 2021. JLM
 ! TAUC files only for debugging (!dbg), filetau removed. 7 November 2026. claude+JLM
+! ek, tauc (only used by TAUC_orbitals.dat) as !dbg arguments. 8 November 2026. claude+JLM
 
 
   implicit none
@@ -77,9 +79,9 @@ subroutine atom_atm_datout(iotape, fileae,                               &
   real(REAL64), intent(in)          ::  vhxc(mxdnr,-1:1)                 !<  screening potential (Ry)
 
   real(REAL64), intent(in)          ::  ev(mxdorb)                       !<  orbital energy
-  real(REAL64), intent(in)          ::  ek(mxdorb)
-  real(REAL64), intent(in)          ::  tauc_total(mxdnr)                !<
-  real(REAL64), intent(in)          ::  tauc(mxdnr,mxdorb)               !<
+!dbg  real(REAL64), intent(in)          ::  ek(mxdorb)                       !<  orbital kinetic energy
+  real(REAL64), intent(in)          ::  tauc_total(mxdnr)                !<  core kinetic energy density
+!dbg  real(REAL64), intent(in)          ::  tauc(mxdnr,mxdorb)               !<  kinetic energy density of each orbital
 
 
 ! local variables, maybe should be input...

@@ -14,6 +14,8 @@ subroutine atom_kb_psd_out_psml(iotape, fname,                           &
       mxdl, mxdnr)
 
 ! written from atom_kb_psd_out_psp8. 28 October 2026. claude
+! values at r = 0 from symmetric points (grid_interp_even), trailing values
+! below 1e-12 (was 1e-14, at the roundoff level) of the maximum not written. 8 November 2026. claude+JLM
 
 ! Conventions of PSML (A. Garcia et al., Comput. Phys. Commun. 227, 51 (2018)
 ! and the libPSML documentation), checked with the files of libPSML:
@@ -516,7 +518,7 @@ subroutine atom_kb_psd_out_psml(iotape, fname,                           &
     np = nr
     if(ltrim) then
       gmax = maxval(abs(g(1:nr)))
-      do while(np > 2 .and. abs(g(np)) <= 1.0E-14_REAL64*gmax)
+      do while(np > 2 .and. abs(g(np)) <= 1.0E-12_REAL64*gmax)
         np = np - 1
       enddo
     endif
@@ -529,13 +531,23 @@ subroutine atom_kb_psd_out_psml(iotape, fname,                           &
 
   end subroutine write_radfunc
 
-! linear extrapolation to r(1) = 0
+! value at r(1) = 0 of a function that is even in r, from g(2), g(3),...
+! and their symmetric points (linear extrapolation if that fails)
 
   subroutine extrap0(g)
 
     real(REAL64), intent(inout)     ::  g(:)
 
-    g(1) = g(2) - (g(3)-g(2))*(r(2)-r(1))/(r(3)-r(2))
+    real(REAL64)   ::  xz(1), gz(1,0:0), ez(0:0)
+    integer        ::  ifl
+
+    xz(1) = r(1)
+    call grid_interp_even(6, 0, nr-1, r(2:nr), g(2:nr), 1, xz, gz, ez, ifl, 1)
+    if(ifl == 0) then
+      g(1) = gz(1,0)
+    else
+      g(1) = g(2) - (g(3)-g(2))*(r(2)-r(1))/(r(3)-r(2))
+    endif
 
   end subroutine extrap0
 

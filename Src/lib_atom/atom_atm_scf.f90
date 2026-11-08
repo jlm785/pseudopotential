@@ -19,6 +19,7 @@ subroutine atom_atm_scf(etotal,                                          &
 ! Calculation of tauc_total by Emmi Gareis moved from atom_atm_etotal. 6 January 2026. JLM
 ! Absolute value in convergence criteria. 9 April 2026. JLM
 ! TAUC files only for debugging (in atom_atm_datout). 7 November 2026. claude+JLM
+! ek, tau passed to atom_atm_datout only for debugging (!dbg). 8 November 2026. claude+JLM
 
 
   implicit none
@@ -413,7 +414,8 @@ subroutine atom_atm_scf(etotal,                                          &
         itype, icorr, ispp,                                              &
         nr, a, b, r, drdi,                                               &
         nameat, norb, ncore, no, lo, iso, zo, znuc, zel,                 &
-        cdc, vionic, vhxc_in, ev,  ek, tauc_total, tau,                  &
+        cdc, vionic, vhxc_in, ev, tauc_total,                            &
+!dbg        ek, tau,                                                     &
         mxdnr, mxdorb, mxdl)
 
   endif
