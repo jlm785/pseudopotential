@@ -169,16 +169,20 @@ endif
 
 
 
-#  OpenMP flags (also used when linking)
+#  OpenMP flag FCOMP.  It is only used for the files with OpenMP directives
+#  (lib_num/ft_radial.f90, lib_num/ft_precise.f90), for the function called in
+#  their parallel regions (lib_num/sbessj.f90), see lib_num/Makefile, and when
+#  linking the executables (OpenMP runtime library).  Empty if OPENMP=false.
 
+FCOMP=
 ifeq ($(OPENMP),true)
    ifeq ($(F77),gfortran)
-      FCOPTS+= -fopenmp
+      FCOMP=-fopenmp
    else ifeq ($(F77),flang-new)
-      FCOPTS+= -fopenmp
+      FCOMP=-fopenmp
    else ifneq ($(filter $(F77),nvfortran pgfortran),)
-      FCOPTS+= -mp
+      FCOMP=-mp
    else ifneq ($(filter $(F77),ifx ifort),)
-      FCOPTS+= -qopenmp
+      FCOMP=-qopenmp
    endif
 endif

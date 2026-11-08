@@ -14,6 +14,18 @@ libadd:    $(obj)
 %.o: %.f90
 	$(F77) -c $(FCOPTS) $<
 
+#  OpenMP only for the files with OpenMP directives and the function
+#  called in their parallel regions (FCOMP is defined in make.inc)
+
+ft_radial.o: ft_radial.f90
+	$(F77) -c $(FCOPTS) $(FCOMP) $<
+
+ft_precise.o: ft_precise.f90
+	$(F77) -c $(FCOPTS) $(FCOMP) $<
+
+sbessj.o: sbessj.f90
+	$(F77) -c $(FCOPTS) $(FCOMP) $<
+
 clean:
 	rm -f *.o *.mod *genmod*
 
