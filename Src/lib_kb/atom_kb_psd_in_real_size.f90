@@ -9,6 +9,7 @@ subroutine atom_kb_psd_in_real_size(iotape, fname, lmax, nrmax)
 
 ! nrmax->mxdnr. 17 September 2021. JLM
 ! parsec_size -> real_size in name. 26 January 2026. JLM
+! skips the lines of arrays (4 numbers per line, any format). 8 November 2026. claude+JLM
 
 
   implicit none
@@ -28,7 +29,6 @@ subroutine atom_kb_psd_in_real_size(iotape, fname, lmax, nrmax)
 ! local variables
 
   integer                      ::  npotd, npotu, nr, nrm, l
-  real(REAL64)                 ::  dummy
 
 ! counters
 
@@ -46,21 +46,27 @@ subroutine atom_kb_psd_in_real_size(iotape, fname, lmax, nrmax)
   nrmax = nr
 
   read(iotape,*)                                  !'Radial grid follows'
-  read(iotape,'(4g20.12)') (dummy,j=2,nr)
+  do j = 2,nr,4
+    read(iotape,*)
+  enddo
 
   lmax = 0
   do i = 1, npotd
     read (iotape,*)                               !'Pseudopotential follows (l on next line)'
     read(iotape,'(1x,i2)') l
     lmax = max(lmax,l)
-    read(iotape,'(4g20.12)') (dummy,j=2,nr)
+    do j = 2,nr,4
+      read(iotape,*)
+    enddo
   enddo
 
   do i = 1, npotu
     read(iotape,*)                                !   'Minor comp. of Pseudop. follows (l on next line)'
     read(iotape,'(1x,i2)') l
     lmax = max(lmax,l)
-    read(iotape,'(4g20.12)') (dummy,j=2,nr)
+    do j = 2,nr,4
+      read(iotape,*)
+    enddo
   enddo
 
   close(unit=iotape)

@@ -14,6 +14,7 @@ subroutine atom_kb_psd_out_interp(nr, r, nrupf, rupf, lso,               &
       mxdl, mxdnr)
 
 ! Extracted from atom_kb_psd_out_upf. 15 November 2024. JLM
+! values at r = 0 from symmetric points (grid_interp_even). 8 November 2026. claude+JLM
 
   implicit none
 
@@ -35,8 +36,8 @@ subroutine atom_kb_psd_out_interp(nr, r, nrupf, rupf, lso,               &
   logical, intent(in)               ::  lso                              !<  indicates that spin-orbit is used
 
   real(REAL64), intent(in)          ::  vlocal(mxdnr)                    !<  r*local pseudopotential
-  real(REAL64), intent(in)          ::  cdc(mxdnr)                       !<  4*pi*r**2 charge density of valence.  kb_conv is not spin polarized...
-  real(REAL64), intent(in)          ::  cdv(mxdnr)                       !<  4*pi*r**2 charge density of core
+  real(REAL64), intent(in)          ::  cdc(mxdnr)                       !<  4*pi*r**2 charge density of core
+  real(REAL64), intent(in)          ::  cdv(mxdnr)                       !<  4*pi*r**2 charge density of valence.  kb_conv is not spin polarized...
 
   integer                           ::  lmax_pot                         !<  maximum angular momentum in potential
   real(REAL64), intent(in)          ::  vkbproj(mxdnr,0:mxdl,-1:1)       !<  kb-projector(r(i),l,2j-2l)
@@ -49,7 +50,7 @@ subroutine atom_kb_psd_out_interp(nr, r, nrupf, rupf, lso,               &
   real(REAL64), intent(out)         ::  vlocupf(nrupf)                   !<  local pseudopotential (not r*vlocal) for UPF
   real(REAL64), intent(out)         ::  vnlupf(nrupf,0:mxdl,-1:1)        !<  kb-projectors (multiplied by r) for UPF
   real(REAL64), intent(out)         ::  chi(nrupf,0:mxdl,-1:1)           !<  wavefunctions (r(i),l,2j-2l) for UPF (r*psi)
-  real(REAL64), intent(out)         ::  cdcupf(nrupf)                    !<  charge density of core.
+  real(REAL64), intent(out)         ::  cdcupf(nrupf)                    !<  charge density of core (rho, not 4*pi*r**2 rho).
   real(REAL64), intent(out)         ::  cdvupf(nrupf)                    !<  4*pi*r**2 charge density of valence.
 
 ! spline interpolation
@@ -63,6 +64,11 @@ subroutine atom_kb_psd_out_interp(nr, r, nrupf, rupf, lso,               &
   integer                          ::  jmin, jmax, imin
   integer                          ::  nrange, nrange_upf                !  maximum range of projectors in original and interpolated grids
   logical                          ::  lexit
+  integer                          ::  ifail
+  real(REAL64)                     ::  rzero(1)                          !  r = 0
+  real(REAL64)                     ::  fzero(1,0:0)                      !  value of a function at r = 0
+  real(REAL64)                     ::  errzero(0:0)                      !  estimate of its error
+  real(REAL64), allocatable        ::  f(:)                              !  even function at r(2),...,r(nr)
 
 ! constants
 
@@ -96,10 +102,23 @@ subroutine atom_kb_psd_out_interp(nr, r, nrupf, rupf, lso,               &
     stop
   endif
 
+! value at r = 0 from vlocal(2)/r(2), vlocal(3)/r(3),... and their symmetric points
+
+  allocate(f(nr-1))
+  rzero(1) = ZERO
+
   imin = 1
   if(abs(rupf(1)) < EPS) then
     imin = 2
-    vlocupf(1) = vlocupf(2)/rupf(2)
+    do i = 2,nr
+      f(i-1) = vlocal(i)/r(i)
+    enddo
+    call grid_interp_even(6, 0, nr-1, r(2:nr), f, 1, rzero, fzero, errzero, ifail, 1)
+    if(ifail == 0) then
+      vlocupf(1) = fzero(1,0)
+    else
+      vlocupf(1) = vlocupf(2)/rupf(2)
+    endif
   endif
   do i = imin,nrupf
     vlocupf(i) = vlocupf(i)/rupf(i)
@@ -277,14 +296,26 @@ subroutine atom_kb_psd_out_interp(nr, r, nrupf, rupf, lso,               &
     stop
   endif
 
+! value at r = 0 from cdc(2)/r(2)**2, cdc(3)/r(3)**2,... and their symmetric points
+
   imin = 1
   if(abs(rupf(1)) < EPS) then
     imin = 2
-    cdcupf(1) = cdcupf(2) / (PI4*rupf(2)*rupf(2))
+    do i = 2,nr
+      f(i-1) = cdc(i) / (PI4*r(i)*r(i))
+    enddo
+    call grid_interp_even(6, 0, nr-1, r(2:nr), f, 1, rzero, fzero, errzero, ifail, 1)
+    if(ifail == 0) then
+      cdcupf(1) = fzero(1,0)
+    else
+      cdcupf(1) = cdcupf(2) / (PI4*rupf(2)*rupf(2))
+    endif
   endif
   do i = imin,nrupf
     cdcupf(i) = cdcupf(i) / (PI4*rupf(i)*rupf(i))
   enddo
+
+  deallocate(f)
 
 
   return

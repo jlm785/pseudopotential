@@ -36,7 +36,7 @@ subroutine atom_kb_setup_pseudo(llocal, lmax_pot, nql, delql)
 
 
   write(6,*)
-  write(6,*) '  The current parameters for the Kleiman-Bylander'
+  write(6,*) '  The current parameters for the Kleinman-Bylander'
   write(6,*) '  non-local pseudopotential transformation are:'
   write(6,*)
   if(llocal < 0) then

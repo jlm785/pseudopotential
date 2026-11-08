@@ -3,6 +3,10 @@ Numerical subroutines used by the atom program
 ft_*.f90         :  Fourier transforms for different situations.  Could be simplified
                     but if ain't broken don't fix it...
 
+grid_interp.f90  :  Lagrange interpolation (with derivatives) from one grid to another.
+grid_interp_even.f90 : the same for even functions f(-x) = f(x), with the symmetric
+                    points -x, for example densities and potentials near r = 0.
+
 poly_interp.f90  :  Lagrange polynomial interpolation with derivatives.  Couldn't find
                     a code on the net after googling, and writing was faster than
                     keeping googling...

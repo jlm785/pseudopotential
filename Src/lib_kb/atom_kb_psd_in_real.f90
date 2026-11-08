@@ -2,7 +2,7 @@
 !>
 !>  \author       J.L.Martins
 !>  \version      6.1.0
-!>  \date         25 May 2012, 19 May 2022. 5 february 2026, 25 October 2026.
+!>  \date         25 May 2012, 8 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_psd_in_real(iotape, fname,                            &
@@ -19,6 +19,7 @@ subroutine atom_kb_psd_in_real(iotape, fname,                            &
 ! in_parsec -> in_real in name. 26 January 2026. JLM
 ! tauc, 5 february 2026. JLM
 ! paranoid check of r against a, b (as other readers). 25 October 2026. claude
+! list-directed reads, 4 numbers per line, of old (g20.12) and new (es24.16e3) psd.pot. 8 November 2026. claude+JLM
 
   implicit none
 
@@ -79,6 +80,7 @@ subroutine atom_kb_psd_in_real(iotape, fname,                            &
   integer                       ::  l
   integer                       ::  ios
   integer                       ::  nrm
+  character(len=256)            ::  line                             !  line with nl nls nr a b zion (cfac rcfac)
 
 
 
@@ -109,14 +111,13 @@ subroutine atom_kb_psd_in_real(iotape, fname,                            &
          (psdtitle(i),i=1,7)
   endif
 
+  read(iotape,'(a)') line
+  read(line,'(1x,2i3,i5)') npot(1), npot(-1), nrm
   ifcore = 1
-  read(iotape,'(1x,2i3,i5,5g20.12)',iostat=ios)                          &
-                   npot(1), npot(-1), nrm, a, b, zion, cfac, rcfac
+  read(line(13:),*,iostat=ios) a, b, zion, cfac, rcfac
   if(ios /= 0) then
-    backspace iotape
     ifcore = 0
-    read(iotape,'(1x,2i3,i5,3g20.12)')                                   &
-                   npot(1), npot(-1), nrm, a, b, zion
+    read(line(13:),*) a, b, zion
   endif
 
   nr = nrm+1
@@ -131,7 +132,7 @@ subroutine atom_kb_psd_in_real(iotape, fname,                            &
   r(1) = ZERO
   read(iotape,*)                               !'Radial grid follows'
 
-  read(iotape,'(4g20.12)') (r(j),j=2,nr)
+  call read4(r(2:nr))
 
 ! paranoid check
 
@@ -166,7 +167,7 @@ subroutine atom_kb_psd_in_real(iotape, fname,                            &
 
     endif
 
-    read(iotape,'(4g20.12)') (vionic(j,l,0), j=2,nr)
+    call read4(vionic(2:nr,l,0))
 
     rv0pr = (vionic(3,l,0) - vionic(2,l,0))/(r(3)-r(2))
     rv0 = vionic(2,l,0) - rv0pr*r(2)
@@ -186,7 +187,7 @@ subroutine atom_kb_psd_in_real(iotape, fname,                            &
 
     endif
 
-    read(iotape,'(4g20.12)') (vionic(j,l,-1),j=2,nr)
+    call read4(vionic(2:nr,l,-1))
 
     rv0pr = (vionic(3,l,-1) - vionic(2,l,-1)) / (r(3)-r(2))
     rv0 = vionic(2,l,-1) - rv0pr*r(2)
@@ -210,12 +211,12 @@ subroutine atom_kb_psd_in_real(iotape, fname,                            &
 
   read(iotape,*) ! 'Core charge follows'
 
-  read(iotape,'(4g20.12)') (cdc(i),i=2,nr)
+  call read4(cdc(2:nr))
   cdc(1) = ZERO
 
   read(iotape,*) !'Valence charge follows'
 
-  read(iotape,'(4g20.12)') (cdv(i),i=2,nr)
+  call read4(cdv(2:nr))
   cdv(1) = ZERO
 
 ! iotape still has information about wave-functions
@@ -227,19 +228,36 @@ subroutine atom_kb_psd_in_real(iotape, fname,                            &
   do i = 1, npot(0)
     read (iotape,*)                           ! Pseudo-wave-function follows (l, zelect, rc)
     read(iotape,'(1x,i2,1x,g20.12,1x,g20.12)') l, zo(l), rc(l)
-    read(iotape,'(4(g20.12))') (rpsi_ps(j,l),j=2,nr)
+    call read4(rpsi_ps(2:nr,l))
     rpsi_ps(1,l) = ZERO
   enddo
 
 ! reads the core kinetic energy
 
   read(iotape,*)                             !Core kinetic energy density follows
-  read(iotape,'(4(g20.12))') (tauc_partial(i),i=2,nr)
+  call read4(tauc_partial(2:nr))
   tauc_partial(1) = ZERO
 
 
   close(unit=iotape)
 
   return
+
+  contains
+
+! reads an array written 4 numbers per line, list-directed, so that the
+! old g20.12 and the new es24.16e3 files are both read
+
+  subroutine read4(f)
+
+    real(REAL64), intent(out)       ::  f(:)
+
+    integer   ::  k, m
+
+    do k = 1,size(f),4
+      read(iotape,*) (f(m), m = k,min(k+3,size(f)))
+    enddo
+
+  end subroutine read4
 
 end subroutine atom_kb_psd_in_real

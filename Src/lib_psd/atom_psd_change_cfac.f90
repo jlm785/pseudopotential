@@ -44,7 +44,7 @@ subroutine atom_psd_change_cfac(ifcore, cfac, rcfac, cfactau)
       write(6,'("  The current value of cfac is ",f10.3)') cfac
       write(6,*) '  The xc partial core correction will be set'
       write(6,*) '  at the radius where the core charge density'
-      write(6,*) '  is cfac times the valence cahrge density'
+      write(6,*) '  is cfac times the valence charge density'
       write(6,*) '  (there is a correction for ionized reference atoms)'
       write(6,*)
       write(6,*) '  Do you want to change cfac? (y/n)'

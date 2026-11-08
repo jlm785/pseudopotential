@@ -5,9 +5,13 @@
 !>  with the small difference algorithm of Numerical Recipes Eq. 3.1.5
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.0.6 of atom
-!>  \date         15 July 2021.
+!>  \version      6.1.0 of atom
+!>  \date         15 July 2021. 8 November 2026.
 !>  \copyright    GNU Public License v3
+
+! close points are tested against the local range of the points that can enter
+! an interpolation with them, not the full range (logarithmic grids of heavy atoms
+! have points 1e-7 apart in a 120 bohr range). 8 November 2026. claude+JLM
 
 
 subroutine grid_interp(n, nd, nin, xin, fin, nout, xout, fout, dymax, ifail, mxdout)
@@ -54,7 +58,9 @@ subroutine grid_interp(n, nd, nin, xin, fin, nout, xout, fout, dymax, ifail, mxd
   logical        ::  linup, lindw
   logical        ::  loutup, loutdw
 
-  real(REAL64)   ::  xdif
+  real(REAL64)   ::  xdif                                                !  tolerance for extrapolation (full range)
+  real(REAL64)   ::  xloc                                                !  tolerance for close points (local range)
+  integer        ::  i1, i2                                              !  points that can enter an interpolation with i and i+1
   integer        ::  near
   integer        ::  nn
   real(REAL64)   ::  xgmin, xgmax
@@ -63,7 +69,7 @@ subroutine grid_interp(n, nd, nin, xin, fin, nout, xout, fout, dymax, ifail, mxd
 ! constants
 
   real(REAL64), parameter    ::  ZERO = 0.0_REAL64
-  real(REAL64), parameter    ::  EPS = 1.0E-9_REAL64
+  real(REAL64), parameter    ::  EPS = 1.0E-9_REAL64                     !  relative tolerance for close points and extrapolation
 
 
 ! counters
@@ -127,7 +133,10 @@ subroutine grid_interp(n, nd, nin, xin, fin, nout, xout, fout, dymax, ifail, mxd
 
   linup = .TRUE.
   do i = 1,nin-1
-    if(xin(i+1) < xin(i)+xdif) then
+    i1 = max(i+1-n,1)
+    i2 = min(i+n,nin)
+    xloc = EPS*abs(xin(i2) - xin(i1))
+    if(xin(i+1) <= xin(i)+xloc) then
       linup = .FALSE.
 
       exit
@@ -137,7 +146,10 @@ subroutine grid_interp(n, nd, nin, xin, fin, nout, xout, fout, dymax, ifail, mxd
 
   lindw = .TRUE.
   do i = 1,nin-1
-    if(xin(i+1)+xdif > xin(i)) then
+    i1 = max(i+1-n,1)
+    i2 = min(i+n,nin)
+    xloc = EPS*abs(xin(i2) - xin(i1))
+    if(xin(i+1)+xloc >= xin(i)) then
       lindw = .FALSE.
 
       exit
@@ -271,9 +283,12 @@ subroutine grid_interp(n, nd, nin, xin, fin, nout, xout, fout, dymax, ifail, mxd
 !   check if the input grid has close points
 
     do i = 1,nin-1
-      if( xin(isin(i+1)) < xin(isin(i))+xdif ) then
+      i1 = max(i+1-n,1)
+      i2 = min(i+n,nin)
+      xloc = EPS*abs(xin(isin(i2)) - xin(isin(i1)))
+      if( xin(isin(i+1)) <= xin(isin(i))+xloc ) then
 
-        write(iowrite,*) '  grid_interp,  duplicate poins in input grid'
+        write(iowrite,*) '  grid_interp,  duplicate points in input grid'
         write(6,*) 'xin(',isin(i+1),') = ',xin(isin(i+1))
         write(6,*) 'xin(',isin(i),') = ',xin(isin(i))
         ifail = 5

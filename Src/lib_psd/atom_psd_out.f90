@@ -20,6 +20,7 @@ subroutine atom_psd_out(itpars, filename, nameat, cftype,                &
 ! Modified rpsi_ps, dimensions, 9 July 2021
 ! rpsi_ps. 2 November 2021. JLM
 ! psdtitle, 18 May 2022. JLM
+! psd.pot with 17 significant digits (es24.16e3), read list-directed. 8 November 2026. claude+JLM
 
   implicit none
 
@@ -85,6 +86,8 @@ subroutine atom_psd_out(itpars, filename, nameat, cftype,                &
 
   integer       ::  nrm
   integer       ::  id                         !  identifies which is the old "down" potential
+  character(len=20)  ::  fmtr                  !  format of the numbers, g20.12 (PARSEC, SIESTA) or es24.16e3 (psd.pot)
+  character(len=40)  ::  fmth3, fmth5          !  formats of the line with a, b, zion (cfac, rcfac)
 
 ! counters
 
@@ -131,6 +134,20 @@ subroutine atom_psd_out(itpars, filename, nameat, cftype,                &
 
   open(unit = itpars, file = filename, status = 'unknown', form = 'formatted')
 
+! psd.pot is only read by kb_conv, list-directed with 4 numbers per line (old files
+! also), and keeps the full precision (17 digits) of the numbers, with an explicit E
+! and a blank between them.  The files for other codes keep the traditional g20.12.
+
+  if(cftype == 'SI' .or. cftype == 'PA') then
+    fmtr = '(4(g20.12))'
+    fmth3 = '(1x,2i3,i5,3g20.12,a20)'
+    fmth5 = '(1x,2i3,i5,5g20.12,a29)'
+  else
+    fmtr = '(4(1x,es24.16e3))'
+    fmth3 = '(1x,2i3,i5,3(1x,es24.16e3),a20)'
+    fmth5 = '(1x,2i3,i5,5(1x,es24.16e3),a29)'
+  endif
+
   write(itpars,'(1x,a2,1x,a2,1x,a3,1x,a4)') nameat, icorr, irel, nicore
   write(itpars,'(1x,6a10)') (iray(j),j=1,6)
   if(cftype == 'SI') then
@@ -145,16 +162,16 @@ subroutine atom_psd_out(itpars, filename, nameat, cftype,                &
     write(itpars,'(1x,2i3,i5,3g20.12)') npot(id), npot(-1), nrm, a, b, zion
   else
     if (ifcore == 0) then
-      write(itpars,'(1x,2i3,i5,3g20.12,a20)') npot(id), npot(-1), nrm,     &
+      write(itpars,fmth3) npot(id), npot(-1), nrm,                       &
            a, b, zion,' nl nls nr a b zion '
     else
-      write(itpars,'(1x,2i3,i5,5g20.12,a29)') npot(id), npot(-1), nrm,     &
+      write(itpars,fmth5) npot(id), npot(-1), nrm,                       &
            a, b, zion, cfac, rcfac,' nl nls nr a b zion cfac rcfac'
     endif
   endif
 
   write(itpars,'(" Radial grid follows")')
-  write(itpars,'(4(g20.12))') (r(j),j=2,nr)
+  write(itpars,fmtr) (r(j),j=2,nr)
 
 ! Write the potentials
 
@@ -164,7 +181,7 @@ subroutine atom_psd_out(itpars, filename, nameat, cftype,                &
       if (indv(l,1) /= 0) then
         write(itpars,'(" Average pseudopotential follows (l on next line)")')
         write(itpars,'(1x,i2)') l
-        write(itpars,'(4(g20.12))') (((l+1)*vpsd(j,l, 1) + l*vpsd(j,l,-1)) / (2*l+1) ,j=2,nr)
+        write(itpars,fmtr) (((l+1)*vpsd(j,l, 1) + l*vpsd(j,l,-1)) / (2*l+1) ,j=2,nr)
       endif
     enddo
 
@@ -172,7 +189,7 @@ subroutine atom_psd_out(itpars, filename, nameat, cftype,                &
       if (indv(l,1) /= 0) then
         write(itpars,'(" Spin-orbit pseudopotential follows (l on next line)")')
         write(itpars,'(1x,i2)') l
-        write(itpars,'(4(g20.12))') (2*(vpsd(j,l, 1) - vpsd(j,l,-1)) / (2*l+1) ,j=2,nr)
+        write(itpars,fmtr) (2*(vpsd(j,l, 1) - vpsd(j,l,-1)) / (2*l+1) ,j=2,nr)
      endif
     enddo
 
@@ -182,7 +199,7 @@ subroutine atom_psd_out(itpars, filename, nameat, cftype,                &
       if (indv(l,id) /= 0) then
         write(itpars,'(" Pseudopotential follows (l on next line)")')
         write(itpars,'(1x,i2)') l
-        write(itpars,'(4(g20.12))') (vpsd(j,l,id),j=2,nr)
+        write(itpars,fmtr) (vpsd(j,l,id),j=2,nr)
       endif
     enddo
 
@@ -190,7 +207,7 @@ subroutine atom_psd_out(itpars, filename, nameat, cftype,                &
       if (indv(l,-1) /= 0) then
        write(itpars,'(" Minor comp. of Pseudop. follows (l on next line)")')
        write(itpars,'(1x,i2)') l
-       write(itpars,'(4(g20.12))') (vpsd(j,l,-1),j=2,nr)
+       write(itpars,fmtr) (vpsd(j,l,-1),j=2,nr)
       endif
     enddo
 
@@ -199,14 +216,14 @@ subroutine atom_psd_out(itpars, filename, nameat, cftype,                &
   write(itpars,'(" Core charge follows")')
 
   if (ifcore == 0) then
-    write(itpars,'(4(g20.12))') (ZERO,i=2,nr)
+    write(itpars,fmtr) (ZERO,i=2,nr)
   else
-    write(itpars,'(4(g20.12))') (cdc(i),i=2,nr)
+    write(itpars,fmtr) (cdc(i),i=2,nr)
   end if
 
   write(itpars,'(" Valence charge follows")')
 !jlm
-       write(itpars,'(4(g20.12))') ((cdpsd(i, 1)+cdpsd(i,-1)),i=2,nr)
+       write(itpars,fmtr) ((cdpsd(i, 1)+cdpsd(i,-1)),i=2,nr)
 !jlm
   do l = 0,lc
 !   calculate number of electrons with this angular momentum
@@ -219,7 +236,7 @@ subroutine atom_psd_out(itpars, filename, nameat, cftype,                &
       if (indv(l,id) /= 0) then
         write(itpars,'(" Pseudo-wave-function follows (l, zelect, rc)")')
         write(itpars,'(1x,i2,1x,g20.12,1x,g20.12)') l,zelt,rc(l)
-        write(itpars,'(4(g20.12))') (rpsi_ps(j,1,l,id),j=2,nr)
+        write(itpars,fmtr) (rpsi_ps(j,1,l,id),j=2,nr)
       endif
 
     endif
@@ -227,7 +244,7 @@ subroutine atom_psd_out(itpars, filename, nameat, cftype,                &
 
   if(cftype == 'AT') then
     write(itpars,'(" Core kinetic energy density follows")')
-    write(itpars,'(4(g20.12))') (tauc(i),i=2,nr)
+    write(itpars,fmtr) (tauc(i),i=2,nr)
   endif
 
   close(unit = itpars)
