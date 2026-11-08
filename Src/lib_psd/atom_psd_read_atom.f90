@@ -4,7 +4,9 @@
 !>  momentum, rc(s), rc(p), rc(d), rc(f) in 4f10.5 (old convention),
 !>  followed by cfac, rcfac and cfactau.  If there is a valence g
 !>  orbital rc(g) is a fifth field and cfac etc. start in column 51.
-!>  Files written by version 6.1.0 (columns 41-50 blank) are also read.
+!>
+!>  Files written in 2021-2026 (columns 41-50 blank, cfac... from column 51)
+!>  cannot be distinguished from a blank cfac and must be edited (read the user guide).
 !>
 !>  \author       Jose Luis Martins
 !>  \version      6.1.0
