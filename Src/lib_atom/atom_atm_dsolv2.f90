@@ -15,7 +15,7 @@
        nr, r, drdi, d2rodr,                                              &
        norb, ncore, no, lo, iso, zo, znuc,                               &
        cdv, cdc, vionic, vhxc_orb, ev, ek, ep, tau, evi,                 &
-       iowrite, mxdnr, mxdorb, mxdl)
+       ifail, iowrite, mxdnr, mxdorb, mxdl)
 
 ! converted to fortran 90, March 1st 2018
 ! cleanup and new interface, July 2019. JLM
@@ -23,6 +23,7 @@
 ! so->iso, vionic, single orbital in orban, cdv, 12 September 2021. JLM
 ! Bug in the calculation of core charge for relativistic calculation squashed by Emmi Gareis. 2025.
 ! calculation of tau implemented by Emmi Gareis moved to a separete subroutine, 6 January 2026. JLM
+! ifail instead of stop if a wave-function is not found. 8 November 2026. claude+JLM
 
   implicit none
 
@@ -75,6 +76,8 @@
   real(REAL64), intent(out)         ::  ep(mxdorb)                       !<  orbital potential energy
   real(REAL64), intent(out)         ::  tau(mxdnr,mxdorb)                !<  core kinetic energy density matrix (gradient version)
 
+  integer, intent(out)              ::  ifail                            !<  0: ok;  iflag of the solver if a wave-function was not found
+
 ! input and output
 
   real(REAL64), intent(inout)       ::  ev(mxdorb)                       !<  orbital energy
@@ -108,6 +111,8 @@
 
   integer     ::  i, j, k
 
+
+  ifail = 0
 
   allocate(v(mxdnr))
   allocate(ar(mxdnr), br(mxdnr))
@@ -200,7 +205,14 @@
                   &  i3,"  iter = ",i3,"  iorb = ",i3)') iflag, iter, i
         write(iowrite,*)
 
-        if(iflag > 4) stop
+        if(iflag > 4) then
+          ifail = iflag
+          deallocate(v)
+          deallocate(ar, br)
+
+          return
+
+        endif
 
       endif
 

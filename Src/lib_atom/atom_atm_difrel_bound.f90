@@ -17,6 +17,7 @@ subroutine atom_atm_difrel_bound(nr, r, drdi, v, ar, br,                 &
 ! use of atm_integ_rel, 23 June 2021. JLM
 ! remove fixed evi. 28 June 2021. JLM
 ! so->iso, 12 September 2021. JLM
+! ninf, nodes initialized (undefined if the first ev > 0). 8 November 2026. claude+JLM
 
 
   implicit none
@@ -108,6 +109,8 @@ subroutine atom_atm_difrel_bound(nr, r, drdi, v, ar, br,                 &
   icmax = 100                                                            !  maximum iteration steps for ninf, nctp
 
   iflag = 1
+  ninf = 1
+  nodes = 0
 
   lmany = .TRUE.
   lfew = .TRUE.

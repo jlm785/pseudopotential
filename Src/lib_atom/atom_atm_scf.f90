@@ -5,7 +5,7 @@
 !>  \date         22 June 2021, 7 November 2026
 !>  \copyright    GNU Public License v2
 
-subroutine atom_atm_scf(etotal,                                          &
+subroutine atom_atm_scf(etotal, ifail,                                   &
          nameat, ctype, ititle, kerker, icorr, ispp_in,                  &
          znuc_in, rmax_in, aa_in, bb_in, ncore_in, nval_in,              &
          ni, li, zd, zu, evd,                                            &
@@ -20,6 +20,7 @@ subroutine atom_atm_scf(etotal,                                          &
 ! Absolute value in convergence criteria. 9 April 2026. JLM
 ! TAUC files only for debugging (in atom_atm_datout). 7 November 2026. claude+JLM
 ! ek, tau passed to atom_atm_datout only for debugging (!dbg). 8 November 2026. claude+JLM
+! ifail instead of stop if there is no self-consistent solution. 8 November 2026. claude+JLM
 
 
   implicit none
@@ -56,7 +57,8 @@ subroutine atom_atm_scf(etotal,                                          &
 
 ! output
 
-  real(REAL64), intent(out)         ::  etotal                           !<  total energy
+  real(REAL64), intent(out)         ::  etotal                           !<  total energy (0 if ifail /= 0)
+  integer, intent(out)              ::  ifail                            !<  0: converged;  1: potential not converged;  > 4: wave-function not found
 
 ! modified locally, do not propagate the configuration!
 
@@ -157,6 +159,8 @@ subroutine atom_atm_scf(etotal,                                          &
   real(REAL64), parameter    ::  TOL = 1.0E-8_REAL64
 
   call zesec(t1)
+
+  ifail = 0
 
 ! maximum number of iterations
 
@@ -304,7 +308,9 @@ subroutine atom_atm_scf(etotal,                                          &
           nr, r, drdi, d2rodr,                                           &
           norb, ncore, no, lo, iso, zo, znuc,                            &
           cdv, cdc, vionic, vhxc_orb, ev, ek, ep, tau, evi,              &
-          iowrite, mxdnr, mxdorb, mxdl)
+          ifail, iowrite, mxdnr, mxdorb, mxdl)
+
+    if(ifail /= 0) exit
 
 !   set up output screening potential from charge density
 
@@ -347,15 +353,52 @@ subroutine atom_atm_scf(etotal,                                          &
 
   enddo
 
-  if(iconv == 2) then
+  if(ifail /= 0 .or. iconv == 2) then
 
-!   End of iteration of loop without convergence.
+    if(ifail == 0) then
 
+!     End of iteration of loop without convergence.
+
+      write(iowrite,*)
+      write(iowrite,'(" potential not converged - dvmax =",              &
+           & e12.4," xmixo =",f5.3 )') dvmax,xmixo
+      ifail = 1
+
+    endif
+
+    etotal = ZERO
     write(iowrite,*)
-    write(iowrite,'(" potential not converged - dvmax =",                &
-         & e12.4," xmixo =",f5.3 )') dvmax,xmixo
+    write(iowrite,'("  no self-consistent solution for this configuration")')
+    write(iowrite,*)
 
-    stop
+    deallocate(r)
+    deallocate(drdi)
+    deallocate(d2rodr)
+
+    deallocate(no)
+    deallocate(lo)
+    deallocate(iso)
+    deallocate(zo)
+    deallocate(evi)
+
+    deallocate(cdc)
+    deallocate(cdv)
+
+    deallocate(vhxc_out)
+    deallocate(vhxc_in)
+    deallocate(vionic)
+
+    deallocate(vhxc_orb)
+
+    deallocate(ev)
+    deallocate(ek)
+    deallocate(ep)
+    deallocate(tau)
+    deallocate(tauc_total)
+
+    deallocate(vmem)
+
+    return
 
   endif
 

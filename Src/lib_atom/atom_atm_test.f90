@@ -9,6 +9,7 @@ subroutine atom_atm_test(iowrite, ioread, filein,                        &
          iopsd, filepsd, iopsdkb, filepsdkb)
 
 ! translated to f90 from atm.f version 5.805
+! configurations without self-consistent solution are skipped (ifail). 8 November 2026. claude+JLM
 
 ! copyright  J.L.Martins, INESC-MN.
 
@@ -86,6 +87,11 @@ subroutine atom_atm_test(iowrite, ioread, filein,                        &
   real(REAL64), allocatable         ::  exct_kb(:)                       !  KB projector excitation
 
   logical, allocatable              ::  lempty(:), lfull(:)              !  indicates mostly empty or full orbital
+
+  integer                           ::  ifail                            !  /= 0: no self-consistent solution
+  character(len=6)                  ::  fail_ref                         !  calculation (ae, pseudo, KB) that failed for the reference
+  character(len=6), allocatable     ::  fail_ion(:)                      !  calculation that failed for an ionization (blank if none)
+  character(len=6), allocatable     ::  fail_exct(:)                     !  calculation that failed for an excitation (blank if none)
   real(REAL64), allocatable         ::  zexct(:), zexct2(:)              !  excitation charge
 
 ! constants
@@ -136,31 +142,92 @@ subroutine atom_atm_test(iowrite, ioread, filein,                        &
   allocate(lempty(nval))
   allocate(lfull(nval))
 
+  allocate(fail_ion(nval))
+  allocate(fail_exct(nval*nval))
+  fail_ion(:) = '      '
+  fail_exct(:) = '      '
+
 ! calculates the all-electron reference energy
+
+  fail_ref = '      '
 
   ctype = 'ae'
 
-  call atom_atm_scf(eae_ref,                                             &
+  call atom_atm_scf(eae_ref, ifail,                                      &
       nameat, ctype, ititle, kerker, icorr, ispp,                        &
       znuc, rmax, aa, bb, ncore, nval, ni, li, zd, zu, evd,              &
       iowrite, 0, fileae, iopsd, filepsd,                                &
       mxdnr, mxdorb, mxdl)
+
+  if(ifail /= 0) fail_ref = 'ae'
 
 ! calculates the pseudopotential reference energy
 
-  ctype = 'pt'
+  if(fail_ref == ' ') then
 
-  call atom_atm_scf(epsd_ref,                                            &
-      nameat, ctype, ititle, kerker, icorr, ispp,                        &
-      znuc, rmax, aa, bb, ncore, nval, ni, li, zd, zu, evd,              &
-      iowrite, 0, fileae, iopsd, filepsd,                                &
-      mxdnr, mxdorb, mxdl)
+    ctype = 'pt'
 
-  call atom_kb_test_scf(ekb_ref,                                         &
-         nameat, ititle, icorr, ispp,                                    &
-         nval, ni, li, zd, zu, evd,                                      &
-         iowrite, iopsdkb, filepsdkb,                                    &
-         mxdnr, mxdorb, mxdl)
+    call atom_atm_scf(epsd_ref, ifail,                                   &
+        nameat, ctype, ititle, kerker, icorr, ispp,                      &
+        znuc, rmax, aa, bb, ncore, nval, ni, li, zd, zu, evd,            &
+        iowrite, 0, fileae, iopsd, filepsd,                              &
+        mxdnr, mxdorb, mxdl)
+
+    if(ifail /= 0) fail_ref = 'pseudo'
+
+  endif
+
+  if(fail_ref == ' ') then
+
+    call atom_kb_test_scf(ekb_ref, ifail,                                &
+           nameat, ititle, icorr, ispp,                                  &
+           nval, ni, li, zd, zu, evd,                                    &
+           iowrite, iopsdkb, filepsdkb,                                  &
+           mxdnr, mxdorb, mxdl)
+
+    if(ifail /= 0) fail_ref = 'KB'
+
+  endif
+
+! without the reference energies there is nothing to compare
+
+  if(fail_ref /= ' ') then
+
+    write(6,*)
+    write(6,'("    Tests skipped, the ",a," calculation of the reference ",   &
+       &     "configuration did not converge")') trim(fail_ref)
+    write(6,*)
+    if(iowrite /= 6) then
+      write(iowrite,*)
+      write(iowrite,'("    Tests skipped, the ",a," calculation of the ",   &
+         &     "reference configuration did not converge")') trim(fail_ref)
+      write(iowrite,*)
+    endif
+
+    deallocate(ni)
+    deallocate(li)
+    deallocate(zu,zd)
+    deallocate(evd)
+
+    deallocate(eion_ae)
+    deallocate(eion_psd)
+    deallocate(eion_kb)
+
+    deallocate(exct_ae)
+    deallocate(exct_psd)
+    deallocate(exct_kb)
+
+    deallocate(lempty)
+    deallocate(lfull)
+    deallocate(zexct)
+    deallocate(zexct2)
+
+    deallocate(fail_ion)
+    deallocate(fail_exct)
+
+    return
+
+  endif
 
   ztot = ZERO
   do n = 1,nval
@@ -181,33 +248,46 @@ subroutine atom_atm_test(iowrite, ioread, filein,                        &
       zd(n) = zd(n) - zdi
       zu(n) = zu(n) - zui
 
+!     a calculation without self-consistent solution skips the configuration
+
       ctype = 'ae'
 
-      call atom_atm_scf(etotal,                                          &
+      call atom_atm_scf(etotal, ifail,                                   &
           nameat, ctype, ititle, kerker, icorr, ispp,                    &
           znuc, rmax, aa, bb, ncore, nval, ni, li, zd, zu, evd,          &
           iowrite, 0, fileae, iopsd, filepsd,                            &
           mxdnr, mxdorb, mxdl)
 
       eion_ae(n) = etotal - eae_ref
+      if(ifail /= 0) fail_ion(n) = 'ae'
 
-      ctype = 'pt'
+      if(fail_ion(n) == ' ') then
 
-      call atom_atm_scf(etotal,                                          &
-          nameat, ctype, ititle, kerker, icorr, ispp,                    &
-          znuc, rmax, aa, bb, ncore, nval, ni, li, zd, zu, evd,          &
-          iowrite, 0, fileae, iopsd, filepsd,                            &
-          mxdnr, mxdorb, mxdl)
+        ctype = 'pt'
 
-      eion_psd(n) = etotal - epsd_ref
+        call atom_atm_scf(etotal, ifail,                                 &
+            nameat, ctype, ititle, kerker, icorr, ispp,                  &
+            znuc, rmax, aa, bb, ncore, nval, ni, li, zd, zu, evd,        &
+            iowrite, 0, fileae, iopsd, filepsd,                          &
+            mxdnr, mxdorb, mxdl)
 
-      call atom_kb_test_scf(etotal,                                      &
-          nameat, ititle, icorr, ispp,                                   &
-          nval, ni, li, zd, zu, evd,                                     &
-          iowrite, iopsdkb, filepsdkb,                                   &
-          mxdnr, mxdorb, mxdl)
+        eion_psd(n) = etotal - epsd_ref
+        if(ifail /= 0) fail_ion(n) = 'pseudo'
 
-      eion_kb(n) = etotal - ekb_ref
+      endif
+
+      if(fail_ion(n) == ' ') then
+
+        call atom_kb_test_scf(etotal, ifail,                             &
+            nameat, ititle, icorr, ispp,                                 &
+            nval, ni, li, zd, zu, evd,                                   &
+            iowrite, iopsdkb, filepsdkb,                                 &
+            mxdnr, mxdorb, mxdl)
+
+        eion_kb(n) = etotal - ekb_ref
+        if(ifail /= 0) fail_ion(n) = 'KB'
+
+      endif
 
 
       zd(n) = zd(n) + zdi
@@ -265,33 +345,46 @@ subroutine atom_atm_test(iowrite, ioread, filein,                        &
         zd(n2) = zd(n2) + zdx
         zu(n2) = zu(n2) + zux
 
+!       a calculation without self-consistent solution skips the configuration
+
         ctype = 'ae'
 
-        call atom_atm_scf(etotal,                                    &
+        call atom_atm_scf(etotal, ifail,                             &
             nameat, ctype, ititle, kerker, icorr, ispp,              &
             znuc, rmax, aa, bb, ncore, nval, ni, li, zd, zu, evd,    &
             iowrite, 0, fileae, iopsd, filepsd,                      &
             mxdnr, mxdorb, mxdl)
 
         exct_ae((n-1)*nval+n2) = etotal - eae_ref
+        if(ifail /= 0) fail_exct((n-1)*nval+n2) = 'ae'
 
-        ctype = 'pt'
+        if(fail_exct((n-1)*nval+n2) == ' ') then
 
-        call atom_atm_scf(etotal,                                    &
-            nameat, ctype, ititle, kerker, icorr, ispp,              &
-            znuc, rmax, aa, bb, ncore, nval, ni, li, zd, zu, evd,    &
-            iowrite, 0, fileae, iopsd, filepsd,                      &
-            mxdnr, mxdorb, mxdl)
+          ctype = 'pt'
 
-        exct_psd((n-1)*nval+n2) = etotal - epsd_ref
+          call atom_atm_scf(etotal, ifail,                           &
+              nameat, ctype, ititle, kerker, icorr, ispp,            &
+              znuc, rmax, aa, bb, ncore, nval, ni, li, zd, zu, evd,  &
+              iowrite, 0, fileae, iopsd, filepsd,                    &
+              mxdnr, mxdorb, mxdl)
 
-        call atom_kb_test_scf(etotal,                                &
-            nameat, ititle, icorr, ispp,                             &
-            nval, ni, li, zd, zu, evd,                               &
-            iowrite, iopsdkb, filepsdkb,                             &
-            mxdnr, mxdorb, mxdl)
+          exct_psd((n-1)*nval+n2) = etotal - epsd_ref
+          if(ifail /= 0) fail_exct((n-1)*nval+n2) = 'pseudo'
 
-        exct_kb((n-1)*nval+n2) = etotal - ekb_ref
+        endif
+
+        if(fail_exct((n-1)*nval+n2) == ' ') then
+
+          call atom_kb_test_scf(etotal, ifail,                       &
+              nameat, ititle, icorr, ispp,                           &
+              nval, ni, li, zd, zu, evd,                             &
+              iowrite, iopsdkb, filepsdkb,                           &
+              mxdnr, mxdorb, mxdl)
+
+          exct_kb((n-1)*nval+n2) = etotal - ekb_ref
+          if(ifail /= 0) fail_exct((n-1)*nval+n2) = 'KB'
+
+        endif
 
         zexct((n-1)*nval+n2) = -zdi - zui
         zexct2((n-1)*nval+n2) = zdx + zux
@@ -330,7 +423,7 @@ subroutine atom_atm_test(iowrite, ioread, filein,                        &
 
 !   minimum of ionization to make it worth
 
-    if(zui + zdi > ONE/10) then
+    if(zui + zdi > ONE/10 .and. fail_ion(n) == ' ') then
 
       write(6,'(3x,i2,a1,3(5x,f8.3))') ni(n), IL(li(n)),                 &
               eion_ae(n)*RYDBERG, eion_psd(n)*RYDBERG,                   &
@@ -341,6 +434,18 @@ subroutine atom_atm_test(iowrite, ioread, filein,                        &
         write(iowrite,'(3x,i2,a1,3(5x,f8.3))') ni(n),                    &
               IL(li(n)), eion_ae(n)*RYDBERG, eion_psd(n)*RYDBERG,        &
               eion_kb(n)*RYDBERG
+
+      endif
+
+    elseif(zui + zdi > ONE/10) then
+
+      write(6,'(3x,i2,a1,5x,"skipped, no self-consistent ",a,           &
+         &      " solution")') ni(n), IL(li(n)), trim(fail_ion(n))
+
+      if(iowrite /= 6) then
+
+        write(iowrite,'(3x,i2,a1,5x,"skipped, no self-consistent ",a,    &
+           &      " solution")') ni(n), IL(li(n)), trim(fail_ion(n))
 
       endif
 
@@ -370,7 +475,23 @@ subroutine atom_atm_test(iowrite, ioread, filein,                        &
     do n = 1,nval
     do n2 = 1,nval
 
-      if(n2 /= n .and. (.not. lempty(n)) .and. (.not. lfull(n2))) then
+      if(n2 /= n .and. (.not. lempty(n)) .and. (.not. lfull(n2)) .and.  &
+         fail_exct((n-1)*nval+n2) /= ' ') then
+
+        write(6,'(3x,i2,a1,5x,i2,a1,5x,"skipped, no self-consistent ",a, &
+           &      " solution")') ni(n), IL(li(n)), ni(n2), IL(li(n2)),    &
+           trim(fail_exct((n-1)*nval+n2))
+
+        if(iowrite /= 6) then
+
+          write(iowrite,'(3x,i2,a1,5x,i2,a1,5x,                          &
+             &     "skipped, no self-consistent ",a," solution")')        &
+             ni(n), IL(li(n)), ni(n2), IL(li(n2)),                        &
+             trim(fail_exct((n-1)*nval+n2))
+
+        endif
+
+      elseif(n2 /= n .and. (.not. lempty(n)) .and. (.not. lfull(n2))) then
 
         write(6,'(3x,i2,a1,5x,i2,a1,3(5x,f8.3),5x,2f6.2)')               &
             ni(n),                                                       &
@@ -420,6 +541,9 @@ subroutine atom_atm_test(iowrite, ioread, filein,                        &
   deallocate(lfull)
   deallocate(zexct)
   deallocate(zexct2)
+
+  deallocate(fail_ion)
+  deallocate(fail_exct)
 
   return
 

@@ -7,6 +7,7 @@
 
 subroutine atom_kb_test_sub(iowrite, ioread, filein, iopsd, filepsd)
 
+! stops if there is no self-consistent solution (ifail of atom_kb_test_scf). 8 November 2026. claude+JLM
 
 
   implicit none
@@ -45,6 +46,7 @@ subroutine atom_kb_test_sub(iowrite, ioread, filein, iopsd, filepsd)
   integer                           ::  nval                             !  number of valence orbitals
 
   real(REAL64)                      ::  etotal                           !  total energy
+  integer                           ::  ifail                            !  /= 0: no self-consistent solution
 
   integer, allocatable              ::  ni(:)                            !  valence principal quantum number
   integer, allocatable              ::  li(:)                            !  valence angular quantum number
@@ -82,11 +84,20 @@ subroutine atom_kb_test_sub(iowrite, ioread, filein, iopsd, filepsd)
 
 ! calculates the ae structure
 
-   call atom_kb_test_scf(etotal,                                         &
+   call atom_kb_test_scf(etotal, ifail,                                  &
       nameat, ititle, icorr, ispp,                                       &
       nval, ni, li, zd, zu, evd,                                         &
       iowrite, iopsd, filepsd,                                           &
       mxdnr, mxdorb, mxdl)
+
+  if(ifail /= 0) then
+    write(6,*)
+    write(6,*) '  Stopped: no self-consistent solution for the configuration of atom.dat'
+    write(6,*)
+
+    stop
+
+  endif
 
   deallocate(ni)
   deallocate(li)

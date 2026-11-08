@@ -9,6 +9,7 @@ subroutine atom_atm_sub(iowrite, ioread, filein, ioae, fileae, iopsd, filepsd)
 
 ! translated to f90 from atm.f version 5.805
 ! printing, 21 October 2021. JLM
+! stops if there is no self-consistent solution (ifail of atom_atm_scf). 8 November 2026. claude+JLM
 
 
   implicit none
@@ -61,6 +62,7 @@ subroutine atom_atm_sub(iowrite, ioread, filein, ioae, fileae, iopsd, filepsd)
   real(REAL64), allocatable         ::  evd(:)                           !  default eigenvalue
 
   real(REAL64)                      ::  etotal                           !  total energy
+  integer                           ::  ifail                            !  /= 0: no self-consistent solution
 
 ! finds dimensions
 
@@ -91,11 +93,20 @@ subroutine atom_atm_sub(iowrite, ioread, filein, ioae, fileae, iopsd, filepsd)
   write(6,*) '  Starting all-electron calculation'
   write(6,*)
 
-  call atom_atm_scf(etotal,                                              &
+  call atom_atm_scf(etotal, ifail,                                       &
       nameat, ctype, ititle, kerker, icorr, ispp,                        &
       znuc, rmax, aa, bb, ncore, nval, ni, li, zd, zu, evd,              &
       iowrite, ioae, fileae, iopsd, filepsd,                             &
       mxdnr, mxdorb, mxdl)
+
+  if(ifail /= 0) then
+    write(6,*)
+    write(6,*) '  Stopped: no self-consistent solution for the configuration of atom.dat'
+    write(6,*)
+
+    stop
+
+  endif
 
   deallocate(ni)
   deallocate(li)

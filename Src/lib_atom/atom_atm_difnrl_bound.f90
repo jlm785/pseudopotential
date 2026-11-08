@@ -18,6 +18,8 @@ subroutine atom_atm_difnrl_bound(nr, r, drdi, d2rodr, v, rpsi, drpsidr,  &
 ! cleanup and new interface, July 2019. JLM
 ! jlm  version 6.011
 ! jlm  replaced ev by einf - ef in final test.  dev0. September 2021. JLM
+! ninf, nodes initialized (undefined if the first ev > einf, segmentation fault
+! with ifx -O3), iterations done in the message. 8 November 2026. claude+JLM
 
 
   implicit none
@@ -105,6 +107,8 @@ subroutine atom_atm_difnrl_bound(nr, r, drdi, d2rodr, v, rpsi, drpsidr,  &
   icmax = 100                                                       !  maximum iteratio
 
   iflag = 1
+  ninf = 1
+  nodes = 0
 
   lmany = .FALSE.
   lfew = .FALSE.
@@ -416,7 +420,7 @@ subroutine atom_atm_difnrl_bound(nr, r, drdi, d2rodr, v, rpsi, drpsidr,  &
   if(iflag > 0) then
     write(iowrite,*)
     write(iowrite,'("   atm_difnrl:  solution was not found in ",i6,     &
-            & " iterations ")') itmax
+            & " iterations ")') min(it,itmax)
     write(iowrite,'(" n =",i3," l =",i3," ev =",e18.10," nodes =",i2)')  &
           n,l,ev,nodes
     write(iowrite,*)

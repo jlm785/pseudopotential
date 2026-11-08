@@ -19,6 +19,7 @@ subroutine atom_psd_test_simple(ifcore, icorr, ispp, rc,                 &
 ! Modified (cleaning) 8 July 2021. JLM
 ! so->iso, vpsd. 15 Septenber 2021. JLM
 ! no virial en etotal. 18 October 2021. JLM
+! ifail of atom_atm_dsolv2. 8 November 2026. claude+JLM
 
 !mmga  modifications from early Sverre code by Manuel Maria Gonzalez Alemany
 !njtj  modifications from early Sverre code by Norm Troullier
@@ -91,6 +92,7 @@ subroutine atom_psd_test_simple(ifcore, icorr, ispp, rc,                 &
 ! local variables
 
   integer            ::  ncp
+  integer            ::  ifail                                           !  /= 0: wave-function not found
 
   real(REAL64)       ::  etot(10)                                        !  components of total energy
 
@@ -201,7 +203,16 @@ subroutine atom_psd_test_simple(ifcore, icorr, ispp, rc,                 &
       norb-ncore, 0, nops(ncp), lo(ncp), iso(ncp), zo(ncp), znuc,        &
       cdpsd, cdc, vpsd, vhxc(:,ncp),                                     &
       ev(ncp), ek(ncp), ep(ncp), tau, evi(ncp),                          &
-      iowrite, mxdnr, mxdorb-ncore, lc)
+      ifail, iowrite, mxdnr, mxdorb-ncore, lc)
+
+  if(ifail /= 0) then
+    write(6,*)
+    write(6,*) '  Stopped: pseudo wave-function not found in atom_psd_test_simple'
+    write(6,*)
+
+    stop
+
+  endif
 
 ! Printout the pseudo eigenvalues after cutoff.
 

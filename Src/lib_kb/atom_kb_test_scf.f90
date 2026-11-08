@@ -5,7 +5,7 @@
 !>  \date         22 June 2021, 28 October 2026.
 !>  \copyright    GNU Public License v2
 
-subroutine atom_kb_test_scf(etotal,                                      &
+subroutine atom_kb_test_scf(etotal, ifail,                               &
          nameat, ititle, icorr, ispp_in,                                 &
          nval_in, ni, li, zd, zu, evd,                                   &
          iowrite, iopsd, filepsd,                                        &
@@ -19,6 +19,7 @@ subroutine atom_kb_test_scf(etotal,                                      &
 ! initialize itype. 25 May 2022. JLM
 ! absolute values in the convergence criterion (as atom_atm_scf),
 ! convergence test on min(1,r)*v (GGA noise at small r). 28 October 2026. JLM+claude
+! ifail instead of stop if there is no self-consistent solution. 8 November 2026. claude+JLM
 
 
   implicit none
@@ -56,7 +57,8 @@ subroutine atom_kb_test_scf(etotal,                                      &
 
 ! output
 
-  real(REAL64), intent(out)         ::  etotal                           !<  total energy
+  real(REAL64), intent(out)         ::  etotal                           !<  total energy (0 if ifail /= 0)
+  integer, intent(out)              ::  ifail                            !<  0: converged;  1: potential not converged;  > 4: wave-function not found
 
 ! used array dimensions
 
@@ -147,6 +149,8 @@ subroutine atom_kb_test_scf(etotal,                                      &
 
 
   call zesec(t1)
+
+  ifail = 0
 
 ! maximum number of iterations (bigger for KB)
 
@@ -266,7 +270,9 @@ subroutine atom_kb_test_scf(etotal,                                      &
         norb, no, lo, iso, zo,                                           &
         cdv, vhxc_orb, ev, ek, ep,                                        &
         vlocal, vkbproj, inorm, rpsi,                                    &
-        iowrite, mxdnr, mxdorb, mxdl)
+        ifail, iowrite, mxdnr, mxdorb, mxdl)
+
+    if(ifail /= 0) exit
 
 !    write(6,*)  '  finished dsolk2'
 !    write(6,'("  ev(i) = ",10g10.3)') (ev(i),i=1,norb)
@@ -314,15 +320,56 @@ subroutine atom_kb_test_scf(etotal,                                      &
 
   enddo
 
-  if(iconv == 2) then
+  if(ifail /= 0 .or. iconv == 2) then
 
-!   End of iteration of loop without convergence.
+    if(ifail == 0) then
 
+!     End of iteration of loop without convergence.
+
+      write(iowrite,*)
+      write(iowrite,'(" potential not converged - dvmax =",              &
+           & e12.4," xmixo =",f5.3 )') dvmax,xmixo
+      ifail = 1
+
+    endif
+
+    etotal = ZERO
     write(iowrite,*)
-    write(iowrite,'(" potential not converged - dvmax =",                &
-         & e12.4," xmixo =",f5.3 )') dvmax,xmixo
+    write(iowrite,'("  no self-consistent solution for this configuration")')
+    write(iowrite,*)
 
-    stop
+    deallocate(r)
+    deallocate(drdi)
+    deallocate(d2rodr)
+
+    deallocate(no)
+    deallocate(lo)
+    deallocate(iso)
+    deallocate(zo)
+    deallocate(evi)
+
+    deallocate(cdc)
+    deallocate(cdv)
+
+    deallocate(vhxc_out)
+    deallocate(vhxc_in)
+
+    deallocate(vhxc_orb)
+
+    deallocate(ev)
+    deallocate(ek)
+    deallocate(ep)
+
+    deallocate(rpsi)
+
+    deallocate(vmem)
+
+    deallocate(lpot)
+    deallocate(vlocal)
+    deallocate(inorm)
+    deallocate(vkbproj)
+
+    return
 
   endif
 

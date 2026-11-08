@@ -14,13 +14,14 @@ subroutine atom_kb_test_dsolv2(iter, iconv,                              &
        norb, no, lo, iso, zo,                                            &
        cdv, vhxc, ev, ek, ep,                                            &
        vlocal, vkbproj, inorm, rpsi,                                     &
-       iowrite, mxdnr, mxdorb, mxdl)
+       ifail, iowrite, mxdnr, mxdorb, mxdl)
 
 ! converted to fortran 90, March 1st 2018
 ! cleanup and new interface, July 2019. JLM
 ! exit bug. 22 June 2021. JLM
 ! mxdnr, mxdl, 17 September 2021. JLM
 ! KB term regularized at nodes of the previous wave-function. 25 October 2026. claude
+! ifail instead of stop if a wave-function is not found. 8 November 2026. claude+JLM
 
   implicit none
 
@@ -63,6 +64,8 @@ subroutine atom_kb_test_dsolv2(iter, iconv,                              &
 
   real(REAL64), intent(out)         ::  ek(mxdorb)                       !<  orbital kinetic energy
   real(REAL64), intent(out)         ::  ep(mxdorb)                       !<  orbital potential energy
+
+  integer, intent(out)              ::  ifail                            !<  0: ok;  iflag of the solver if a wave-function was not found
 
 ! input and output
 
@@ -107,6 +110,8 @@ subroutine atom_kb_test_dsolv2(iter, iconv,                              &
 
   integer     ::  i, j, k, l
 
+
+  ifail = 0
 
   allocate(v(mxdnr))
   allocate(ar(mxdnr), br(mxdnr))
@@ -220,7 +225,16 @@ subroutine atom_kb_test_dsolv2(iter, iconv,                              &
                   &  i3,"  iter = ",i3,"  iorb = ",i3)') iflag, iter, i
         write(iowrite,*)
 
-        if(iflag > 4) stop
+        if(iflag > 4) then
+          ifail = iflag
+          deallocate(v)
+          deallocate(ar, br)
+          deallocate(work)
+          deallocate(vkbt)
+
+          return
+
+        endif
 
       endif
 
