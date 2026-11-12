@@ -20,6 +20,7 @@ subroutine atom_atm_write_sub(ioread, filein, nameat, vtype)
 ! columns 41-50) unless there is a g orbital. 27 October 2026. JLM+claude
 ! rcval up to 9 fields. 27 October 2026. claude
 ! tested pseudopotentials, vtype. 12 November 2026. JLM+claude
+! cfactau from the tested pseudopotential. 12 November 2026. claude
 
   implicit none
 
@@ -147,6 +148,7 @@ subroutine atom_atm_write_sub(ioread, filein, nameat, vtype)
 
     cfac = ONE
     rcfac = ZERO
+    cfactau = ONE
 
     write(6,*)
     write(6,'("  Pseudopotential parameters for ",a," from the old ",    &
@@ -223,7 +225,7 @@ subroutine atom_atm_write_sub(ioread, filein, nameat, vtype)
   endif
 
   write(cline,'(9f10.5)') (rcval(l),l=0,lmax)
-  write(cline(10*nrc+1:10*nrc+30),'(3f10.5)') cfac, rcfac, ONE
+  write(cline(10*nrc+1:10*nrc+30),'(3f10.5)') cfac, rcfac, cfactau
   write(ioread,'(a128)') cline
 
 ! for back-compatibility you need to finish with an empty line

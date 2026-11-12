@@ -9,14 +9,18 @@
 
 subroutine atom_psd_tested_match(iowrite, nameat,                       &
       norb, ncore, no, lo, zo,                                          &
-      rc, ifcore, cfac, rcfac, label, nvar, vlist, status, lrctab,      &
+      rc, ifcore, cfac, rcfac, cfactau,                                 &
+      label, nvar, vlist, status, lrctab,                               &
       mxdorb, mxdlc, mxdvar)
 
 ! Written 12 November 2026. JLM+claude
+! cfactau compared, table values in local variables. 12 November 2026. claude
+! message also to the default output (unit 6), contained tested_match_print. 12 November 2026. claude
 
 ! Compared: valence configuration (n, l and occupation summed over
 ! spin or j), core radii of the valence l, partial core correction
-! and, if it is used, cfac and rcfac.
+! and, if it is used, cfac and rcfac, and cfactau (the core kinetic
+! energy density correction is independent of the core charge one).
 ! Not compared: exchange and correlation, relativistic or spin
 ! polarized calculation, number of core orbitals (fixed by the
 ! valence configuration).
@@ -53,7 +57,7 @@ subroutine atom_psd_tested_match(iowrite, nameat,                       &
   real(REAL64), intent(in)          ::  cfac                             !<  criteria for pseudo-core charge
   real(REAL64), intent(in)          ::  rcfac                            !<  pseudo-core radius
 
-  real(REAL64)                      ::  cfactau                          !  SHOULD BE INTENT IN
+  real(REAL64), intent(in)          ::  cfactau                          !<  core correction factor for kinetic energy density
 
 ! output
 
@@ -81,7 +85,7 @@ subroutine atom_psd_tested_match(iowrite, nameat,                       &
   real(REAL64)                      ::  zo_t(LC+1)
   real(REAL64)                      ::  rc_t(0:LC)
   character(len=2)                  ::  pcc_t
-  real(REAL64)                      ::  cfac_t, rcfac_t
+  real(REAL64)                      ::  cfac_t, rcfac_t, cfactau_t
   integer                           ::  llocal_t
   character(len=30)                 ::  status_t
 
@@ -90,8 +94,6 @@ subroutine atom_psd_tested_match(iowrite, nameat,                       &
   real(REAL64)                      ::  rc_tab(0:LC)                     !  core radii in the old table
   character(len=30)                 ::  status_tab                       !  confidence on the core radii of the old table
   integer                           ::  jm, l
-
-  character(len=30)                 ::  stsq                             !  squeezed status
 
 ! constants
 
@@ -109,7 +111,7 @@ subroutine atom_psd_tested_match(iowrite, nameat,                       &
 
   call atom_p_tbl_tested(nameat, 'LIST', nvar, vlist, lfound,            &
       ncore_t, nval_t, no_t, lo_t, zo_t, rc_t, pcc_t, llocal_t,          &
-      cfac, rcfac, cfactau, status_t,                                    &
+      cfac_t, rcfac_t, cfactau_t, status_t,                              &
       mxdvar)
 
 ! valence configuration summed over spin or j
@@ -155,7 +157,7 @@ subroutine atom_psd_tested_match(iowrite, nameat,                       &
 
     call atom_p_tbl_tested(nameat, vlist(k), nvtmp, vtmp, lfound,        &
         ncore_t, nval_t, no_t, lo_t, zo_t, rc_t, pcc_t, llocal_t,        &
-        cfac_t, rcfac_t, cfactau, status_t,                              &
+        cfac_t, rcfac_t, cfactau_t, status_t,                            &
         mxdvar)
 
     lmatch = lfound .and. nval_t == nval
@@ -191,6 +193,7 @@ subroutine atom_psd_tested_match(iowrite, nameat,                       &
           if(abs(rcfac - rcfac_t) > EPS) lmatch = .FALSE.
         endif
       endif
+      if(abs(cfactau - cfactau_t) > EPS) lmatch = .FALSE.
     endif
 
     if(lmatch) then
@@ -206,51 +209,64 @@ subroutine atom_psd_tested_match(iowrite, nameat,                       &
   deallocate(nv, lv, zv)
   deallocate(vtmp)
 
-! prints the eventual match
+! prints the result to the output file and to the default output
 
-  write(iowrite,*)
+  call tested_match_print(iowrite)
+  if(iowrite /= 6) call tested_match_print(6)
 
-  if(label /= 'NONE') then
+  return
 
-    write(iowrite,'("  The parameters are those of the tested ",         &
-         &   "pseudopotential ",a,1x,a4)') trim(adjustl(nameat)), label
-    write(iowrite,'("  tests: ",a)') trim(status)
+  contains
 
-  elseif(nvar > 0) then
+! prints the result of the comparison with the tested pseudopotentials,
+! and if it is not one of them the confidence on the core radii
 
-    write(iowrite,'("  The parameters differ from the tested ",          &
-         &   a," pseudopotentials:",9(2x,a4))') trim(adjustl(nameat)),   &
-         (vlist(k),k=1,nvar)
-    write(iowrite,'("  This pseudopotential was not tested")')
+  subroutine tested_match_print(io)
 
-  else
+    integer, intent(in)             ::  io                               !  output tape
 
-    write(iowrite,'("  There are no tested pseudopotentials for ",a,     &
-         &   ", this one was not tested")') trim(adjustl(nameat))
+    character(len=30)               ::  stsq                             !  squeezed status
+    integer                         ::  m
 
-  endif
+    write(io,*)
 
-  if(label == 'NONE') then
+    if(label /= 'NONE') then
 
-    if(lrctab) then
+      write(io,'("  The parameters are those of the tested ",            &
+           &   "pseudopotential ",a,1x,a4)') trim(adjustl(nameat)), label
+      write(io,'("  tests: ",a)') trim(status)
 
-      stsq = status
-      call chr_squeeze(stsq)
-      if(len_trim(stsq) == 0) stsq = 'no information'
+    elseif(nvar > 0) then
 
-      write(iowrite,'("  core radii: ",a,", test local and other choices")') trim(stsq)
+      write(io,'("  The parameters differ from the tested ",             &
+           &   a," pseudopotentials:",9(2x,a4))') trim(adjustl(nameat)), &
+           (vlist(m),m=1,nvar)
+      write(io,'("  This pseudopotential was not tested")')
 
     else
 
-      write(iowrite,'("  core radii differ from the old table, test ",   &
-           &   "all the choices")')
+      write(io,'("  There are no tested pseudopotentials for ",a,        &
+           &   ", this one was not tested")') trim(adjustl(nameat))
 
     endif
 
-  endif
+    if(label == 'NONE') then
 
-  write(iowrite,*)
+      if(lrctab) then
+        stsq = status
+        call chr_squeeze(stsq)
+        if(len_trim(stsq) == 0) stsq = 'no information'
+        write(io,'("  core radii: ",a,", test local and other ",         &
+             &   "choices")') trim(stsq)
+      else
+        write(io,'("  core radii differ from the old table, test ",      &
+             &   "all the choices")')
+      endif
 
-  return
+    endif
+
+    write(io,*)
+
+  end subroutine tested_match_print
 
 end subroutine atom_psd_tested_match

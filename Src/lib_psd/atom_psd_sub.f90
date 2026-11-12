@@ -216,7 +216,8 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
 
   call atom_psd_tested_match(iowrite, nameat,                           &
       norb, ncore, no, lo, zo,                                          &
-      rc, ifcore, cfac, rcfac, label, nvar, vlist, status, lrctab,      &
+      rc, ifcore, cfac, rcfac, cfactau,                                 &
+      label, nvar, vlist, status, lrctab,                               &
       mxdorb, mxdlc, MXDVAR)
 
 ! fills indv, indx
