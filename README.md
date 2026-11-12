@@ -37,7 +37,7 @@ The code is self-contained, it only needs a Fortran compiler.  `gnuplot` is used
     mkdir WORK; cd WORK
     ../Src/atom_all_gfortran.exe Si        # the suffix is the compiler of make.inc, in this case gfortran
 
-`atom_all` writes a default input file `atom.dat` for the element, generates the pseudopotential, tests it and writes all the files above.  Optional second and third arguments choose the partial core correction (yes/no) and the basis set (SZ/DZ/DZP).  The same steps can be run one at a time (`atom`, `psd_gen`, `kb_conv`, `atom_test`, `kb_test` and the plotting programs) to change the parameters interactively.
+`atom_all` writes a default input file `atom.dat` for the element, generates the pseudopotential, tests it and writes all the files above.  If the element has tested pseudopotentials (for now only carbon, `HARD` and `SOFT`) the default is the first one, otherwise the parameters are an educated guess from the old tables, and the program says which.  Optional further arguments, in any order, choose a tested pseudopotential (`HARD`, `SOFT`, or `NONE` for the old tables), the partial core correction (yes/no) and the basis set (SZ/DZ/DZP).  The same steps can be run one at a time (`atom`, `psd_gen`, `kb_conv`, `atom_test`, `kb_test` and the plotting programs) to change the parameters interactively.
 
 ## Documentation
 
@@ -53,6 +53,7 @@ The code is self-contained, it only needs a Fortran compiler.  `gnuplot` is used
 ## What's new in 6.2.0 (since 6.0.8)
 
 - New output formats: UPF for Quantum ESPRESSO with spin-orbit, psp8 for ABINIT (with spin-orbit) and PSML for SIESTA; the PARSEC and SIESTA `.psf` outputs were repaired.
+- Tested pseudopotentials: an element can have several pseudopotentials that were compared with all-electron calculations (for now `HARD` and `SOFT`), chosen by a label.  The programs say whether the pseudopotential generated is one of them or an educated guess, and the label goes to the titles of the output files (`var=`).  This will be updated slowly, started with carbon.
 - Core kinetic energy density and its partial core correction (E. Gareis, I. Schelter and S. Kümmel, Phys. Rev. B 114, 165112 (2026)).
 - Atomic orbital basis sets for cpw2000: several basis sets per element, confined orbitals with cutoff radii derived from the SIESTA energy-shift radius, the relaxed energy derivative as second zeta, and a single perturbative polarization orbital.  Bespoke basis sets in the interactive mode of `kb_conv`.
 - OpenMP parallelization of the Bessel transforms.

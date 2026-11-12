@@ -21,6 +21,7 @@ subroutine atom_atm_write_sub(ioread, filein, nameat, vtype)
 ! rcval up to 9 fields. 27 October 2026. claude
 ! tested pseudopotentials, vtype. 12 November 2026. JLM+claude
 ! cfactau from the tested pseudopotential. 12 November 2026. claude
+! confidence on core radii only printed by atom_psd_tested_match. 12 November 2026. claude
 
   implicit none
 
@@ -72,8 +73,6 @@ subroutine atom_atm_write_sub(ioread, filein, nameat, vtype)
   real(REAL64)                      ::  cfactau                          !  partial core kinetic energy parameter
   integer                           ::  llocal                           !  local component (not used here)
   character(len=30)                 ::  status_tst                       !  tests performed on the tested pseudopotential
-
-  character(len=30)                 ::  stsq                             !  squeezed status
 
 ! constants
 
@@ -153,13 +152,6 @@ subroutine atom_atm_write_sub(ioread, filein, nameat, vtype)
     write(6,*)
     write(6,'("  Pseudopotential parameters for ",a," from the old ",    &
          &   "tables (educated guess)")') trim(adjustl(nameat))
-
-    stsq = status
-    call chr_squeeze(stsq)
-    if(len_trim(stsq) == 0) stsq = 'no information'
-
-    write(6,'("  core radii: ",a,", test local and other choices")') trim(stsq)
-
     if(nvar > 0) write(6,'("  Tested pseudopotentials for ",a,":",       &
          &   9(2x,a4))') trim(adjustl(nameat)), (vlist(n),n=1,nvar)
 
