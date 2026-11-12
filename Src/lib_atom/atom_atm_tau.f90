@@ -1,9 +1,14 @@
 !>  Calculates the kinetic energy density for a given orbital
 !>  See Gareis, Schelter, Kummel PRB 114, 165112 (2026)
 !>
+!>  In the relativistic case the positive definite kinetic energy density
+!>  is calculated from the radial derivatives of the major and minor components
+!>  tau = (2j+1)/(4 pi) [ (dG/dr)^2 + l(l+1) G^2/r^2 + (dF/dr)^2 + l'(l'+1) F^2/r^2 ]
+!>  G = ar/r, F = br/r, l(l+1) = lambda(lambda+1), l'(l'+1) = lambda(lambda-1)
+!>
 !>  \author       Emmi Gareis
 !>  \version      6.1.0
-!>  \date         2025, 3 January 2026. 14 April 2026.
+!>  \date         2025, 3 January 2026. 12 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_atm_tau(ispp, ar, br, nr, r,                             &
@@ -13,6 +18,8 @@ subroutine atom_atm_tau(ispp, ar, br, nr, r,                             &
 ! Written in atom_atm_orban by Emmi Gareis in collaboration with Ingo Schelter and Stephan Kümmel.
 ! Separated in an autonomous subroutine, 3 January 2025. JLM
 ! Bug introduced by JLM (l+1=l) eliminated by EG. 14 April 2026. EG
+! Relativistic case: positive definite tau from the derivatives of the major and minor
+! components, the previous form was the symmetric tau - lap(rho)/4 (rydberg). 12 November 2026. JLM+claude
 
   implicit none
 
@@ -56,6 +63,9 @@ subroutine atom_atm_tau(ispp, ar, br, nr, r,                             &
 
   real(REAL64)           ::  tauSecondTermValue                          !  contribution to tau from l-quantum number from theta and phi gradient contribution
 
+  real(REAL64)           ::  dgdr, dfdr                                  !  d(ar/r)/dr, d(br/r)/dr
+  real(REAL64)           ::  bror2                                       !  br / r^2
+
 ! constants
 
   real(REAL64), parameter    ::  ONE = 1.0_REAL64, ZERO = 0.0_REAL64
@@ -84,12 +94,20 @@ subroutine atom_atm_tau(ispp, ar, br, nr, r,                             &
     do i = 2, nr
 
 !     contribution of i-th orbital to tau in the relativistic case
+!     major component orbital angular momentum l, l(l+1) = lambda(lambda+1)
+!     minor component orbital angular momentum l', l'(l'+1) = lambda(lambda-1)
 
       arder(i) = -(lambda/r(i))*ar(i) + (ev - v(i) + 4*AI*AI) * (br(i)/(2*AI))
       brder(i) = +(lambda/r(i))*br(i) - (ev - v(i)) * (ar(i)/(2*AI))
-      tau(i) = (AI* (2*jo +1)/(4*PI)) *                                        &
-                 (  ((ar(i)/(r(i)*r(i)))*(-brder(i) + lambda*br(i)/r(i)))      &
-                  + ((br(i)/(r(i)*r(i)))*( arder(i) + lambda*ar(i)/r(i)))  )
+
+      aror2 = ar(i)/(r(i)*r(i))
+      bror2 = br(i)/(r(i)*r(i))
+      dgdr = arder(i)/r(i) - aror2
+      dfdr = brder(i)/r(i) - bror2
+
+      tau(i) = ((2*jo +1)/(4*PI)) *                                            &
+                 (  dgdr*dgdr + (lambda*(lambda+1))*aror2*aror2                &
+                  + dfdr*dfdr + (lambda*(lambda-1))*bror2*bror2  )
     enddo
 
   else
