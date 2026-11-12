@@ -14,7 +14,7 @@ program atom_all
 ! tbasis, lmax_bas allocated with mxdset, 24 October 2026. JLM+claude
 ! tapes >= 10 consistent with the other programs. 7 November 2026. claude+JLM
 ! tested pseudopotentials, arguments identified by content,
-! rpoint from the core radii used. 12 November 2026. JLM+claude
+! rpoint from the core radii before rounding to the grid. 12 November 2026. claude
 
   implicit none
 
@@ -396,6 +396,14 @@ program atom_all
 
   endif
 
+! default radius for the logarithmic derivatives, from the core radii
+! before atom_psd_sub rounds them to the grid
+
+  rpoint = ONE
+  do l = 0,lc
+    if(1.2*rc(l) > rpoint) rpoint = 1.2*rc(l)
+  enddo
+
 ! constructs the pseudopotential
 
   call atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, .FALSE.,           &
@@ -496,13 +504,6 @@ program atom_all
     read(5,*) rpoint
     write(6,*)
     write(6,*)
-
-  else
-
-    rpoint = ONE
-    do l = 0,lc
-      if(1.2*rc(l) > rpoint) rpoint = 1.2*rc(l)
-    enddo
 
   endif
 
