@@ -7,7 +7,7 @@
 !>  G = ar/r, F = br/r, l(l+1) = lambda(lambda+1), l'(l'+1) = lambda(lambda-1)
 !>
 !>  \author       Emmi Gareis
-!>  \version      6.1.0
+!>  \version      6.2.0
 !>  \date         2025, 3 January 2026. 12 November 2026.
 !>  \copyright    GNU Public License v2
 
@@ -52,8 +52,6 @@ subroutine atom_atm_tau(ispp, ar, br, nr, r,                             &
 
 ! local alocatable arrays
 
-  real(REAL64), allocatable         ::  arder(:)                         !  d ar / d r derivative of major spinor component
-  real(REAL64), allocatable         ::  brder(:)                         !  d br / d r derivative of minor spinor component
 
 ! local
 
@@ -66,6 +64,9 @@ subroutine atom_atm_tau(ispp, ar, br, nr, r,                             &
   real(REAL64)           ::  dgdr, dfdr                                  !  d(ar/r)/dr, d(br/r)/dr
   real(REAL64)           ::  bror2                                       !  br / r^2
 
+  real(REAL64)           ::  arder                                       !  d ar / d r derivative of major spinor component
+  real(REAL64)           ::  brder                                       !  d br / d r derivative of minor spinor component
+
 ! constants
 
   real(REAL64), parameter    ::  ONE = 1.0_REAL64, ZERO = 0.0_REAL64
@@ -76,11 +77,8 @@ subroutine atom_atm_tau(ispp, ar, br, nr, r,                             &
 
   integer          ::  i
 
+
   tauSecondTermValue = ((2*lo+1)*(lo+1)*lo) / (4*PI)
-
-
-  allocate(arder(mxdnr))
-  allocate(brder(mxdnr))
 
   if (ispp == 'r') then
 
@@ -97,13 +95,13 @@ subroutine atom_atm_tau(ispp, ar, br, nr, r,                             &
 !     major component orbital angular momentum l, l(l+1) = lambda(lambda+1)
 !     minor component orbital angular momentum l', l'(l'+1) = lambda(lambda-1)
 
-      arder(i) = -(lambda/r(i))*ar(i) + (ev - v(i) + 4*AI*AI) * (br(i)/(2*AI))
-      brder(i) = +(lambda/r(i))*br(i) - (ev - v(i)) * (ar(i)/(2*AI))
+      arder = -(lambda/r(i))*ar(i) + (ev - v(i) + 4*AI*AI) * (br(i)/(2*AI))
+      brder = +(lambda/r(i))*br(i) - (ev - v(i)) * (ar(i)/(2*AI))
 
       aror2 = ar(i)/(r(i)*r(i))
       bror2 = br(i)/(r(i)*r(i))
-      dgdr = arder(i)/r(i) - aror2
-      dfdr = brder(i)/r(i) - bror2
+      dgdr = arder/r(i) - aror2
+      dfdr = brder/r(i) - bror2
 
       tau(i) = ((2*jo +1)/(4*PI)) *                                            &
                  (  dgdr*dgdr + (lambda*(lambda+1))*aror2*aror2                &
@@ -124,9 +122,6 @@ subroutine atom_atm_tau(ispp, ar, br, nr, r,                             &
   endif
 
   tau(1) = ZERO
-
-  deallocate(arder)
-  deallocate(brder)
 
   return
 
