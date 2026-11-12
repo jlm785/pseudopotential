@@ -1,11 +1,13 @@
 !>  Calls the atomic program
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.013
-!>  \date         14 July 2021
+!>  \version      6.2.0
+!>  \date         14 July 2021. 12 November 2026.
 !>  \copyright    GNU Public License v2
 
 program atom
+
+! choice of tested pseudopotential. 12 November 2026. JLM+claude
 
   implicit none
 
@@ -28,6 +30,7 @@ program atom
 
   logical                           ::  lex
   character(len=2)                  ::  nameat                           !  chemical symbol of the atom
+  character(len=4)                  ::  vtype                            !  label of tested pseudopotential, 'NONE' old tables
 
 
   iowrite = 6
@@ -61,7 +64,8 @@ program atom
 
     nameat = '  '
     read(5,*) nameat
-    call atom_atm_write_sub(ioread, filein, nameat)
+    call atom_atm_tested_choose(nameat, vtype)
+    call atom_atm_write_sub(ioread, filein, nameat, vtype)
     write(6,*)
   endif
 

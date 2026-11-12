@@ -36,7 +36,7 @@
 \par\vspace{3cm}
 \hrulefill
 \par\vspace{3cm}
-{\Large {\bf Version 6.2.0, October 2026}}
+{\Large {\bf Version 6.2.0, \today}}
 \par\vspace{2cm}
 \hrulefill
 
@@ -302,6 +302,9 @@ to modify the default values of parameters or generate new graphics.
 
 \textbf{WARNING:} the defaults of the code are ``educated guesses'' for the majority of atoms.
 Any pseudopotential should be thoroughly tested before being used.
+For a few elements the code has \textit{tested pseudopotentials}, compared with
+all-electron calculations, and it always tells you if you are using one of them
+or an educated guess (Section~\ref{sec:tested}).
 
 \subsection{Validation}
 \label{sec:valid}
@@ -318,6 +321,8 @@ go for a coffee, and when you return you should have the pseudopotentials for al
 with the default choices.   \textbf{WARNING:} the defaults of the code are ``educated guesses''
 for the majority of atoms, in particular transition metals, Lanthanides, and Actinides.
 Any pseudopotential should be thoroughly tested before being used!
+For the elements with tested pseudopotentials (Section~\ref{sec:tested}) the validation
+uses the first (default) one.
 
 \subsection{Running pseudopotential construction with all tests and plots}
 \label{sec:run-all}
@@ -333,6 +338,7 @@ This is the original input file of the old code and its strictly formatted struc
 is described in Section~\ref{sec:atomdat}.
 If the file is present it will use it, otherwise
 the program will ask for the chemical symbol of the element you want,
+and, if the element has tested pseudopotentials (Section~\ref{sec:tested}), which one you want,
 write a \texttt{atom.dat} file with default values.  In both cases it will then proceed with
 the reference all-electron calculation, the pseudopotential generation,
 finding atomic orbitals basis set and non-local projectors, generate plots and perform tests on the pseudopotential.
@@ -399,16 +405,37 @@ The most useful first argument is the chemical symbol,
 where you can swap ``Si'' for the chemical symbol of any element
 that interests you from Hydrogen to Oganesson.
 All the work will be done with default values without prompting the user.
+If the element has tested pseudopotentials the default is the first of them
+(for carbon the \texttt{HARD} one), otherwise the defaults are educated guesses
+and the program says so.
 Read the \textbf{Warning} above about default values.
 
-\subsubsection{Second and third command line arguments}
+\subsubsection{Other command line arguments}
+\label{sec:run-args}
+
+After the chemical symbol you can give other arguments, in any order,
+as the program identifies them by their content (lower or upper case,
+at most four characters each):
+\begin{itemize}
+\item \texttt{yes/no} forces using or not using the partial core correction
+for exchange and correlation;
+\item an argument with a \texttt{Z} as second character (\texttt{SZ/SZP/DZ/DZP})
+chooses the basis set, see below;
+\item any other argument is the label of a tested pseudopotential, for example
+\texttt{HARD} or \texttt{SOFT} for carbon, or \texttt{NONE} for the educated guess
+of the old tables (Section~\ref{sec:tested}).
+\end{itemize}
+For example \texttt{../atom\_all.exe C soft} or \texttt{../atom\_all.exe C DZ none no}.
+If the label is not one of the tested pseudopotentials of that element the program
+lists the available ones and stops.  If the element has no tested pseudopotentials
+the label is ignored, with a message.
 
 Default values for the reference atomic configuration and pseudopotential radii
 can be overridden by careful editing the \texttt{atom.dat} file.  Although the choice of
 using the partial core-correction for exchange and correlation can
-be altered in that way, it is easier to do it by the second argument of the
-command line, that takes the values \texttt{yes/no} force using or not using the
-partial core correction.
+be altered in that way, it is easier to do it with the \texttt{yes/no} argument.
+Remember that changing any of those parameters of a tested pseudopotential
+(the partial core correction included) gives a pseudopotential that was not tested.
 
 The code generates ``\textsc{SIESTA}-like'' confined atomic orbitals.  By default two
 basis sets are built and written to the \textit{Xy}\texttt{\_POTKB\_F.DAT} file
@@ -420,12 +447,110 @@ of the highest occupied $l$ and $l_{\max}-1$, $l_{\max}$ being the highest angul
 of the pseudopotential, and the polarization orbitals have $l_a+1$ (not above $f$).
 There is a single polarization orbital (in SZP and DZP), the perturbative polarization
 of the first $l_a$ orbital $\psi$ as in \textsc{SIESTA}.
-The third argument, which takes the values
+The basis set argument, which takes the values
 \texttt{SZ/SZP/DZ/DZP} (lower case is accepted), replaces the two default sets
-by a single set of that kind; any other value stops the program.
-As the arguments are positional, the second one must be given to use the third,
-for example \texttt{../atom\_all.exe Si no DZ}.
+by a single set of that kind; any other value with a \texttt{Z} as second character
+stops the program.
 See section~\ref{sec:orbital} for the details on how these orbitals are constructed.
+
+
+\subsection{Tested pseudopotentials}
+\label{sec:tested}
+
+For most elements the default parameters of the pseudopotential (reference configuration,
+core radii, partial core correction and local component of the Kleinman-Bylander form)
+come from internal tables that are educated guesses.
+For a few elements there are \textit{tested pseudopotentials}, sets of parameters that were
+compared with all-electron calculations of molecules and solids.
+An element may have one or several of them, each identified by a label of up to
+four characters.
+For example carbon has a \texttt{HARD} pseudopotential, with a $2s^2 2p^2 3d^0$
+reference configuration, core radii of 1.10 bohr, partial core correction and the
+$d$ potential as local component, and a \texttt{SOFT} one, with $2s^2 2p^2$, core radii
+of 1.50 bohr, no partial core correction and the $p$ potential as local component.
+The list for an element, with a short description of the tests, is shown when
+you are asked to choose (see below); all of them are in the file
+\texttt{Src/lib\_atom/atom\_p\_tbl\_tested.f90}.
+
+When the code is run without prompting the user, for example
+\texttt{../atom\_all.exe C}, the first tested pseudopotential of the element is used.
+Another one is chosen by giving its label as an argument
+(Section~\ref{sec:run-args}), for example \texttt{../atom\_all.exe C SOFT},
+and the label \texttt{NONE} gives the educated guess of the old tables.
+When the user is prompted for the chemical symbol
+(\texttt{atom\_all.exe -x}, or \texttt{atom\_all.exe} or \texttt{atom.exe}
+without an \texttt{atom.dat} file) the program also asks which pseudopotential to use,
+\begin{verbatim}
+  Tested pseudopotentials for C:
+
+     1   HARD   diamond LAPW, C2H2 all-electr.
+     2   SOFT   diamond
+     3   NONE   old tables, core radii: hard tested (triple bond)
+
+  Enter your choice (default 1)
+\end{verbatim}
+and writes \texttt{atom.dat} with the parameters of the choice.
+Elements without tested pseudopotentials skip that question.
+
+The choice is not written in \texttt{atom.dat}, as you can edit that file
+and the pseudopotential would no longer be the tested one.
+Instead, when the pseudopotential is constructed (\texttt{psd\_gen.exe}
+or \texttt{atom\_all.exe}) the parameters actually used are compared with those
+of the tested pseudopotentials of the element:
+the valence configuration (principal and angular quantum numbers and occupations,
+added over spin or $j$),
+the core radii (within 0.005 bohr), and the partial core correction with its
+parameters \texttt{cfac} and \texttt{rcfac} (Section~\ref{sec:cc}).
+The exchange and correlation functional and the relativistic or spin-polarized
+character of the calculation are not compared, so you can generate the tested
+pseudopotential with another functional (check with which functional it was tested).
+The program reports the result,
+\begin{verbatim}
+  The parameters are those of the tested pseudopotential C HARD
+  tests: diamond LAPW, C2H2 all-electr.
+\end{verbatim}
+or
+\begin{verbatim}
+  The parameters differ from the tested C pseudopotentials:  HARD  SOFT
+  This pseudopotential was not tested
+  core radii: hard tested (triple bond), test local and other choices
+\end{verbatim}
+or, for elements without tested pseudopotentials,
+\begin{verbatim}
+  There are no tested pseudopotentials for P, this one was not tested
+  core radii: hard guess, test local and other choices
+\end{verbatim}
+Any change of a tested pseudopotential, a core radius in \texttt{atom.dat} or the
+partial core correction forced with \texttt{yes/no}, gives a pseudopotential that was not tested.
+
+When the pseudopotential was not tested, the last line gives the confidence on the
+core radii of the old table, if those are the radii used (otherwise it says that the
+core radii differ from the old table, and that all the choices should be tested).
+That confidence refers only to the core radii: \texttt{hard guess} means they were
+never used, \texttt{hard used} that they were used in calculations,
+for example \texttt{hard used (oxides)} for sodium,
+and \texttt{hard tested} or \texttt{fully tested} that they were compared with
+all-electron calculations
+(\texttt{hard} because the radii of the old table are on the small side).
+The choice of the local component and the other parameters were not tested,
+hence the warning.
+The same line is printed when \texttt{atom.dat} is written from the old tables.
+
+The result is written as \texttt{var=HARD} (or \texttt{var=NONE} if the pseudopotential
+was not tested) in the title of \texttt{psd.pot}, after the configuration and core radii,
+and from there it goes to the titles of \textit{Xy}\texttt{\_POTKB\_F.DAT} and
+\texttt{pseudokb.dat} and to the \textit{Xy}\texttt{.psml} file.
+\texttt{kb\_conv.exe} reads it from \texttt{psd.pot} and uses the local component of the
+tested pseudopotential, or the one of the old table (not tested) if the
+pseudopotential was not tested.
+Files \texttt{psd.pot} written by older versions of the code have no label and are
+treated as not tested.
+
+To add a tested pseudopotential you only have to edit
+\texttt{atom\_p\_tbl\_tested.f90}, writing all its parameters (not only the ones that
+differ from the old tables).  The first label of an element is its default.
+\texttt{NONE}, \texttt{LIST}, \texttt{YES}, \texttt{NO} and anything with a \texttt{Z}
+as second character cannot be used as labels.
 
 
 \subsection{Running step by step}
@@ -498,6 +623,7 @@ configuration and options of the calculation such as the exchange and correlatio
 This is the key input file and is described in Section~\ref{sec:atomdat}.
 
 If the file \texttt{atom.dat} is not present, the code asks the user the chemical symbol of the element to be calculated,
+and, if there are tested pseudopotentials for that element, which of them to use (Section~\ref{sec:tested}),
 writes an \texttt{atom.dat} file with the default values and runs the calculation.
 The user may edit the \texttt{atom.dat} file to change the default choices, taking into account that the
 file is read with fixed formats (back-compatibility), so the columns matter (Section~\ref{sec:inputfile}).
@@ -772,6 +898,9 @@ a \texttt{plot.dat} file used for later plotting,
 a formatted \texttt{psd.pot} file used to pass the information for the Kleinman-Bylander transformation,
 and the files \textit{Xy}\texttt{\_POTRE.DAT} for PARSEC and \textit{Xy}\texttt{.psf} for \textsc{SIESTA}.
 The file \texttt{psd.pot} is therefore the key output file of the program.
+Before the construction the program also tells you if the parameters are those of
+a tested pseudopotential, and that information is written in the title of \texttt{psd.pot}
+(Section~\ref{sec:tested}).
 
 
 \subsubsection{Visualizing the pseudopotential}
@@ -835,6 +964,10 @@ the default local pseudopotential and the default Fourier grid.
    The Fourier grid will range from q = 0.0000 to   40.0000  with steps of     0.0100
    Enough for a cutoff of    200.000 Ha.
 \end{verbatim}
+If the title of \texttt{psd.pot} identifies a tested pseudopotential
+(Section~\ref{sec:tested}) the default local component is the one of that
+pseudopotential, otherwise it comes from an internal table, and for most elements it is
+the smoothed maximum of all the pseudopotentials, as in the example.
 The code will ask the user if they accept the defaults and
 in the negative case allows the choice of new parameters.
 
@@ -849,7 +982,7 @@ angular momentum $l_\text{max}$, as it would reduce the number of projectors,
 and in most cases an eventual $l_\text{max}+1$ pseudopotential is more similar to the
 $l_\text{max}$ than to $l < l_\text{max}$ pseudopotentials.
 A second rule of thumb is that the smoothed maximum of all the pseudopotentials
-(the default) makes all the projectors attractive and therefore dramatically reduces the
+(the default of the internal table) makes all the projectors attractive and therefore dramatically reduces the
 possibility of having ghost states: the local potential is then the least attractive one,
 and its bound states lie above the reference energies.
 
@@ -1152,7 +1285,8 @@ The good news is that running
 in a folder without the \texttt{atom.dat} and entering
 the chemical symbol of the element will generate such a file
 with default values, which can be modified for subsequent runs.
-Notice that the default values may not be the best, so that file
+Notice that the default values may not be the best, unless they are those
+of a tested pseudopotential (Section~\ref{sec:tested}), so that file
 is just a template to be edited!
 
 We can run the calculation by typing again

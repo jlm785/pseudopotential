@@ -2,13 +2,16 @@
 !>  The default is Perdew-Zunger non-spin-polarized LDA for the
 !>  atomic ground state configuration.
 !>  User may edit that file to have the other cases.
+!>  The configuration, core radii and partial core correction come from
+!>  a tested pseudopotential (atom_p_tbl_tested) if there is one,
+!>  otherwise from the old tables (educated guess).
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.1.0
-!>  \date         22 June 2021, 27 March 2026, 27 October 2026.
+!>  \version      6.2.0
+!>  \date         22 June 2021, 27 March 2026, 12 November 2026.
 !>  \copyright    GNU Public License v2
 
-subroutine atom_atm_write_sub(ioread, filein, nameat)
+subroutine atom_atm_write_sub(ioread, filein, nameat, vtype)
 
 ! nval2, jhard. 21 December 2021. JLM
 ! default mesh. 21 April 2022. JLM
@@ -16,6 +19,7 @@ subroutine atom_atm_write_sub(ioread, filein, nameat)
 ! MXDVAL, core radii by angular momentum, old convention (cfac in
 ! columns 41-50) unless there is a g orbital. 27 October 2026. JLM+claude
 ! rcval up to 9 fields. 27 October 2026. claude
+! tested pseudopotentials, vtype. 12 November 2026. JLM+claude
 
   implicit none
 
@@ -23,6 +27,7 @@ subroutine atom_atm_write_sub(ioread, filein, nameat)
 
   integer, parameter          :: LC = 4                                  !  maximum angular momentum in the tables
   integer, parameter          :: MXDVAL = LC + 1                         !  maximum number of valence orbitals in the tables
+  integer, parameter          :: MXDVAR = 9                              !  maximum number of tested pseudopotentials of an element
 
 ! input
 
@@ -30,6 +35,7 @@ subroutine atom_atm_write_sub(ioread, filein, nameat)
   character(len=*), intent(in)      ::  filein                           !<  name of default tape for reading
 
   character(len=2), intent(in)      ::  nameat                           !<  chemical symbol of the atom
+  character(len=4), intent(in)      ::  vtype                            !<  label of tested pseudopotential, '    ' default, 'NONE' old tables
 
 ! local variables
 
@@ -57,6 +63,17 @@ subroutine atom_atm_write_sub(ioread, filein, nameat)
 
   character(len=128)                ::  cline                            !  better way to code the last line
 
+  integer                           ::  nvar                             !  number of tested pseudopotentials
+  character(len=4)                  ::  vlist(MXDVAR)                    !  labels of tested pseudopotentials
+  character(len=4)                  ::  vuse                             !  label of the pseudopotential that is used
+  logical                           ::  lfound                           !  vtype is one of the labels
+  real(REAL64)                      ::  cfac, rcfac                      !  pseudo-core parameters
+  real(REAL64)                      ::  cfactau                          !  partial core kinetic energy parameter
+  integer                           ::  llocal                           !  local component (not used here)
+  character(len=30)                 ::  status_tst                       !  tests performed on the tested pseudopotential
+
+  character(len=30)                 ::  stsq                             !  squeezed status
+
 ! constants
 
   real(REAL64), parameter    ::  ONE = 1.0_REAL64, ZERO = 0.0_REAL64
@@ -66,8 +83,85 @@ subroutine atom_atm_write_sub(ioread, filein, nameat)
   integer     ::  n, l
 
 
-  jhard = 0
-  call atom_p_tbl_psd_pcc(nameat, pcc, jhard)
+! tested pseudopotentials
+
+  call atom_p_tbl_tested(nameat, 'LIST', nvar, vlist, lfound,            &
+      ncore, nval, no, lo, zo, rc, pcc, llocal,                          &
+      cfac, rcfac, cfactau, status_tst,                                  &
+      MXDVAR)
+
+  if(vtype == '    ') then
+    if(nvar > 0) then
+      vuse = vlist(1)
+    else
+      vuse = 'NONE'
+    endif
+  elseif(vtype == 'NONE') then
+    vuse = 'NONE'
+  else
+    vuse = 'NONE'
+    do n = 1,nvar
+      if(vtype == vlist(n)) vuse = vtype
+    enddo
+    if(vuse == 'NONE') then
+      if(nvar == 0) then
+        write(6,*)
+        write(6,'("  There are no tested pseudopotentials for ",a,       &
+             &   ", ",a4," ignored")') trim(adjustl(nameat)), vtype
+      else
+        write(6,*)
+        write(6,'("  Stopped in atom_atm_write_sub: ",a4," is not a ",   &
+             &   "tested pseudopotential for ",a)') vtype,               &
+             trim(adjustl(nameat))
+        write(6,'("  Available:",9(2x,a4))') (vlist(n),n=1,nvar), 'NONE'
+        write(6,*)
+
+        STOP
+
+      endif
+    endif
+  endif
+
+  if(vuse /= 'NONE') then
+
+    call atom_p_tbl_tested(nameat, vuse, nvar, vlist, lfound,            &
+        ncore, nval, no, lo, zo, rc, pcc, llocal,                        &
+        cfac, rcfac, cfactau, status_tst,                                &
+        MXDVAR)
+
+    write(6,*)
+    write(6,'("  Using the tested pseudopotential ",a,1x,a4,             &
+         &   " (",a,")")') trim(adjustl(nameat)), vuse, trim(status_tst)
+    if(nvar > 1) write(6,'("  Tested pseudopotentials for ",a,":",       &
+         &   9(2x,a4))') trim(adjustl(nameat)), (vlist(n),n=1,nvar)
+
+  else
+
+    jhard = 0
+    call atom_p_tbl_psd_pcc(nameat, pcc, jhard)
+
+    jhard = 0
+    call atom_p_tbl_config(nameat, ncore, nval, no, lo, zo, jhard)
+
+    call atom_p_tbl_psd_tm2(nameat, rc, status)
+
+    cfac = ONE
+    rcfac = ZERO
+
+    write(6,*)
+    write(6,'("  Pseudopotential parameters for ",a," from the old ",    &
+         &   "tables (educated guess)")') trim(adjustl(nameat))
+
+    stsq = status
+    call chr_squeeze(stsq)
+    if(len_trim(stsq) == 0) stsq = 'no information'
+
+    write(6,'("  core radii: ",a,", test local and other choices")') trim(stsq)
+
+    if(nvar > 0) write(6,'("  Tested pseudopotentials for ",a,":",       &
+         &   9(2x,a4))') trim(adjustl(nameat)), (vlist(n),n=1,nvar)
+
+  endif
 
   call zedate(bdate)
 
@@ -85,11 +179,6 @@ subroutine atom_atm_write_sub(ioread, filein, nameat)
   if(iz > 20) ispp = 'r'
 
   call atom_atm_default_mesh(rmax, aa, bb)
-
-  jhard = 0
-  call atom_p_tbl_config(nameat, ncore, nval, no, lo, zo, jhard)
-
-  call atom_p_tbl_psd_tm2(nameat, rc, status)
 
   open(unit=ioread, file=trim(filein), status='NEW', form='FORMATTED')
 
@@ -134,7 +223,7 @@ subroutine atom_atm_write_sub(ioread, filein, nameat)
   endif
 
   write(cline,'(9f10.5)') (rcval(l),l=0,lmax)
-  write(cline(10*nrc+1:10*nrc+30),'(3f10.5)') ONE, ZERO, ONE
+  write(cline(10*nrc+1:10*nrc+30),'(3f10.5)') cfac, rcfac, ONE
   write(ioread,'(a128)') cline
 
 ! for back-compatibility you need to finish with an empty line

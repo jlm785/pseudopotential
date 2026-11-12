@@ -1,8 +1,8 @@
 !>  Constructs the Kleinman-Bylander format pseudopotential
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.1.0
-!>  \date         June 2021. 7 November 2026.
+!>  \version      6.2.0
+!>  \date         June 2021. 12 November 2026.
 !>  \copyright    GNU Public License v2
 
 
@@ -13,6 +13,7 @@ program kb_conv
 ! up to quadruple zeta basis, 24 October 2026. JLM+claude
 ! tbasis, lmax_bas allocated with mxdset, 24 October 2026. JLM+claude
 ! tapes >= 10 consistent with the other programs. 7 November 2026. claude+JLM
+! llocal of tested pseudopotentials. 12 November 2026. JLM+claude
 
   implicit none
 
@@ -49,8 +50,6 @@ program kb_conv
   integer                           ::  mxdnr                            !  dimension for radial grid
   integer                           ::  mxdset                           !  dimension for number of atomic basis sets
   character(len=2)                  ::  nameat                           !  chemical symbol of the element
-
-  integer                           ::  jhard                            !  flag for accuracy/speed compromise
 
   integer                           ::  n_bsets                          !  number of atomic basis sets
 
@@ -120,10 +119,9 @@ program kb_conv
       iowrite, ioreal, filereal,                                         &
       mxdl, mxdset, mxdnr)
 
-! llocal from table
+! llocal of the tested pseudopotential or from table
 
-  jhard = 0
-  call atom_p_tbl_kb_local(nameat, llocal, jhard)
+  call atom_kb_llocal_default(nameat, llocal, iowrite, ioreal, filereal)
 
   if(llocal > lmax_pot) llocal = lmax_pot
 

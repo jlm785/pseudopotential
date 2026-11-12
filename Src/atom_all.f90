@@ -1,8 +1,8 @@
 !>  Calls the whole atomic pseudo-potential test plot chain
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.1.0
-!>  \date         21 October 2021. 26 January 2026.
+!>  \version      6.2.0
+!>  \date         21 October 2021. 26 January 2026. 12 November 2026.
 !>  \copyright    GNU Public License v2
 
 program atom_all
@@ -13,6 +13,8 @@ program atom_all
 ! up to quadruple zeta basis, 24 October 2026. JLM+claude
 ! tbasis, lmax_bas allocated with mxdset, 24 October 2026. JLM+claude
 ! tapes >= 10 consistent with the other programs. 7 November 2026. claude+JLM
+! tested pseudopotentials, arguments identified by content,
+! rpoint from the core radii used. 12 November 2026. JLM+claude
 
   implicit none
 
@@ -83,8 +85,6 @@ program atom_all
   integer                           ::  mxdnr                            !  dimension for radial grid
   integer                           ::  mxdset                           !  dimension for number of atomic basis sets
 
-  integer                           ::  jhard                            !  flag for accuracy/speed compromise
-
   integer                           ::  n_bsets                          !  number of atomic basis sets
 
   character(len=3), allocatable     ::  tbasis(:)                        !  type of basis
@@ -110,8 +110,6 @@ program atom_all
   logical                           ::  lkb                              !  If KB results are included in the plots
   real(REAL64)                      ::  rpoint                           !  radius where log derivatives are calculated
 
-  character(len=30)                 ::  status                           !  quality of psedopotential
-
   logical                           ::  lint                             !  interactive run
 
   integer                           ::  iz                               !  atomic number
@@ -119,6 +117,10 @@ program atom_all
   character(len=2)                  ::  firstarg                         !  first argument
   character(len=3)                  ::  tbasisin                         !  type of basis in program line
   character(len=3)                  ::  pccin                            !  type of partial core correction in program line
+  character(len=4)                  ::  vtypein                          !  label of tested pseudopotential, '    ' default, 'NONE' old tables
+  character(len=4)                  ::  argin                            !  argument in program line
+  integer                           ::  larg                             !  length of argument
+  integer                           ::  iarg                             !  counter
 
 ! parameters
 
@@ -195,12 +197,18 @@ program atom_all
       write(6,*) '  with a chemical symbol as first argument, or'
       write(6,*) '  with -x  as first argument to enter an interactive mode.'
       write(6,*)
-      write(6,*) '  Second argument is yes/no for with/without'
-      write(6,*) '  partial core corrections for exchange and correlation.'
+      write(6,*) '  The other arguments, in any order, can be:'
       write(6,*)
-      write(6,*) '  Third argument is SZ/DZ/DZP for choice of basis set.'
+      write(6,*) '  yes/no for with/without partial core corrections'
+      write(6,*) '  for exchange and correlation.'
       write(6,*)
-      write(6,*) '  If the arguments do not match, or are not present, default values are used.'
+      write(6,*) '  SZ/DZ/DZP/... for choice of basis set.'
+      write(6,*)
+      write(6,*) '  the label of a tested pseudopotential (HARD, SOFT,...),'
+      write(6,*) '  or NONE for the old tables (educated guess).'
+      write(6,*) '  The default is the first tested pseudopotential.'
+      write(6,*)
+      write(6,*) '  If the arguments are not present default values are used.'
       write(6,*)
 
       stop
@@ -231,7 +239,9 @@ program atom_all
 
       endif
 
-      call atom_atm_write_sub(ioread, filein, nameat)
+      call atom_atm_tested_choose(nameat, vtypein)
+
+      call atom_atm_write_sub(ioread, filein, nameat, vtypein)
       write(6,*)
 
     else
@@ -263,30 +273,42 @@ program atom_all
 
       endif
 
-      call atom_atm_write_sub(ioread, filein, nameat)
-      write(6,*)
+!     more then one argument, identified by content
 
-!     more then one argument
+      vtypein = '    '
 
-      if(narg > 1) then
+      do iarg = 2,narg
 
-        call get_command_argument(2,pccin)
+        call get_command_argument(iarg, argin, larg)
 
-        if(pccin == 'YES') pccin = 'yes'
-        if(pccin == 'NO ') pccin = 'no '
-        if(iz < 3) pccin = '   '
+        if(larg > 4) then
+          write(6,*)
+          write(6,'("  Argument ",i2," is too long (more than 4 ",       &
+               &   "characters), STOPPING")') iarg
+          write(6,*)
 
-        if(narg > 2) then
-
-          call get_command_argument(3,tbasisin)
-
-          if(tbasisin == 'sz ') tbasisin = 'SZ '
-          if(tbasisin == 'dz ') tbasisin = 'DZ '
-          if(tbasisin == 'dzp') tbasisin = 'DZP'
+          stop
 
         endif
 
-      endif
+        call chrcap(argin, 4)
+
+        if(argin == 'YES ') then
+          pccin = 'yes'
+        elseif(argin == 'NO  ') then
+          pccin = 'no '
+        elseif(argin(2:2) == 'Z') then
+          tbasisin = argin(1:3)
+        else
+          vtypein = argin
+        endif
+
+      enddo
+
+      if(iz < 3) pccin = '   '
+
+      call atom_atm_write_sub(ioread, filein, nameat, vtypein)
+      write(6,*)
 
     endif
 
@@ -322,7 +344,9 @@ program atom_all
 
       endif
 
-      call atom_atm_write_sub(ioread, filein, nameat)
+      call atom_atm_tested_choose(nameat, vtypein)
+
+      call atom_atm_write_sub(ioread, filein, nameat, vtypein)
       write(6,*)
 
     endif
@@ -431,10 +455,9 @@ program atom_all
       iowrite, ioreal, filereal,                                         &
       mxdl, mxdset, mxdnr)
 
-! llocal from table
+! llocal of the tested pseudopotential or from table
 
-  jhard = 0
-  call atom_p_tbl_kb_local(nameat, llocal, jhard)
+  call atom_kb_llocal_default(nameat, llocal, iowrite, ioreal, filereal)
 
   if(llocal > lmax_pot) llocal = lmax_pot
 
@@ -476,11 +499,9 @@ program atom_all
 
   else
 
-    call atom_p_tbl_psd_tm2(nameat, rc_tab, status)
-
     rpoint = ONE
     do l = 0,lc
-      if(1.2*rc_tab(l) > rpoint) rpoint = 1.2*rc_tab(l)
+      if(1.2*rc(l) > rpoint) rpoint = 1.2*rc(l)
     enddo
 
   endif

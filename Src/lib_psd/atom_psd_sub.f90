@@ -1,8 +1,8 @@
 !>  main subroutine to generate a pseudopotential
 !>
 !>  \author       Norm Troullier, Jose Luis Martins
-!>  \version      6.1.0
-!>  \date         April 1990, 24 March 2026.
+!>  \version      6.2.0
+!>  \date         April 1990, 24 March 2026, 12 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
@@ -21,6 +21,7 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
 ! tauc, 7 January 206. JLM
 ! more output files. 26 January 2026. JLM
 ! cfactau, 24 March 2026. JLM
+! identifies tested pseudopotentials, label in psdtitle(11). 12 November 2026. JLM+claude
 
 
   implicit none
@@ -29,6 +30,7 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
 
   integer, parameter                ::  mxdlc = 4                        !  hard coded maximum valence angular momentum
   integer, parameter                ::  mxdnw = 2                        !  hard coded dimension of number of wave-functions same l
+  integer, parameter                ::  MXDVAR = 9                       !  maximum number of tested pseudopotentials of an element
 
 ! input
 
@@ -99,6 +101,12 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
   integer              ::  isplot
 
   integer              ::  lcmax
+
+  character(len=4)     ::  label                                         !  label of tested pseudopotential, 'NONE' if not tested
+  integer              ::  nvar                                          !  number of tested pseudopotentials of the element
+  character(len=4)     ::  vlist(MXDVAR)                                 !  labels of tested pseudopotentials
+  character(len=30)    ::  status                                        !  tests performed on the tested pseudopotential, or confidence on core radii
+  logical              ::  lrctab                                        !  core radii are those of the old table
 
 ! allocatable arrays
 
@@ -203,6 +211,13 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
     ev_ae(j) = ev(j)
     evi(j) = ZERO
   enddo
+
+! identifies tested pseudopotentials (before rc is rounded to the grid)
+
+  call atom_psd_tested_match(iowrite, nameat,                           &
+      norb, ncore, no, lo, zo,                                          &
+      rc, ifcore, cfac, rcfac, label, nvar, vlist, status, lrctab,      &
+      mxdorb, mxdlc, MXDVAR)
 
 ! fills indv, indx
 
@@ -361,6 +376,10 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
       ispp, ifcore, rc, cfac, zratio, ncore, norb,                       &
       iray, psdtitle, siestatitle, nicore, irel, npot,                   &
       mxdorb)
+
+! label of the tested pseudopotential (fields 1-10 are used by atom_psd_titles)
+
+  write(psdtitle(11),'(" var=",a4,1x)') label
 
   call atom_psd_out_unfmt(iopsd, filepsd, nameat,                        &
       icorr, irel, nicore, iray, psdtitle,                               &
