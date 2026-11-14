@@ -1,6 +1,6 @@
-!>  Writes a default input configuration file from the chemical symbol.
-!>  The default is Perdew-Zunger non-spin-polarized LDA for the
-!>  atomic ground state configuration.
+!>  Writes a default input configuration file from the chemical symbol
+!>  and the exchange and correlation functional, for the atomic ground
+!>  state configuration (non-spin-polarized up to Ca, relativistic above).
 !>  User may edit that file to have the other cases.
 !>  The configuration, core radii and partial core correction come from
 !>  a tested pseudopotential (atom_p_tbl_tested) if there is one,
@@ -8,10 +8,10 @@
 !>
 !>  \author       Jose Luis Martins
 !>  \version      6.2.0
-!>  \date         22 June 2021, 27 March 2026, 12 November 2026.
+!>  \date         22 June 2021, 27 March 2026, 14 November 2026.
 !>  \copyright    GNU Public License v2
 
-subroutine atom_atm_write_sub(ioread, filein, nameat, vtype)
+subroutine atom_atm_write_sub(ioread, filein, nameat, vtype, icorr)
 
 ! nval2, jhard. 21 December 2021. JLM
 ! default mesh. 21 April 2022. JLM
@@ -22,6 +22,7 @@ subroutine atom_atm_write_sub(ioread, filein, nameat, vtype)
 ! tested pseudopotentials, vtype. 12 November 2026. JLM+claude
 ! cfactau from the tested pseudopotential. 12 November 2026. claude
 ! confidence on core radii only printed by atom_psd_tested_match. 12 November 2026. claude
+! icorr is an argument. 14 November 2026. claude
 
   implicit none
 
@@ -38,12 +39,12 @@ subroutine atom_atm_write_sub(ioread, filein, nameat, vtype)
 
   character(len=2), intent(in)      ::  nameat                           !<  chemical symbol of the atom
   character(len=4), intent(in)      ::  vtype                            !<  label of tested pseudopotential, '    ' default, 'NONE' old tables
+  character(len=2), intent(in)      ::  icorr                            !<  exchange and correlation functional (ca, pw, pb)
 
 ! local variables
 
   character(len=10)                 ::  ititle(5)                        !  title of calculation
   character(len=9)                  ::  bdate                            !  date
-  character(len=2)                  ::  icorr                            !  correlation type
   character(len=1)                  ::  ispp                             !  spin polarization  ' ', 's', 'r'
 
   integer                           ::  iz                               !  atomic number
@@ -164,8 +165,6 @@ subroutine atom_atm_write_sub(ioread, filein, nameat, vtype)
   ititle(3) = 'nerated by'
   ititle(4) = ' atm_write'
   ititle(5) = ' '//bdate
-
-  icorr = 'ca'
 
   call atom_p_tbl_charge(nameat, iz)
 

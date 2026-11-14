@@ -92,7 +92,9 @@ subroutine atom_p_tbl_tested(name, vtype, nvar, vlist, lfound,          &
   llocal = -1
   status = '                              '
 
+
   if (name == 'C ' .or. name == ' C') then
+
 
     nvar = 2
     vtab(1) = 'HARD'
@@ -134,13 +136,125 @@ subroutine atom_p_tbl_tested(name, vtype, nvar, vlist, lfound,          &
       lo(2) = 1
       zo(2) = 2*ONE
       rc(0) = 1.50_REAL64
-      rc(1) = 1.50_REAL64
+      rc(1) = 1.54_REAL64
       pcc = 'pg'
       cfac = ONE
       rcfac = ZERO
       cfactau = ONE
       llocal = 1
-      status = 'diamond                       '
+      status = 'diamond PRB 43 1993 (1991)    '
+
+    endif
+
+
+  elseif (name == 'Si') then
+
+
+    nvar = 2
+    vtab(1) = 'HARD'
+    vtab(2) = 'SOFT'
+
+    if(vtype == 'HARD') then
+
+      lfound = .TRUE.
+      ncore = 3
+      nval = 3
+      no(1) = 2
+      lo(1) = 0
+      zo(1) = 2*ONE
+      no(2) = 2
+      lo(2) = 1
+      zo(2) = 2*ONE
+      no(3) = 3
+      lo(3) = 2
+      zo(3) = 0*ONE
+      rc(0) = 1.90_REAL64
+      rc(1) = 1.90_REAL64
+      rc(2) = 1.90_REAL64
+      pcc = 'pe'
+      cfac = ONE
+      rcfac = ZERO
+      cfactau = ONE/4
+      llocal = -1
+      status = 'LAPW comparison               '
+
+    elseif(vtype == 'SOFT') then
+
+      lfound = .TRUE.
+      ncore = 3
+      nval = 2
+      no(1) = 2
+      lo(1) = 0
+      zo(1) = 2*ONE
+      no(2) = 2
+      lo(2) = 1
+      zo(2) = 2*ONE
+      rc(0) = 2.50_REAL64
+      rc(1) = 2.50_REAL64
+      pcc = 'pg'
+      cfac = ONE
+      rcfac = ZERO
+      cfactau = ONE
+      llocal = 1
+      status = 'silicon  PRB 52 13281 (1995)  '
+
+    endif
+
+
+  elseif (name == 'Ge') then
+
+
+    nvar = 2
+    vtab(1) = 'HARD'
+    vtab(2) = 'SOFT'
+
+    if(vtype == 'HARD') then
+
+      lfound = .TRUE.
+      ncore = 6
+      nval = 4
+      no(1) = 2
+      lo(1) = 0
+      zo(1) = 2*ONE
+      no(2) = 2
+      lo(2) = 1
+      zo(2) = 2*ONE
+      no(3) = 3
+      lo(3) = 2
+      zo(4) = 0*ONE
+      no(4) = 4
+      lo(4) = 3
+      zo(3) = 0*ONE
+      rc(0) = 2.20_REAL64
+      rc(1) = 2.20_REAL64
+      rc(2) = 2.20_REAL64
+      rc(3) = 2.20_REAL64
+      pcc = 'pe'
+      cfac = ONE
+      rcfac = ZERO
+      cfactau = 8*ONE
+      llocal = -1
+      status = 'LAPW comparison               '
+
+    elseif(vtype == 'SOFT') then
+
+      lfound = .TRUE.
+      ncore = 6
+      nval = 2
+      no(1) = 2
+      lo(1) = 0
+      zo(1) = 2*ONE
+      no(2) = 2
+      lo(2) = 1
+      zo(2) = 2*ONE
+      rc(0) = 2.68_REAL64
+      rc(1) = 2.68_REAL64
+      pcc = 'pg'
+      cfac = ONE
+      rcfac = ZERO
+      cfactau = 8*ONE
+      llocal = 1
+      status = 'germanium  PRB 52 13283 (1995)'
 
     endif
 

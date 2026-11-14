@@ -2,7 +2,7 @@
 !>
 !>  \author       Jose Luis Martins
 !>  \version      6.2.0
-!>  \date         21 October 2021. 26 January 2026. 12 November 2026.
+!>  \date         21 October 2021. 26 January 2026. 14 November 2026.
 !>  \copyright    GNU Public License v2
 
 program atom_all
@@ -15,6 +15,7 @@ program atom_all
 ! tapes >= 10 consistent with the other programs. 7 November 2026. claude+JLM
 ! tested pseudopotentials, arguments identified by content,
 ! rpoint from the core radii before rounding to the grid. 12 November 2026. claude
+! choice of exchange and correlation functional (xcLDA/xcGGA). 14 November 2026. JLM+claude
 
   implicit none
 
@@ -118,7 +119,8 @@ program atom_all
   character(len=3)                  ::  tbasisin                         !  type of basis in program line
   character(len=3)                  ::  pccin                            !  type of partial core correction in program line
   character(len=4)                  ::  vtypein                          !  label of tested pseudopotential, '    ' default, 'NONE' old tables
-  character(len=4)                  ::  argin                            !  argument in program line
+  character(len=2)                  ::  icorrin                          !  exchange and correlation functional (ca, pw, pb)
+  character(len=5)                  ::  argin                            !  argument in program line
   integer                           ::  larg                             !  length of argument
   integer                           ::  iarg                             !  counter
 
@@ -208,6 +210,9 @@ program atom_all
       write(6,*) '  or NONE for the old tables (educated guess).'
       write(6,*) '  The default is the first tested pseudopotential.'
       write(6,*)
+      write(6,*) '  xcLDA/xcGGA for the LDA (Ceperley-Alder) or GGA (PBE)'
+      write(6,*) '  exchange and correlation functional. The default is LDA.'
+      write(6,*)
       write(6,*) '  If the arguments are not present default values are used.'
       write(6,*)
 
@@ -241,7 +246,9 @@ program atom_all
 
       call atom_atm_tested_choose(nameat, vtypein)
 
-      call atom_atm_write_sub(ioread, filein, nameat, vtypein)
+      call atom_atm_xc_choose(icorrin)
+
+      call atom_atm_write_sub(ioread, filein, nameat, vtypein, icorrin)
       write(6,*)
 
     else
@@ -276,12 +283,33 @@ program atom_all
 !     more then one argument, identified by content
 
       vtypein = '    '
+      icorrin = 'ca'
 
       do iarg = 2,narg
 
         call get_command_argument(iarg, argin, larg)
 
-        if(larg > 4) then
+        call chrcap(argin, 5)
+
+        if(argin(1:2) == 'XC') then
+
+!         exchange and correlation, only the basic choices
+
+          if(argin == 'XCLDA' .and. larg == 5) then
+            icorrin = 'ca'
+          elseif(argin == 'XCGGA' .and. larg == 5) then
+            icorrin = 'pb'
+          else
+            write(6,*)
+            write(6,'("  Argument ",i2," should be xcLDA or xcGGA, ",    &
+                 &   "STOPPING")') iarg
+            write(6,*)
+
+            stop
+
+          endif
+
+        elseif(larg > 4) then
           write(6,*)
           write(6,'("  Argument ",i2," is too long (more than 4 ",       &
                &   "characters), STOPPING")') iarg
@@ -289,25 +317,29 @@ program atom_all
 
           stop
 
-        endif
-
-        call chrcap(argin, 4)
-
-        if(argin == 'YES ') then
+        elseif(argin == 'YES ') then
           pccin = 'yes'
         elseif(argin == 'NO  ') then
           pccin = 'no '
         elseif(argin(2:2) == 'Z') then
           tbasisin = argin(1:3)
+        elseif(argin == 'LDA ' .or. argin == 'GGA ' .or. argin == 'PBE ') then
+          write(6,*)
+          write(6,'("  Argument ",i2," is ",a,", use xcLDA or xcGGA ",   &
+               &   "for the functional, STOPPING")') iarg, trim(argin)
+          write(6,*)
+
+          stop
+
         else
-          vtypein = argin
+          vtypein = argin(1:4)
         endif
 
       enddo
 
       if(iz < 3) pccin = '   '
 
-      call atom_atm_write_sub(ioread, filein, nameat, vtypein)
+      call atom_atm_write_sub(ioread, filein, nameat, vtypein, icorrin)
       write(6,*)
 
     endif
@@ -346,7 +378,9 @@ program atom_all
 
       call atom_atm_tested_choose(nameat, vtypein)
 
-      call atom_atm_write_sub(ioread, filein, nameat, vtypein)
+      call atom_atm_xc_choose(icorrin)
+
+      call atom_atm_write_sub(ioread, filein, nameat, vtypein, icorrin)
       write(6,*)
 
     endif

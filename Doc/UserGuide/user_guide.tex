@@ -415,8 +415,13 @@ Read the \textbf{Warning} above about default values.
 
 After the chemical symbol you can give other arguments, in any order,
 as the program identifies them by their content (lower or upper case,
-at most four characters each):
+at most four characters each, except the functional):
 \begin{itemize}
+\item \texttt{xcLDA/xcGGA} chooses the exchange and correlation functional,
+the LDA with the Ceperley-Alder (Perdew-Zunger) parametrization or the PBE GGA.
+The default is the LDA.  Other functionals (the Perdew-Wang 92 LDA) are
+offered in the interactive mode (Section~\ref{sec:tested}).
+\texttt{LDA}, \texttt{GGA} or \texttt{PBE} without the \texttt{xc} stop the program with a hint;
 \item \texttt{yes/no} forces using or not using the partial core correction
 for exchange and correlation;
 \item an argument with a \texttt{Z} as second character (\texttt{SZ/SZP/DZ/DZP})
@@ -425,7 +430,8 @@ chooses the basis set, see below;
 \texttt{HARD} or \texttt{SOFT} for carbon, or \texttt{NONE} for the educated guess
 of the old tables (Section~\ref{sec:tested}).
 \end{itemize}
-For example \texttt{../atom\_all.exe C soft} or \texttt{../atom\_all.exe C DZ none no}.
+For example \texttt{../atom\_all.exe C soft}, \texttt{../atom\_all.exe C HARD xcLDA},
+\texttt{../atom\_all.exe Si xcGGA} or \texttt{../atom\_all.exe C DZ none no}.
 If the label is not one of the tested pseudopotentials of that element the program
 lists the available ones and stops.  If the element has no tested pseudopotentials
 the label is ignored, with a message.
@@ -479,7 +485,8 @@ Another one is chosen by giving its label as an argument
 and the label \texttt{NONE} gives the educated guess of the old tables.
 When the user is prompted for the chemical symbol
 (\texttt{atom\_all.exe -x}, or \texttt{atom\_all.exe} or \texttt{atom.exe}
-without an \texttt{atom.dat} file) the program also asks which pseudopotential to use,
+without an \texttt{atom.dat} file) the program also asks which pseudopotential to use
+and which exchange and correlation functional,
 \begin{verbatim}
   Tested pseudopotentials for C:
 
@@ -488,9 +495,17 @@ without an \texttt{atom.dat} file) the program also asks which pseudopotential t
      3   NONE   old tables, core radii: hard tested (triple bond)
 
   Enter your choice (default 1)
+
+  Exchange and correlation functional:
+
+     1   LDA   ca   Ceperley-Alder, Perdew-Zunger parametrization
+     2   LDA   pw   Perdew-Wang 92
+     3   GGA   pb   Perdew-Burke-Ernzerhof (PBE)
+
+  Enter your choice (default 1)
 \end{verbatim}
-and writes \texttt{atom.dat} with the parameters of the choice.
-Elements without tested pseudopotentials skip that question.
+and writes \texttt{atom.dat} with the parameters of the choices.
+Elements without tested pseudopotentials skip the first question.
 
 The choice is not written in \texttt{atom.dat}, as you can edit that file
 and the pseudopotential would no longer be the tested one.
@@ -505,7 +520,8 @@ of the partial core kinetic energy density, which is independent of the partial
 core correction (Section~\ref{sec:cc}).
 The exchange and correlation functional and the relativistic or spin-polarized
 character of the calculation are not compared, so you can generate the tested
-pseudopotential with another functional (check with which functional it was tested).
+pseudopotential with another functional, for example \texttt{../atom\_all.exe C HARD xcGGA}
+(check with which functional it was tested).
 The program reports the result,
 \begin{verbatim}
   The parameters are those of the tested pseudopotential C HARD
@@ -550,8 +566,9 @@ treated as not tested.
 To add a tested pseudopotential you only have to edit
 \texttt{atom\_p\_tbl\_tested.f90}, writing all its parameters (not only the ones that
 differ from the old tables).  The first label of an element is its default.
-\texttt{NONE}, \texttt{LIST}, \texttt{YES}, \texttt{NO} and anything with a \texttt{Z}
-as second character cannot be used as labels.
+\texttt{NONE}, \texttt{LIST}, \texttt{YES}, \texttt{NO}, \texttt{LDA}, \texttt{GGA},
+\texttt{PBE}, anything with a \texttt{Z} as second character and anything starting
+with \texttt{XC} cannot be used as labels.
 
 
 \subsection{Running step by step}
@@ -625,6 +642,7 @@ This is the key input file and is described in Section~\ref{sec:atomdat}.
 
 If the file \texttt{atom.dat} is not present, the code asks the user the chemical symbol of the element to be calculated,
 and, if there are tested pseudopotentials for that element, which of them to use (Section~\ref{sec:tested}),
+and the exchange and correlation functional,
 writes an \texttt{atom.dat} file with the default values and runs the calculation.
 The user may edit the \texttt{atom.dat} file to change the default choices, taking into account that the
 file is read with fixed formats (back-compatibility), so the columns matter (Section~\ref{sec:inputfile}).
@@ -1413,7 +1431,8 @@ The file for Si could be:
 	\item Chemical symbol of the nucleus (here {\tt Si}, obviously)
 	\item Exchange-correlation type. Here, {\tt ca} stands for
           Ceperley-Alder.  The
-          ``best'' LDA choice should be {\tt ca}.  It is also possible
+          ``best'' LDA choice should be {\tt ca}.  The Perdew-Wang 92
+          parametrization of the LDA is {\tt pw}.  It is also possible
           to use a gradient-corrected functional: {\tt pb} indicates use
           of the PBE scheme by Perdew, Burke, and Ernzerhof (PRL 77,
           3865 (1996)).
