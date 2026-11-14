@@ -9,12 +9,13 @@
 !>  provide an educated guess.
 !>
 !>  The labels 'NONE' (old tables) and '    ' (default) are reserved,
-!>  'YES', 'NO' and anything with a 'Z' in the second position
-!>  (basis set) cannot be used as labels.
+!>  'YES', 'NO', 'LDA', 'GGA', 'PBE', anything with a 'Z' in the second
+!>  position (basis set) and anything starting with 'XC' (functional)
+!>  cannot be used as labels.
 !>
 !>  \author       Jose Luis Martins+claude
 !>  \version      6.2.0
-!>  \date         12 November 2026.
+!>  \date         12 November 2026. 14 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_p_tbl_tested(name, vtype, nvar, vlist, lfound,          &
@@ -23,6 +24,7 @@ subroutine atom_p_tbl_tested(name, vtype, nvar, vlist, lfound,          &
       mxdvar)
 
 ! Written 12 November 2026. JLM+claude
+! Si, Ge. 14 November 2026. JLM+claude
 
   implicit none
 
@@ -159,10 +161,10 @@ subroutine atom_p_tbl_tested(name, vtype, nvar, vlist, lfound,          &
       lfound = .TRUE.
       ncore = 3
       nval = 3
-      no(1) = 2
+      no(1) = 3
       lo(1) = 0
       zo(1) = 2*ONE
-      no(2) = 2
+      no(2) = 3
       lo(2) = 1
       zo(2) = 2*ONE
       no(3) = 3
@@ -183,10 +185,10 @@ subroutine atom_p_tbl_tested(name, vtype, nvar, vlist, lfound,          &
       lfound = .TRUE.
       ncore = 3
       nval = 2
-      no(1) = 2
+      no(1) = 3
       lo(1) = 0
       zo(1) = 2*ONE
-      no(2) = 2
+      no(2) = 3
       lo(2) = 1
       zo(2) = 2*ONE
       rc(0) = 2.50_REAL64
@@ -213,18 +215,18 @@ subroutine atom_p_tbl_tested(name, vtype, nvar, vlist, lfound,          &
       lfound = .TRUE.
       ncore = 6
       nval = 4
-      no(1) = 2
+      no(1) = 4
       lo(1) = 0
       zo(1) = 2*ONE
-      no(2) = 2
+      no(2) = 4
       lo(2) = 1
       zo(2) = 2*ONE
-      no(3) = 3
+      no(3) = 4
       lo(3) = 2
-      zo(4) = 0*ONE
+      zo(3) = 0*ONE
       no(4) = 4
       lo(4) = 3
-      zo(3) = 0*ONE
+      zo(4) = 0*ONE
       rc(0) = 2.20_REAL64
       rc(1) = 2.20_REAL64
       rc(2) = 2.20_REAL64
@@ -241,10 +243,10 @@ subroutine atom_p_tbl_tested(name, vtype, nvar, vlist, lfound,          &
       lfound = .TRUE.
       ncore = 6
       nval = 2
-      no(1) = 2
+      no(1) = 4
       lo(1) = 0
       zo(1) = 2*ONE
-      no(2) = 2
+      no(2) = 4
       lo(2) = 1
       zo(2) = 2*ONE
       rc(0) = 2.68_REAL64
