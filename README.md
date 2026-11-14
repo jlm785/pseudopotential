@@ -37,7 +37,7 @@ The code is self-contained, it only needs a Fortran compiler.  `gnuplot` is used
     mkdir WORK; cd WORK
     ../Src/atom_all_gfortran.exe Si        # the suffix is the compiler of make.inc, in this case gfortran
 
-`atom_all` writes a default input file `atom.dat` for the element, generates the pseudopotential, tests it and writes all the files above.  If the element has tested pseudopotentials (for now only carbon, `HARD` and `SOFT`) the default is the first one, otherwise the parameters are an educated guess from the old tables, and the program says which.  Optional further arguments, in any order, choose a tested pseudopotential (`HARD`, `SOFT`, or `NONE` for the old tables), the partial core correction (yes/no) and the basis set (SZ/DZ/DZP).  The same steps can be run one at a time (`atom`, `psd_gen`, `kb_conv`, `atom_test`, `kb_test` and the plotting programs) to change the parameters interactively.
+`atom_all` writes a default input file `atom.dat` for the element, generates the pseudopotential, tests it and writes all the files above.  If the element has tested pseudopotentials (for now only carbon, `HARD` and `SOFT`) the default is the first one, otherwise the parameters are an educated guess from the old tables, and the program says which.  Optional further arguments, in any order, choose a tested pseudopotential (`HARD`, `SOFT`, or `NONE` for the old tables), the exchange and correlation functional (`xcLDA`, the default, or `xcGGA` for PBE), the partial core correction (yes/no) and the basis set (SZ/DZ/DZP), for example `atom_all.exe C HARD xcGGA`.  The same steps can be run one at a time (`atom`, `psd_gen`, `kb_conv`, `atom_test`, `kb_test` and the plotting programs) to change the parameters interactively.
 
 ## Documentation
 
