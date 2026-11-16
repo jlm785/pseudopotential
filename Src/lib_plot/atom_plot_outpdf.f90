@@ -3,13 +3,15 @@
 !>  Also writes file for matplotlib
 !>
 !>  \author       Peter Schuster, Manuel Maria Alemany, Jose Luis Martins
-!>  \version      6.1.0
-!>  \date         April 1993, January 2000, 25 October 2026
+!>  \version      6.2.0
+!>  \date         April 1993, January 2000, 25 October 2026, 16 November 2026
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_outpdf(iocomm, iotmp, numw, nump, zion,             &
       iw, ip, iv, ifp, ifw,                                              &
-      labelw, labelp, labelv, labelf, labelfw, yminwp, ymaxwp, yminv)
+      labelw, labelp, labelv, labelf, labelfw, yminwp, ymaxwp, yminv,    &
+      ide, idp, labelde, labeldp, xmaxd, ymind, ymaxd,                   &
+      ite, itp, labelte, labeltp, ymint, ymaxt)
 
 ! adapted from old code
 ! originally written by Peter Schuster, April 1993
@@ -19,6 +21,7 @@ subroutine atom_plot_outpdf(iocomm, iotmp, numw, nump, zion,             &
 ! converted to fortran 90, 6 August 2021. JLM
 ! figure description for matplotlib (wfct, ppot). 25 October 2026. claude
 ! figure description for matplotlib (fwft, fppt). 25 October 2026. claude
+! charge and kinetic energy densities (dens, taur). 16 November 2026. claude+JLM
 
 
   implicit none
@@ -51,6 +54,15 @@ subroutine atom_plot_outpdf(iocomm, iotmp, numw, nump, zion,             &
   character(len=12), intent(in)     ::  labelfw(nump)                    !<  label of pseudo-wave-function transforms
 
   real(REAL64), intent(in)          ::  yminwp, ymaxwp, yminv            !<  min and max
+
+  integer, intent(in)               ::  ide, idp                         !<  number of all-electron and pseudo charge densities
+  character(len=12), intent(in)     ::  labelde(2), labeldp(2)           !<  labels of all-electron and pseudo charge densities
+  real(REAL64), intent(in)          ::  xmaxd                            !<  x range of the density plots
+  real(REAL64), intent(in)          ::  ymind, ymaxd                     !<  y range of the charge densities plot (log scale)
+
+  integer, intent(in)               ::  ite, itp                         !<  number of all-electron and pseudo kinetic energy densities
+  character(len=12), intent(in)     ::  labelte(2), labeltp(2)           !<  labels of all-electron and pseudo kinetic energy densities
+  real(REAL64), intent(in)          ::  ymint, ymaxt                     !<  y range of the kinetic energy densities plot (log scale)
 
 ! local variables
 
@@ -137,6 +149,50 @@ subroutine atom_plot_outpdf(iocomm, iotmp, numw, nump, zion,             &
       x_min, x_max, y_min, y_max, ifp, labelf, ip, labelw)
 
   call atom_plot_gnuplot(iotmp, sfname, 'run  ')
+
+! fifth sheet: charge densities
+
+  if(ide > 0 .and. idp > 0) then
+
+    x_min = ZERO
+    x_max = xmaxd
+
+    y_min = ymind
+    y_max = ymaxd
+
+    sfname = 'dens'
+
+    call atom_plot_command(iocomm, sfname, 2, zion, 0, .TRUE.,           &
+        x_min, x_max, y_min, y_max, ide, labelde, idp, labeldp)
+
+    call atom_plot_spec(iocomm, sfname, 2, zion, 0,                      &
+        x_min, x_max, y_min, y_max, ide, labelde, idp, labeldp)
+
+    call atom_plot_gnuplot(iotmp, sfname, 'run  ')
+
+  endif
+
+! sixth sheet: kinetic energy densities
+
+  if(ite > 0 .and. itp > 0) then
+
+    x_min = ZERO
+    x_max = xmaxd
+
+    y_min = ymint
+    y_max = ymaxt
+
+    sfname = 'taur'
+
+    call atom_plot_command(iocomm, sfname, 2, zion, 0, .TRUE.,           &
+        x_min, x_max, y_min, y_max, ite, labelte, itp, labeltp)
+
+    call atom_plot_spec(iocomm, sfname, 2, zion, 0,                      &
+        x_min, x_max, y_min, y_max, ite, labelte, itp, labeltp)
+
+    call atom_plot_gnuplot(iotmp, sfname, 'run  ')
+
+  endif
 
 ! cleanup
 

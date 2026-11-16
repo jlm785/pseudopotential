@@ -3,8 +3,8 @@
 !>  It mirrors the gnuplot commands of atom_plot_command.
 !>
 !>  \author       claude+JlMartins
-!>  \version      6.1.0
-!>  \date         25 October 2026.
+!>  \version      6.2.0
+!>  \date         25 October 2026, 16 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_spec(iotape, sfname, nlabel, zion, lcentr,         &
@@ -12,6 +12,7 @@ subroutine atom_plot_spec(iotape, sfname, nlabel, zion, lcentr,         &
 
 ! Written by claude from atom_plot_command. 25 October 2026. claude
 ! fwft, fppt, kbop, kbtr, kbek, kbvk, ylog. 25 October 2026. claude
+! dens, taur, kbtc, kbte. 16 November 2026. claude+JLM
 
 ! Same arguments as atom_plot_command (without lpdf).
 ! All figures of atom_plot_command are implemented, unknown figures
@@ -70,6 +71,8 @@ subroutine atom_plot_spec(iotape, sfname, nlabel, zion, lcentr,         &
            sfname == 'fwft' .or. sfname == 'fppt' .or.                   &
            sfname == 'kbop' .or. sfname == 'kbtr' .or.                   &
            sfname == 'kbek' .or. sfname == 'kbvk' .or.                   &
+           sfname == 'dens' .or. sfname == 'taur' .or.                   &
+           sfname == 'kbtc' .or. sfname == 'kbte' .or.                   &
            sfname(1:3) == 'bas' .or. sfname(1:3) == 'log' .or.           &
            sfname(1:2) == 'ln'
 
@@ -88,6 +91,29 @@ subroutine atom_plot_spec(iotape, sfname, nlabel, zion, lcentr,         &
     write(iotape,'("title = Wave Functions")')
     write(iotape,'("xlabel = r [a.u.]")')
     write(iotape,'("ylabel = rR(r)")')
+
+    do i = 1,iw
+      write(iotape,'("curve = ",a4,".gp | 1 | ",i3," | ",a," | dashed | ",i3)') &
+          sfname, 2*i, trim(label(i)), i
+    enddo
+    do i = 1,ip
+      write(iotape,'("curve = ",a4,".gp | 1 | ",i3," | ",a," | solid | ",i3)')  &
+          sfname, 2*i+1, trim(label2(i)), i
+    enddo
+
+  elseif(sfname == 'dens' .or. sfname == 'taur') then
+
+    if(sfname == 'dens') then
+      write(iotape,'("title = Charge Densities")')
+      write(iotape,'("ylabel = rho(r) [1/a.u.^3]")')
+    else
+      write(iotape,'("title = Kinetic Energy Densities")')
+      write(iotape,'("ylabel = tau(r) [Ry/a.u.^3]")')
+    endif
+    write(iotape,'("xlabel = r [a.u.]")')
+    write(iotape,'("ylog = 1")')
+
+!   all-electron (dashed) in columns 2, 4 and pseudo in 3, 5 as in wfct
 
     do i = 1,iw
       write(iotape,'("curve = ",a4,".gp | 1 | ",i3," | ",a," | dashed | ",i3)') &
@@ -185,6 +211,26 @@ subroutine atom_plot_spec(iotape, sfname, nlabel, zion, lcentr,         &
     write(iotape,'("curve = ",a4,".gp | 1 | 2 | ",a," | solid | 1")')            &
         sfname, trim(label(1))
 
+  elseif(sfname == 'kbtc') then
+
+    write(iotape,'("title = Fourier Transform of Partial Core Kinetic Energy Density")')
+    write(iotape,'("xlabel = q [1/a.u.]")')
+    write(iotape,'("ylabel = |tau_c(q)| [Ry]")')
+    write(iotape,'("ylog = 1")')
+
+    write(iotape,'("curve = ",a4,".gp | 1 | 2 | ",a," | solid | 1")')            &
+        sfname, trim(label(1))
+
+  elseif(sfname == 'kbte') then
+
+    write(iotape,'("title = Truncation Error of Partial Core Kinetic Energy Density")')
+    write(iotape,'("xlabel = q [1/a.u.]")')
+    write(iotape,'("ylabel = Delta tau_c(q) [Ry]")')
+    write(iotape,'("ylog = 1")')
+
+    write(iotape,'("curve = ",a4,".gp | 1 | 2 | ",a," | solid | 1")')            &
+        sfname, trim(label(1))
+
   elseif(sfname == 'kbvk') then
 
     write(iotape,'("title = Choice of Local Pseudopotential")')
@@ -213,11 +259,13 @@ subroutine atom_plot_spec(iotape, sfname, nlabel, zion, lcentr,         &
 
   endif
 
-! reference lines, for kbek the suggested accuracies (Ry)
+! reference lines, for kbek and kbte the suggested accuracies (Ry), none for the other log scales
 
-  if(sfname == 'kbek') then
+  if(sfname == 'kbek' .or. sfname == 'kbte') then
     write(iotape,'("hline = 0.0004")')
     write(iotape,'("hline = 0.005")')
+  elseif(sfname == 'kbtc' .or. sfname == 'dens' .or. sfname == 'taur') then
+    continue
   else
     write(iotape,'("hline = 0.0")')
   endif

@@ -2,8 +2,8 @@
 !>  of wave-functions and potentials with gnuplot
 !>
 !>  \author       Peter Schuster, Manuel Maria Alemany, Jose Luis Martins
-!>  \version      6.1.0
-!>  \date         4 September 2021, 25 October 2026.
+!>  \version      6.2.0
+!>  \date         4 September 2021, 25 October 2026, 16 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
@@ -14,7 +14,9 @@ subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
      labelek, numbek, qek, ek,                                           &
      labelv, numbv, vr, vk,                                              &
      yminwp, ymaxwp, xmaxwb, yminp, ymaxp, yminq, ymaxq,                 &
-     xmaxek, yminek, ymaxek, yminv, ymaxv)
+     xmaxek, yminek, ymaxek, yminv, ymaxv,                               &
+     numbtc, qtc, tc, xmaxtc, ymintc, ymaxtc,                            &
+     numbte, qte, te, xmaxte, yminte, ymaxte)
 
 ! adapted from all-electron+pseudopotential plot code.
 ! kinetic, 9 October 2021. JLM
@@ -22,6 +24,8 @@ subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
 ! es format and min/max indices for basis functions. 25 October 2026. claude
 ! es format for projectors, kinetic energy, local potential. 25 October 2026. claude
 ! xmaxwb, largest radius of wave-functions and basis functions. 7 November 2026. claude+JLM
+! Fourier transform (kbtc.gp) and truncation error (kbte.gp) of the partial core
+! kinetic energy density. 16 November 2026. claude+JLM
 
   implicit none
 
@@ -67,6 +71,12 @@ subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
   integer, intent(in)               ::  numbv                            !<  number of q points for local potential
   real(REAL64), intent(in)          ::  vr(nmax), vk(nmax)               !<  local potential
 
+  integer, intent(in)               ::  numbtc                           !<  number of q points of the core kinetic energy density (0 if absent)
+  real(REAL64), intent(in)          ::  qtc(nmax), tc(nmax)              !<  Fourier transform of the partial core kinetic energy density
+
+  integer, intent(in)               ::  numbte                           !<  number of q points of the truncation error (0 if absent)
+  real(REAL64), intent(in)          ::  qte(nmax), te(nmax)              !<  truncation error of the partial core kinetic energy density
+
 ! output
 
   real(REAL64), intent(out)         ::  yminwp, ymaxwp                   !<  min and max
@@ -75,6 +85,8 @@ subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
   real(REAL64), intent(out)         ::  yminq, ymaxq                     !<  min and max
   real(REAL64), intent(out)         ::  xmaxek, yminek, ymaxek           !<  min and max
   real(REAL64), intent(out)         ::  yminv, ymaxv                     !<  min and max
+  real(REAL64), intent(out)         ::  xmaxtc, ymintc, ymaxtc           !<  max and min of the core kinetic energy density
+  real(REAL64), intent(out)         ::  xmaxte, yminte, ymaxte           !<  max and min of the truncation error
 
 ! local variables
 
@@ -255,6 +267,56 @@ subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
   yminv = yminv - 0.2
 
   close(iob)
+
+! Fourier transform of the partial core kinetic energy density (absolute value for the log scale)
+
+  xmaxtc = ZERO
+  ymintc = ZERO
+  ymaxtc = ZERO
+
+  if(numbtc > 0) then
+
+    open(unit = iob, file = 'kbtc.gp', status = 'unknown', form = 'formatted')
+
+    write(iob,'("#     q (1 / a.u.)",3x,"|tau_c(q)|",6x,"tau_c(q)")')
+    write(iob,'("#")')
+    ymintc = abs(tc(1))
+    do i = 1,numbtc
+      write(iob,'(3(1x,es15.7))') qtc(i), abs(tc(i)), tc(i)
+      if(abs(tc(i)) > ymaxtc) ymaxtc = abs(tc(i))
+      if(abs(tc(i)) > ZERO .and. abs(tc(i)) < ymintc) ymintc = abs(tc(i))
+    enddo
+    xmaxtc = 5*(floor(qtc(numbtc)/5)+1)
+    ymaxtc = (10*ONE)**floor(log10(ymaxtc)+1)
+    ymintc = max((10*ONE)**floor(log10(ymintc)), ymaxtc/(10*ONE)**12)
+
+    close(iob)
+
+  endif
+
+! truncation error of the partial core kinetic energy density (decreasing)
+
+  xmaxte = ZERO
+  yminte = ZERO
+  ymaxte = ZERO
+
+  if(numbte > 0) then
+
+    open(unit = iob, file = 'kbte.gp', status = 'unknown', form = 'formatted')
+
+    write(iob,'("#     q (1 / a.u.)",3x,"error (Ry)")')
+    write(iob,'("#")')
+    do i = 1,numbte
+      write(iob,'(2(1x,es15.7))') qte(i), te(i)
+    enddo
+    xmaxte = 5*ceiling(qte(numbte)/5)
+    ymaxte = (10*ONE)**floor(log10(te(1))+1)
+    yminte = ymaxte/(10*ONE)**12
+    if(te(numbte) > ZERO) yminte = max((10*ONE)**floor(log10(te(numbte))), yminte)
+
+    close(iob)
+
+  endif
 
   return
 

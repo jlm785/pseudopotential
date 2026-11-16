@@ -1,8 +1,8 @@
 !>  Writes the files with gnuplot commands
 !>
 !>  \author       Peter Schuster, Manuel Maria Alemany, Jose Luis Martins
-!>  \version      6.0.4
-!>  \date         April 1993, January 2000, 9 August 2021, 9 October 2021.
+!>  \version      6.2.0
+!>  \date         April 1993, January 2000, 9 August 2021, 16 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_command(iotape, sfname, nlabel, zion, lcentr, lpdf, &
@@ -11,6 +11,8 @@ subroutine atom_plot_command(iotape, sfname, nlabel, zion, lcentr, lpdf, &
 ! extracted from outdis. 9 August 2021. JLM
 ! kinetic, 9 October 2021. JLM
 ! offset removed. 18 October 2021. JLM
+! charge and kinetic energy densities (dens, taur), Fourier transform
+! of the partial core kinetic energy density (kbtc) and its truncation error (kbte). 16 November 2026. claude+JLM
 
   implicit none
 
@@ -41,6 +43,7 @@ subroutine atom_plot_command(iotape, sfname, nlabel, zion, lcentr, lpdf, &
 ! local variables
 
   character(len=15)      ::  fname
+  logical                ::  llog                                        !  log scale in y
 
 ! counter
 
@@ -57,7 +60,11 @@ subroutine atom_plot_command(iotape, sfname, nlabel, zion, lcentr, lpdf, &
     write(iotape,'("set term wxt persist")')
   endif
 
-  if(sfname /= 'kbek') then
+  llog = sfname == 'kbek' .or. sfname == 'kbtc' .or.                    &
+         sfname == 'kbte' .or.                                           &
+         sfname == 'dens' .or. sfname == 'taur'
+
+  if(.not. llog) then
 
     write(iotape,'("unset label")')
     write(iotape,'("set key")')
@@ -67,6 +74,19 @@ subroutine atom_plot_command(iotape, sfname, nlabel, zion, lcentr, lpdf, &
 
     write(iotape,'("set yrange [",f5.1,":",f5.1,"]")')  y_min,y_max
     write(iotape,'("set xrange [",f5.1,":",f5.1,"]")')  x_min,x_max
+
+  elseif(sfname /= 'kbek') then
+
+    write(iotape,'("unset label")')
+    write(iotape,'("set key")')
+
+    write(iotape,'("set format x ''%.1f''")')
+    write(iotape,'("set format y ''%.1e''")')
+
+    write(iotape,'("set yrange [",es12.4,":",es12.4,"]")')  y_min,y_max
+    write(iotape,'("set xrange [",f5.1,":",f5.1,"]")')  x_min,x_max
+
+    write(iotape,'("set log y")')
 
   endif
 
@@ -87,6 +107,32 @@ subroutine atom_plot_command(iotape, sfname, nlabel, zion, lcentr, lpdf, &
     do i = 3,2*ip+1,2
       write(iotape,'("''",a4,".gp'' using 1:",i2," ti ''",a12,"'' w li ls ",i2,", \")') sfname, i, label2((i-1)/2), (i-1)/2
     enddo
+
+  elseif(sfname == 'dens' .or. sfname == 'taur') then
+
+!   all-electron (dashed) in columns 2, 4 and pseudo in 3, 5 as in wfct,
+!   the last curve without continuation (no zero line in a log scale)
+
+    if(sfname == 'dens') then
+      write(iotape,'("set title ''Charge Densities''")')
+      write(iotape,'("set ylabel ''rho(r) [1/a.u.^3]'' ")')
+    else
+      write(iotape,'("set title ''Kinetic Energy Densities''")')
+      write(iotape,'("set ylabel ''tau(r) [Ry/a.u.^3]'' ")')
+    endif
+
+    write(iotape,'("set xlabel ''r [a.u.]''")')
+
+    write(iotape,'("plot \")')
+
+    do i = 2,2*iw,2
+      write(iotape,'("''",a4,".gp'' using 1:",i2," ti ''",a12,"''  w li ls ",i2," dashtype 2, \")') sfname, i, label(i/2), i/2
+    enddo
+
+    do i = 3,2*ip-1,2
+      write(iotape,'("''",a4,".gp'' using 1:",i2," ti ''",a12,"'' w li ls ",i2,", \")') sfname, i, label2((i-1)/2), (i-1)/2
+    enddo
+    write(iotape,'("''",a4,".gp'' using 1:",i2," ti ''",a12,"'' w li ls ",i2)') sfname, 2*ip+1, label2(ip), ip
 
   elseif(sfname == 'fwft') then
 
@@ -221,6 +267,30 @@ subroutine atom_plot_command(iotape, sfname, nlabel, zion, lcentr, lpdf, &
     write(iotape,'("''",a4,".gp'' using 1:2 ti ''",a12,"'' w li ls 1, \")') &
              sfname, label(1)
 
+  elseif(sfname == 'kbtc') then
+
+    write(iotape,'("set title ''Fourier Transform of Partial Core Kinetic Energy Density''")')
+
+    write(iotape,'("set xlabel ''q [1/a.u.]''")')
+    write(iotape,'("set ylabel ''|tau_c(q)| [Ry]'' ")')
+
+!   last curve, no reference line (0 is not allowed in a log scale)
+
+    write(iotape,'("plot \")')
+    write(iotape,'("''",a4,".gp'' using 1:2 ti ''",a12,"'' w li ls 1")') &
+             sfname, label(1)
+
+  elseif(sfname == 'kbte') then
+
+    write(iotape,'("set title ''Truncation Error of Partial Core Kinetic Energy Density''")')
+
+    write(iotape,'("set xlabel ''q [1/a.u.]''")')
+    write(iotape,'("set ylabel ''Delta tau_c(q) [Ry]'' ")')
+
+    write(iotape,'("plot \")')
+    write(iotape,'("''",a4,".gp'' using 1:2 ti ''",a12,"'' w li ls 1, \")') &
+             sfname, label(1)
+
   elseif(sfname == 'kbvk') then
 
     write(iotape,'("set title ''Choice of Local Pseudopotential''")')
@@ -241,7 +311,11 @@ subroutine atom_plot_command(iotape, sfname, nlabel, zion, lcentr, lpdf, &
 
   endif
 
-  if(sfname /= 'kbek') then
+  if(sfname == 'kbtc' .or. sfname == 'dens' .or. sfname == 'taur') then
+
+    continue
+
+  elseif(sfname /= 'kbek' .and. sfname /= 'kbte') then
 
     write(iotape,'("0 w li ls 8  notitle")')
 

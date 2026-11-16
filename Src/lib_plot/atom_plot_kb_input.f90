@@ -2,8 +2,8 @@
 !>  of wave-functions and potentials
 !>
 !>  \author       Peter Schuster, Manuel Maria Alemany, Jose Luis Martins
-!>  \version      6.0.8
-!>  \date         4 September 2021, 21 October 2021. 25 May 2022.
+!>  \version      6.2.0
+!>  \date         4 September 2021, 21 October 2021. 16 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_kb_input (iowrite, ioplot,                          &
@@ -13,7 +13,9 @@ subroutine atom_plot_kb_input (iowrite, ioplot,                          &
      ip, labelp, numbp, lo_p, px, py,                                    &
      iq, labelq, numbq, lo_q, qx, qy,                                    &
      labelek, numbek, qek, ek,                                           &
-     labelv, numbv, vr, vk)
+     labelv, numbv, vr, vk,                                              &
+     labeltc, numbtc, qtc, tc,                                           &
+     labelte, numbte, qte, te)
 
 ! adapted from all-electron+pseudopotential plot code.
 ! kinetic, 9 October 2021. JLM
@@ -21,6 +23,7 @@ subroutine atom_plot_kb_input (iowrite, ioplot,                          &
 ! deallocate, 19 May 2022. JLM
 ! initialized px,py. 25 May 2022. JLM
 ! labelv, 6 July 2022. JLM
+! Fourier transform and truncation error of the partial core kinetic energy density. 16 November 2026. claude+JLM
 
 
   implicit none
@@ -73,12 +76,21 @@ subroutine atom_plot_kb_input (iowrite, ioplot,                          &
   integer, intent(out)              ::  numbv                            !<  number of q points for local potential
   real(REAL64), intent(out)         ::  vr(nmax), vk(nmax)               !<  local potential
 
+  character(len=12), intent(out)    ::  labeltc                          !<  label of the core kinetic energy density
+  integer, intent(out)              ::  numbtc                           !<  number of q points of the core kinetic energy density (0 if absent)
+  real(REAL64), intent(out)         ::  qtc(nmax), tc(nmax)              !<  Fourier transform of the partial core kinetic energy density
+
+  character(len=12), intent(out)    ::  labelte                          !<  label of the truncation error (reference volume)
+  integer, intent(out)              ::  numbte                           !<  number of q points of the truncation error (0 if absent)
+  real(REAL64), intent(out)         ::  qte(nmax), te(nmax)              !<  truncation error of the partial core kinetic energy density
+
 ! local variables
 
   real(REAL64), allocatable          ::  absc(:), ord(:)
 
   character(len=9)      ::  marker
   character(len=1)      ::  c1
+  character(len=200)    ::  line
 
   integer     ::  ndata, number, npoints, ioerr, lp1
 
@@ -91,6 +103,11 @@ subroutine atom_plot_kb_input (iowrite, ioplot,                          &
 
   integer     ::  i, j
 
+
+  labeltc = 'partial core'
+  numbtc = 0
+  labelte = 'partial core'
+  numbte = 0
 
   do j = 1,nump
   do i = 1,nmax
@@ -245,6 +262,27 @@ subroutine atom_plot_kb_input (iowrite, ioplot,                          &
          do i = 1,numbek
            qek(i) = absc(i)
            ek(i) = ord(i)
+         enddo
+
+      elseif(marker(1:5) == 'taucq') then
+
+         numbtc = number-1
+         do i = 1,numbtc
+           qtc(i) = absc(i)
+           tc(i) = ord(i)
+         enddo
+
+!     the reference volume is in columns 20-31 of the marker line
+
+      elseif(marker(1:5) == 'tauce') then
+
+         backspace(ioplot)
+         read(ioplot,'(a)') line
+         if(len_trim(line) > 19) labelte = line(20:31)
+         numbte = number-1
+         do i = 1,numbte
+           qte(i) = absc(i)
+           te(i) = ord(i)
          enddo
 
       else

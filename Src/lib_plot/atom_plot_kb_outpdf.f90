@@ -2,8 +2,8 @@
 !>  of wave-functions and potentials with gnuplot ot matplotlib
 !>
 !>  \author       Peter Schuster, Manuel Maria Alemany, Jose Luis Martins
-!>  \version      6.1.0
-!>  \date         4 September 2021, 25 October 2026.
+!>  \version      6.2.0
+!>  \date         4 September 2021, 25 October 2026, 16 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_kb_outpdf(iocomm, iotmp, numw, numb, nump, nftp,    &
@@ -14,7 +14,9 @@ subroutine atom_plot_kb_outpdf(iocomm, iotmp, numw, numb, nump, nftp,    &
      labelek,                                                            &
      labelv,                                                             &
      yminwp, ymaxwp, xmaxwb, yminp, ymaxp, yminq, ymaxq,                 &
-     xmaxek, yminek, ymaxek, yminv, ymaxv)
+     xmaxek, yminek, ymaxek, yminv, ymaxv,                               &
+     labeltc, numbtc, xmaxtc, ymintc, ymaxtc,                            &
+     labelte, numbte, xmaxte, yminte, ymaxte)
 
 ! adapted from all-electron+pseudopotential plot code.
 ! kinetic, 9 October 2021. JLM
@@ -23,6 +25,8 @@ subroutine atom_plot_kb_outpdf(iocomm, iotmp, numw, numb, nump, nftp,    &
 ! figure description for matplotlib (bas). 25 October 2026. claude
 ! figure description for matplotlib (kbvk, kbop, kbtr, kbek). 25 October 2026. claude
 ! xmaxwb, x range of the wave-function and basis plots. 7 November 2026. claude+JLM
+! Fourier transform (kbtc) and truncation error (kbte) of the partial core kinetic
+! energy density. 16 November 2026. claude+JLM
 
 
   implicit none
@@ -63,6 +67,14 @@ subroutine atom_plot_kb_outpdf(iocomm, iotmp, numw, numb, nump, nftp,    &
   real(REAL64), intent(in)          ::  yminq, ymaxq                     !<  min and max
   real(REAL64), intent(in)          ::  xmaxek, yminek, ymaxek           !<  min and max
   real(REAL64), intent(in)          ::  yminv, ymaxv                     !<  min and max
+
+  character(len=12), intent(in)     ::  labeltc                          !<  label of the core kinetic energy density
+  integer, intent(in)               ::  numbtc                           !<  number of q points of the core kinetic energy density (0 if absent)
+  real(REAL64), intent(in)          ::  xmaxtc, ymintc, ymaxtc           !<  max and min of the core kinetic energy density
+
+  character(len=12), intent(in)     ::  labelte                          !<  label of the truncation error (reference volume)
+  integer, intent(in)               ::  numbte                           !<  number of q points of the truncation error (0 if absent)
+  real(REAL64), intent(in)          ::  xmaxte, yminte, ymaxte           !<  max and min of the truncation error
 
 ! local variables
 
@@ -255,6 +267,50 @@ subroutine atom_plot_kb_outpdf(iocomm, iotmp, numw, numb, nump, nftp,    &
          x_min, x_max, y_min, y_max, 1, labelek, 0, labelb)
 
   call atom_plot_gnuplot(iotmp, sfname, 'run  ')
+
+! Fourier transform of the partial core kinetic energy density
+
+  if(numbtc > 0) then
+
+    x_min = ZERO
+    x_max = xmaxtc
+
+    y_min = ymintc
+    y_max = ymaxtc
+
+    sfname = 'kbtc'
+
+    call atom_plot_command(iocomm, sfname, 1, zion, 0, .TRUE.,           &
+           x_min, x_max, y_min, y_max, 1, labeltc, 0, labelb)
+
+    call atom_plot_spec(iocomm, sfname, 1, zion, 0,                      &
+           x_min, x_max, y_min, y_max, 1, labeltc, 0, labelb)
+
+    call atom_plot_gnuplot(iotmp, sfname, 'run  ')
+
+  endif
+
+! truncation error of the partial core kinetic energy density
+
+  if(numbte > 0) then
+
+    x_min = ZERO
+    x_max = xmaxte
+
+    y_min = yminte
+    y_max = ymaxte
+
+    sfname = 'kbte'
+
+    call atom_plot_command(iocomm, sfname, 1, zion, 0, .TRUE.,           &
+           x_min, x_max, y_min, y_max, 1, labelte, 0, labelb)
+
+    call atom_plot_spec(iocomm, sfname, 1, zion, 0,                      &
+           x_min, x_max, y_min, y_max, 1, labelte, 0, labelb)
+
+    call atom_plot_gnuplot(iotmp, sfname, 'run  ')
+
+  endif
 
 
 ! cleanup

@@ -2,13 +2,15 @@
 !>  and gets the plots shown on screen
 !>
 !>  \author       Peter Schuster, Manuel Maria Alemany, Jose Luis Martins
-!>  \version      6.013
-!>  \date         April 1993, January 2000, 6 August 2021. 21 October 2021.
+!>  \version      6.2.0
+!>  \date         April 1993, January 2000, 6 August 2021. 16 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_outdis(iowrite, iocomm, iotmp, numw, nump, zion,    &
       iw, ip, iv, ifp, ifw,                                              &
-      labelw, labelp, labelv, labelf, labelfw, yminwp, ymaxwp, yminv)
+      labelw, labelp, labelv, labelf, labelfw, yminwp, ymaxwp, yminv,    &
+      ide, idp, labelde, labeldp, xmaxd, ymind, ymaxd,                   &
+      ite, itp, labelte, labeltp, ymint, ymaxt)
 
 ! adapted from old code
 ! originally written by Peter Schuster, April 1993
@@ -17,6 +19,7 @@ subroutine atom_plot_outdis(iowrite, iocomm, iotmp, numw, nump, zion,    &
 ! modified June 24 2012 for new gnuplot conventions. JLM
 ! converted to fortran 90, 6 August 2021
 ! printing. iowrite. NEW interface. 21 October 2021. JLM
+! charge and kinetic energy densities (dens, taur). 16 November 2026. claude+JLM
 
 
   implicit none
@@ -52,6 +55,15 @@ subroutine atom_plot_outdis(iowrite, iocomm, iotmp, numw, nump, zion,    &
   character(len=12), intent(in)     ::  labelfw(nump)                    !<  label of pseudo-wave-function transforms
 
   real(REAL64), intent(in)          ::  yminwp, ymaxwp, yminv            !<  min and max
+
+  integer, intent(in)               ::  ide, idp                         !<  number of all-electron and pseudo charge densities
+  character(len=12), intent(in)     ::  labelde(2), labeldp(2)           !<  labels of all-electron and pseudo charge densities
+  real(REAL64), intent(in)          ::  xmaxd                            !<  x range of the density plots
+  real(REAL64), intent(in)          ::  ymind, ymaxd                     !<  y range of the charge densities plot (log scale)
+
+  integer, intent(in)               ::  ite, itp                         !<  number of all-electron and pseudo kinetic energy densities
+  character(len=12), intent(in)     ::  labelte(2), labeltp(2)           !<  labels of all-electron and pseudo kinetic energy densities
+  real(REAL64), intent(in)          ::  ymint, ymaxt                     !<  y range of the kinetic energy densities plot (log scale)
 
 ! local variables
 
@@ -282,6 +294,106 @@ subroutine atom_plot_outdis(iowrite, iocomm, iotmp, numw, nump, zion,    &
         x_min, x_max, y_min, y_max, ifp, labelf, ip, labelw)
 
     call atom_plot_gnuplot(iotmp, sfname, 'run  ')
+
+  endif
+
+
+! charge densities
+
+  if(ide > 0 .and. idp > 0) then
+
+    write(iowrite,*)
+    write(iowrite,*) 'CHARGE DENSITIES'
+    write(iowrite,*)
+
+    x_min = ZERO
+    x_max = xmaxd
+
+    y_min = ymind
+    y_max = ymaxd
+
+    sfname = 'dens'
+
+    call atom_plot_command(iocomm, sfname, 2, zion, 0, .FALSE.,          &
+        x_min, x_max, y_min, y_max, ide, labelde, idp, labeldp)
+
+    call atom_plot_gnuplot(iotmp, sfname, 'run  ')
+
+    call atom_plot_questions('range',x_min, x_max, y_min, y_max, lcentr, lnew)
+
+    if(lnew) then
+
+      call atom_plot_gnuplot(iotmp, sfname, 'kill ')
+
+      call atom_plot_command(iocomm, sfname, 2, zion, 0, .FALSE.,        &
+          x_min, x_max, y_min, y_max, ide, labelde, idp, labeldp)
+
+      call atom_plot_gnuplot(iotmp, sfname, 'run  ')
+
+    endif
+
+    call atom_plot_questions('pdf  ',x_min, x_max, y_min, y_max, lcentr, lnew)
+
+    call atom_plot_gnuplot(iotmp, sfname, 'kill ')
+
+    if(lnew) then
+
+      call atom_plot_command(iocomm, sfname, 2, zion, 0, .TRUE.,         &
+          x_min, x_max, y_min, y_max, ide, labelde, idp, labeldp)
+
+      call atom_plot_gnuplot(iotmp, sfname, 'run  ')
+
+    endif
+
+  endif
+
+
+! kinetic energy densities
+
+  if(ite > 0 .and. itp > 0) then
+
+    write(iowrite,*)
+    write(iowrite,*) 'KINETIC ENERGY DENSITIES'
+    write(iowrite,*)
+
+    x_min = ZERO
+    x_max = xmaxd
+
+    y_min = ymint
+    y_max = ymaxt
+
+    sfname = 'taur'
+
+    call atom_plot_command(iocomm, sfname, 2, zion, 0, .FALSE.,          &
+        x_min, x_max, y_min, y_max, ite, labelte, itp, labeltp)
+
+    call atom_plot_gnuplot(iotmp, sfname, 'run  ')
+
+    call atom_plot_questions('range',x_min, x_max, y_min, y_max, lcentr, lnew)
+
+    if(lnew) then
+
+      call atom_plot_gnuplot(iotmp, sfname, 'kill ')
+
+      call atom_plot_command(iocomm, sfname, 2, zion, 0, .FALSE.,        &
+          x_min, x_max, y_min, y_max, ite, labelte, itp, labeltp)
+
+      call atom_plot_gnuplot(iotmp, sfname, 'run  ')
+
+    endif
+
+    call atom_plot_questions('pdf  ',x_min, x_max, y_min, y_max, lcentr, lnew)
+
+    call atom_plot_gnuplot(iotmp, sfname, 'kill ')
+
+    if(lnew) then
+
+      call atom_plot_command(iocomm, sfname, 2, zion, 0, .TRUE.,         &
+          x_min, x_max, y_min, y_max, ite, labelte, itp, labeltp)
+
+      call atom_plot_gnuplot(iotmp, sfname, 'run  ')
+
+    endif
 
   endif
 

@@ -2,14 +2,15 @@
 !>  and figures out the required array dimensions
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.0.2
-!>  \date         11 August 2021
+!>  \version      6.2.0
+!>  \date         11 August 2021, 16 November 2026
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_kb_input_size(ioplot, nmax, numw, numb, nump, nftp)
 
 
 ! adapted from all-electron+pseudopotential plot code.
+! Fourier transform of the partial core kinetic energy density. 16 November 2026. claude+JLM
 
 
 
@@ -120,6 +121,10 @@ subroutine atom_plot_kb_input_size(ioplot, nmax, numw, numb, nump, nftp)
         if(number > nmax) nmax = number
 
       elseif(marker(1:3) == 'eki') then
+
+        if(number > nmax) nmax = number
+
+      elseif(marker(1:3) == 'tau') then
 
         if(number > nmax) nmax = number
 

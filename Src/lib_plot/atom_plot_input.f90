@@ -2,8 +2,8 @@
 !>  of wave-functions and potentials
 !>
 !>  \author       Peter Schuster, Manuel Maria Alemany, Jose Luis Martins
-!>  \version      6.0.5
-!>  \date         April 1993, January 2000, 6 August 2021, 21 october 2021.
+!>  \version      6.2.0
+!>  \date         April 1993, January 2000, 6 August 2021, 16 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_input (ioplot, nmax, numw, nump, nftp,              &
@@ -11,6 +11,8 @@ subroutine atom_plot_input (ioplot, nmax, numw, nump, nftp,              &
      & numbw, numbp, numbv, numbf, numbfw,                               &
      & iw, ip, iv, ifp, ifw, labelw,                                     &
      & labelp, labelv, labelf, labelfw, zion,                            &
+     & numbd, dx, dy, ide, idp, labelde, labeldp,                        &
+     & numbt, tx, ty, ite, itp, labelte, labeltp,                        &
      & iowrite)
 
 ! adapted from old code
@@ -20,6 +22,7 @@ subroutine atom_plot_input (ioplot, nmax, numw, nump, nftp,              &
 ! converted to fortran 90, 6 August 2021
 ! nbig, 18 october 2021. JLM
 ! printing. New interface. 21 October 2021. JLM
+! charge and kinetic energy densities. 16 November 2026. claude+JLM
 
 
 
@@ -67,6 +70,19 @@ subroutine atom_plot_input (ioplot, nmax, numw, nump, nftp,              &
 
   real(REAL64), intent(out)         ::  zion                             !<  ionic charge
 
+! charge (d) and kinetic energy (t) densities, 1: AE valence, 2: pseudo valence,
+! 3: AE core, 4: partial core.  numbd(k) = 0 if absent.
+
+  integer, intent(out)              ::  numbd(4)                         !<  number of points of the charge densities
+  real(REAL64), intent(out)         ::  dx(nmax,4), dy(nmax,4)           !<  charge densities
+  integer, intent(out)              ::  ide, idp                         !<  number of all-electron (1,3) and pseudo (2,4) charge densities
+  character(len=12), intent(out)    ::  labelde(2), labeldp(2)           !<  labels of all-electron and pseudo charge densities
+
+  integer, intent(out)              ::  numbt(4)                         !<  number of points of the kinetic energy densities
+  real(REAL64), intent(out)         ::  tx(nmax,4), ty(nmax,4)           !<  kinetic energy densities
+  integer, intent(out)              ::  ite, itp                         !<  number of all-electron (1,3) and pseudo (2,4) kinetic energy densities
+  character(len=12), intent(out)    ::  labelte(2), labeltp(2)           !<  labels of all-electron and pseudo kinetic energy densities
+
 ! local variables
 
   real(REAL64), allocatable          ::  absc(:), ord(:)
@@ -75,6 +91,7 @@ subroutine atom_plot_input (ioplot, nmax, numw, nump, nftp,              &
 
   integer     ::  ndata, number, npoints, ioerr, lp1
   integer     ::  nbig
+  integer     ::  k
 
 ! constants
 
@@ -93,6 +110,9 @@ subroutine atom_plot_input (ioplot, nmax, numw, nump, nftp,              &
   iv = 0
   ifp = 0
   ifw = 0
+
+  numbd = 0
+  numbt = 0
 
 
 ! Read data columns
@@ -220,6 +240,40 @@ subroutine atom_plot_input (ioplot, nmax, numw, nump, nftp,              &
          enddo
 !         call atom_plot_field(nmax,nump,numbfw,absc,ord,fwx,fwy,ifw)
 
+!     charge and kinetic energy densities
+
+      elseif(marker(1:1) == 'd' .or. marker(1:1) == 't')then
+
+         k = 0
+         if(marker(2:3) == 'va') k = 1
+         if(marker(2:3) == 'vp') k = 2
+         if(marker(2:3) == 'ca') k = 3
+         if(marker(2:3) == 'cp') k = 4
+
+         if(k == 0) then
+           write(6,*)
+           write(6,*) ' Stopped in atom_plot_input.  Error in markers'
+           write(6,*) ' offending marker is :',marker
+           write(6,*)
+
+           STOP
+
+         endif
+
+         if(marker(1:1) == 'd') then
+           numbd(k) = number-1
+           do i = 1,numbd(k)
+             dx(i,k) = absc(i)
+             dy(i,k) = ord(i)
+           enddo
+         else
+           numbt(k) = number-1
+           do i = 1,numbt(k)
+             tx(i,k) = absc(i)
+             ty(i,k) = ord(i)
+           enddo
+         endif
+
       else
 
         write(6,*)
@@ -238,6 +292,40 @@ subroutine atom_plot_input (ioplot, nmax, numw, nump, nftp,              &
   enddo
 
   deallocate(absc,ord)
+
+! labels of densities, all-electron and pseudo (or partial core) alternate
+
+  labelde(1) = 'AE valence  '
+  labelde(2) = 'AE core     '
+  labeldp(1) = 'PS valence  '
+  labeldp(2) = 'partial core'
+
+  labelte(1) = labelde(1)
+  labelte(2) = labelde(2)
+  labeltp(1) = labeldp(1)
+  labeltp(2) = labeldp(2)
+
+  ide = 0
+  idp = 0
+  if(numbd(1) > 0) then
+    ide = 1
+    if(numbd(3) > 0) ide = 2
+  endif
+  if(numbd(2) > 0) then
+    idp = 1
+    if(numbd(4) > 0) idp = 2
+  endif
+
+  ite = 0
+  itp = 0
+  if(numbt(1) > 0) then
+    ite = 1
+    if(numbt(3) > 0) ite = 2
+  endif
+  if(numbt(2) > 0) then
+    itp = 1
+    if(numbt(4) > 0) itp = 2
+  endif
 
   return
 

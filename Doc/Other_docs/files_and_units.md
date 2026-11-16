@@ -15,16 +15,16 @@ exception); the values are set in the main programs (`atom.f90`, `psd_gen.f90`, 
 | 12 | `ioae`, `iodata` | `datafile.dat` | unformatted | `atom`, `atom_all` | `psd_gen`, `plot_ln_show` |
 | 13 | `iopsd` | `pseudo.dat` | unformatted | `psd_gen`, `atom_all` | `atom_test`, `plot_ln_show` |
 | 14 | `ioreal` | `psd.pot`, *Xy*`_POTRE.DAT` (PARSEC), *Xy*`.psf` (SIESTA) | text | `psd_gen`, `atom_all` | `kb_conv` (`psd.pot`) |
-| 15 | `ioplot` | `plot.dat` | text | `psd_gen`, `atom_all` | `plot_show` |
+| 15 | `ioplot` | `plot.dat` (also the charge and kinetic energy densities, markers `dva`, `dvp`, `dca`, `dcp`, `tva`, `tvp`, `tca`, `tcp`) | text | `psd_gen`, `atom_all` | `plot_show` |
 | 16 | `iopsdkb` (`iopsd` in `kb_test`, `iokb` in `plot_ln_show`) | `pseudokb.dat` | unformatted | `kb_conv`, `atom_all` | `atom_test`, `kb_test`, `plot_ln_show` |
-| 17 | `ioplotkb` (`ioplot` in `plot_kb_show`) | `plot_kb.dat` (also the basis functions, each marker line with set, zeta, kind, nodes, r_c, E) | text | `kb_conv`, `atom_all` | `plot_kb_show`, `Tools/plot_basis.py` |
+| 17 | `ioplotkb` (`ioplot` in `plot_kb_show`) | `plot_kb.dat` (also the basis functions, each marker line with set, zeta, kind, nodes, r_c, E, the Fourier transform of the partial core kinetic energy density, marker `taucq`, and its truncation error, marker `tauce` with the volume of the sphere with 90% of the valence charge) | text | `kb_conv`, `atom_all` | `plot_kb_show`, `Tools/plot_basis.py` |
 | 18 | `iokb` | *Xy*`_POTKB_F.DAT` (cpw2000) | text | `kb_conv`, `atom_all` | |
 | 19 | `ioupf` | *Xy*`_LDA_TM.UPF` (QE), *Xy*`.psp8` (ABINIT), *Xy*`.psml` (SIESTA), one after the other | text | `kb_conv`, `atom_all` | |
 | 20 | `iobas` (local, `!dbg`) | `basis_orbitals.dat` (debugging only, `!dbg` lines in `lib_kb/atom_kb_orbitals.f90`) | text | `kb_conv`, `atom_all` (if the `!dbg` lines are uncommented) | `Tools/plot_basis.py --file basis_orbitals.dat` |
 | 21 | `iocomm` | `command_`*name*`.gp`, `fig_`*name*`.dat` | text | plotting | gnuplot, `Tools/atom_plot_mpl.py` |
 | 23 | `iotmp` | `tmp_mmga_x`, `tmp_mmga_t`, `tmp_mmga_c` (temporary) | text | plotting | |
 | 30 | `iost` (`ioplot` in `plot_ln_show`) | `log_true.gp`, `log_ppot.gp`, `log_ppkb.gp`, and `command_log*.gp`, `fig_log*.dat` | text | `atom_all`, `plot_ln_show` | gnuplot |
-| 31-34 | `iost+1`, ..., `iost+4` | `wfct.gp`, `fwft.gp`, `ppot.gp`, `fppt.gp`; `kbop.gp`, `kbtr.gp`, `kbek.gp`, `kbvk.gp`, `bas`*N*`.gp` (31) | text | `atom_all`, `plot_show`, `plot_kb_show` | gnuplot |
+| 31-34 | `iost+1`, ..., `iost+4` | `wfct.gp`, `fwft.gp`, `ppot.gp`, `fppt.gp`, `dens.gp` and `taur.gp` (31); `kbop.gp`, `kbtr.gp`, `kbek.gp`, `kbvk.gp`, `kbtc.gp`, `kbte.gp`, `bas`*N*`.gp` (31) | text | `atom_all`, `plot_show`, `plot_kb_show` | gnuplot |
 
 *name*`.pdf` files are written by gnuplot (no Fortran unit).
 
@@ -43,7 +43,7 @@ exception); the values are set in the main programs (`atom.f90`, `psd_gen.f90`, 
 | `plot_kb.dat` | `kb_conv.f90:85`, `atom_all.f90:169`, `plot_kb_show.f90:38` |
 | `basis_orbitals.dat` (debugging) | `lib_kb/atom_kb_orbitals.f90:187-188` (local `iobas`, `filebas` in `!dbg` lines) |
 | *Xy*`_POTKB_F.DAT`, `.UPF`, `.psp8`, `.psml` | suffixes `kb_conv.f90:75-79`, `atom_all.f90:159-163`; names `lib_kb/atom_kb_sub.f90` (`filekb = ...`, functional tag `scorr`) |
-| plot files | `lib_plot/atom_plot_outdat.f90`, `atom_plot_kb_outdat.f90`, `atom_plot_ln_outpdf.f90`, `atom_plot_command.f90:49`, `atom_plot_spec.f90:78`, `atom_plot_gnuplot.f90`, `atom_plot_gnuplot_ok.f90:36` |
+| plot files | `lib_plot/atom_plot_outdat.f90`, `atom_plot_kb_outdat.f90`, `atom_plot_ln_outpdf.f90`, `atom_plot_command.f90:52`, `atom_plot_spec.f90:81`, `atom_plot_gnuplot.f90`, `atom_plot_gnuplot_ok.f90:36` |
 
 ## Debugging output (commented with `!dbg`)
 

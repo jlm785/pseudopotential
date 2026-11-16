@@ -2,7 +2,7 @@
 !>
 !>  \author       Norm Troullier, Jose Luis Martins
 !>  \version      6.2.0
-!>  \date         April 1990, 24 March 2026, 15 November 2026.
+!>  \date         April 1990, 24 March 2026, 16 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
@@ -23,6 +23,7 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
 ! cfactau, 24 March 2026. JLM
 ! identifies tested pseudopotentials, label in psdtitle(11). 12 November 2026. JLM+claude
 ! ispp compared with the tested pseudopotentials. 15 November 2026. claude
+! valence charge and kinetic energy densities for the plots. 16 November 2026. claude+JLM
 
 
   implicit none
@@ -101,6 +102,9 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
 
   integer              ::  isplot
 
+  real(REAL64)         ::  wtau                                          !  weight of the orbital kinetic energy density
+!dbg  real(REAL64)         ::  xdbg                                          !  integrals (debugging)
+
   integer              ::  lcmax
 
   character(len=4)     ::  label                                         !  label of tested pseudopotential, 'NONE' if not tested
@@ -124,6 +128,11 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
   real(REAL64), allocatable         ::  cdc(:)                           !  core charge density (partial or total)
   real(REAL64), allocatable         ::  tauc_total(:)                    !  core kinetic energy density (total)
   real(REAL64), allocatable         ::  tauc(:)                          !  core kinetic energy density (partial or total)
+
+  real(REAL64), allocatable         ::  cdv_ae(:)                        !  4 pi r^2 all-electron valence charge density
+  real(REAL64), allocatable         ::  tauv_ae(:)                       !  4 pi r^2 all-electron valence kinetic energy density
+  real(REAL64), allocatable         ::  tauv_ps(:)                       !  4 pi r^2 pseudo valence kinetic energy density
+  real(REAL64), allocatable         ::  tau(:)                           !  kinetic energy density of one orbital
 
   real(REAL64), allocatable         ::  vionic(:,:,:)                    !  r*ionic potential in Rydberg
 
@@ -152,6 +161,7 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
 ! constants
 
   real(REAL64), parameter    ::  ZERO = 0.0_REAL64
+  real(REAL64), parameter    ::  PI = 4*atan(1.0_REAL64)
 
 ! counter
 
@@ -183,6 +193,10 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
   allocate(cdc(mxdnr))
   allocate(tauc_total(mxdnr))
   allocate(tauc(mxdnr))
+  allocate(cdv_ae(mxdnr))
+  allocate(tauv_ae(mxdnr))
+  allocate(tauv_ps(mxdnr))
+  allocate(tau(mxdnr))
   allocate(vionic(mxdnr,0:mxdl,-1:1))
   allocate(vhxc(mxdnr,-1:1))
 
@@ -237,7 +251,10 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
   endif
 
 ! reconstructs all-electron functions
+! and the all-electron valence charge and kinetic energy densities (as atom_atm_scf for the core)
 
+  cdv_ae = ZERO
+  tauv_ae = ZERO
 
   do is = -1,1
   do l = 0,lcmax
@@ -250,6 +267,26 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
             no(i), l, is, znuc, ev(i), .FALSE.,                          &
             vionic(:,l,is), vhxc(:,is),                                  &
             iowrite, mxdnr)
+
+        call atom_atm_tau(ispp, rpsi_ae(:,j,l,is), br_ae(:,j,l,is),      &
+            nr, r, l, is, ev(i), v, tau,                                 &
+            mxdnr)
+
+        if(ispp == 'r') then
+          wtau = zo(i) / (abs(2*l+is) + 1)
+          do k = 1,nr
+            cdv_ae(k) = cdv_ae(k) + zo(i)*(rpsi_ae(k,j,l,is)*rpsi_ae(k,j,l,is) + &
+                                           br_ae(k,j,l,is)*br_ae(k,j,l,is))
+          enddo
+        else
+          wtau = zo(i) / (2*l + 1)
+          do k = 1,nr
+            cdv_ae(k) = cdv_ae(k) + zo(i)*rpsi_ae(k,j,l,is)*rpsi_ae(k,j,l,is)
+          enddo
+        endif
+        do k = 1,nr
+          tauv_ae(k) = tauv_ae(k) + 4*PI*r(k)*r(k)*wtau*tau(k)
+        enddo
 
       enddo
 
@@ -324,6 +361,25 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
   enddo
   enddo
 
+! pseudo valence kinetic energy density
+
+  tauv_ps = ZERO
+
+  do is = -1,1
+  do l = 0,lcmax
+    if(nindx(l,is) > 0) then
+      do k = 1,nindx(l,is)
+        i = indx(k,l,is)
+        call atom_psd_tau_orb(nr, r, drdi, rpsi_ps(:,k,l,is), l, zo(i), tau,  &
+            mxdnr)
+        do j = 1,nr
+          tauv_ps(j) = tauv_ps(j) + tau(j)
+        enddo
+      enddo
+    endif
+  enddo
+  enddo
+
 ! recasts cdpsd as expected by atom_atm_velect
 
   if(ispp == ' ') then
@@ -353,10 +409,24 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
       cdpsd, cdc, vscr, vpsd,                                            &
       iowrite, mxdnr, mxdorb)
 
+! integrals of the valence densities (debugging), the kinetic energies are
+! sum zo*ek of the orbitals (non-relativistic)
+
+!dbg  call atom_atm_integ(xdbg, cdv_ae, drdi, nr)
+!dbg  write(iowrite,'(" AE valence charge           = ",f16.8)') xdbg
+!dbg  call atom_atm_integ(xdbg, cdpsd(:,0), drdi, nr)
+!dbg  write(iowrite,'(" pseudo valence charge       = ",f16.8)') xdbg
+!dbg  call atom_atm_integ(xdbg, tauv_ae, drdi, nr)
+!dbg  write(iowrite,'(" AE valence kinetic energy   = ",f16.8)') xdbg
+!dbg  call atom_atm_integ(xdbg, tauv_ps, drdi, nr)
+!dbg  write(iowrite,'(" pseudo valence kinetic en.  = ",f16.8)') xdbg
+
 ! writes the plotting data file
 
   call atom_psd_plot(ioplot, fileplot, nr, r, drdi,                      &
       nindx, lcmax, rpsi_ps, rpsi_ae, vpsd, zion,                        &
+      ifcore, cdv_ae, cdpsd(:,0), cdc_total, cdc,                        &
+      tauv_ae, tauv_ps, tauc_total, tauc,                                &
       mxdnr, mxdlc, mxdnw)
 
 
@@ -432,6 +502,10 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
   deallocate(cdc)
   deallocate(tauc_total)
   deallocate(tauc)
+  deallocate(cdv_ae)
+  deallocate(tauv_ae)
+  deallocate(tauv_ps)
+  deallocate(tau)
   deallocate(vionic)
   deallocate(vhxc)
 

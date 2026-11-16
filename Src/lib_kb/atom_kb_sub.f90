@@ -1,8 +1,8 @@
 !>  Chooses the local potential in KB transformation
 !>
 !>  \author       Norm Troullier, J.L.Martins
-!>  \version      6.1.0
-!>  \date         November 90, May 2012, 7 November 2026.
+!>  \version      6.2.0
+!>  \date         November 90, May 2012, 16 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
@@ -41,6 +41,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 ! psml file. 28 October 2026. claude
 ! rpsi(:,:,0) to atom_kb_plot, rpsi initialized. 24 October 2026. JLM+claude
 ! basis function labels to plot_kb.dat. 7 November 2026. claude+JLM
+! Fourier transform of the partial core kinetic energy density to plot_kb.dat. 16 November 2026. claude+JLM
 
 
   implicit none
@@ -537,6 +538,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
       npot, lo, n_bsets, norbas, lo_b,                                   &
       kind_bas, nodes_bas, rc_bas, ev_bas,                               &
       inorm, vkbproj, nqnl, delql, vkbprft,                              &
+      nql, taucft, drdi, cdv,                                            &
       mxdnr, nqmax, mxdl, mxdbas, mxdset)
 
 

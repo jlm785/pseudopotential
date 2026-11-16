@@ -1,8 +1,8 @@
 !>  writes the file with data fot later plotting with plot_kb_show
 !>
 !>  \author       Norm Troullier, Jose Luis Martins
-!>  \version      6.1.0
-!>  \date         4 September 2021. 7 November 2026.
+!>  \version      6.2.0
+!>  \date         4 September 2021. 16 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_plot(itplot, filename, irel, nr, r, vlocal,           &
@@ -10,6 +10,7 @@ subroutine atom_kb_plot(itplot, filename, irel, nr, r, vlocal,           &
                     npot, lo, n_bsets, norbas, lo_b,                     &
                     kind_bas, nodes_bas, rc_bas, ev_bas,                 &
                     inorm, vkbproj, nqnl, delql, vkbprft,                &
+                    nql, taucft, drdi, cdv,                              &
                     mxdnr, nqmax, mxdl, mxdbas, mxdset)
 
 !   njtj  ***  plotting routines ***
@@ -28,6 +29,10 @@ subroutine atom_kb_plot(itplot, filename, irel, nr, r, vlocal,           &
 ! set, zeta, kind, nodes, r_c and energy appended to the basis markers (read by
 ! Tools/plot_basis.py, ignored by the Fortran readers that read columns 9-17),
 ! radius max(RMAX, largest r_c). 7 November 2026. claude+JLM
+! Fourier transform of the partial core kinetic energy density. 16 November 2026. claude+JLM
+! truncation error of the partial core kinetic energy density (atom_kb_tauc_error),
+! in the volume of the sphere with 90% of the valence charge, written in the marker
+! line, exponential format for the transforms. 16 November 2026. claude+JLM
 
   implicit none
 
@@ -76,6 +81,11 @@ subroutine atom_kb_plot(itplot, filename, irel, nr, r, vlocal,           &
   real(REAL64), intent(in)          ::  delql                            !<  spacing of points in Fourier grid
   real(REAL64), intent(in)          ::  vkbprft(0:nqmax,0:mxdl,-1:1)     !<  Fourier transform of kb-projector
 
+  integer, intent(in)               ::  nql                              !<  number of points for the Fourier grid of local potential and densities
+  real(REAL64), intent(in)          ::  taucft(0:nqmax)                  !<  Fourier transform of 4*pi*r**2 kinetic energy density of core (partial)
+  real(REAL64), intent(in)          ::  drdi(mxdnr)                      !<  d r(i) / d i
+  real(REAL64), intent(in)          ::  cdv(mxdnr)                       !<  4*pi*r**2 pseudo valence charge density
+
 ! local variables
 
   integer        ::  nrplot, nrp_v, nqp
@@ -88,6 +98,9 @@ subroutine atom_kb_plot(itplot, filename, irel, nr, r, vlocal,           &
   real(REAL64), allocatable         ::  q(:)                             !  wave-vector
   real(REAL64), allocatable         ::  ekdif(:)                         !  kinetic energy difference
   real(REAL64), allocatable         ::  vk(:)                            !  local potential
+  real(REAL64), allocatable         ::  err(:)                           !  truncation error of tau_c
+  real(REAL64)   ::  rval, xsum, xtot                  !  radius with FVAL of the valence charge
+  real(REAL64)   ::  omega                             !  volume of the sphere of radius rval
 
 ! constants
 
@@ -98,6 +111,9 @@ subroutine atom_kb_plot(itplot, filename, irel, nr, r, vlocal,           &
   real(REAL64), parameter    ::  QMAX = 12.0_REAL64
   real(REAL64), parameter    ::  QSTEP = 0.25_REAL64
   real(REAL64), parameter    ::  RSTEP = 0.05_REAL64
+  real(REAL64), parameter    ::  QSTEPT = 0.05_REAL64
+  real(REAL64), parameter    ::  FVAL = 0.9_REAL64                       !  fraction of valence charge that defines the volume for the tau_c error
+  real(REAL64), parameter    ::  PI = 4*atan(1.0_REAL64)
 
 
 ! counter
@@ -286,6 +302,63 @@ subroutine atom_kb_plot(itplot, filename, irel, nr, r, vlocal,           &
 
   endif
 
+
+! plot Fourier transform of the partial core kinetic energy density (same delql),
+! up to the last q where it is larger than SMALL, skipped if there is no core
+
+  do j = nql,0,-1
+    nqp = j
+    if(abs(taucft(j)) > SMALL) exit
+  enddo
+
+  if(nqp > 0) then
+
+    do j = 0,nqp
+      q(j) = j*delql
+    enddo
+
+    call atom_plot_one_es(1, nqp+1, q, taucft, QSTEPT, 'taucq',          &
+           itplot, nqmax+1)
+
+!   error of tau_c(r) if its expansion is truncated at q, in the volume omega of the
+!   sphere with a fraction FVAL of the valence charge (r_WS ~ 0.84 r_val for
+!   elemental solids), omega is appended to the marker line
+
+    xtot = ZERO
+    do j = 1,nr
+      xtot = xtot + cdv(j)*drdi(j)
+    enddo
+    xsum = ZERO
+    rval = r(nr)
+    do j = 1,nr
+      xsum = xsum + cdv(j)*drdi(j)
+      if(xsum > FVAL*xtot) then
+        rval = r(j)
+        exit
+      endif
+    enddo
+    omega = 4*PI*rval**3 / 3
+
+    allocate(err(0:nqmax))
+
+    call atom_kb_tauc_error(nql, delql, taucft, omega, err, nqmax)
+
+    do j = 0,nql
+      q(j) = j*delql
+    enddo
+
+    call atom_plot_one_es(1, nql+1, q, err, QSTEP, 'tauce',              &
+           itplot, nqmax+1)
+
+    write(info,'("Omega",f7.1)') omega
+    backspace(itplot)
+    read(itplot,'(a)') line
+    backspace(itplot)
+    write(itplot,'(a18,1x,a)') line(1:18), trim(info)
+
+    deallocate(err)
+
+  endif
 
   close(unit=itplot)
 

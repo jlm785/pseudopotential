@@ -2,8 +2,8 @@
 !>  and figures out the required array dimensions
 !>
 !>  \author       Jose Luis Martins
-!>  \version      6.0.4
-!>  \date         11 August 2021, 9 October 2021.
+!>  \version      6.2.0
+!>  \date         11 August 2021, 16 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_input_size(ioplot, nmax, numw, nump, nftp)
@@ -14,6 +14,7 @@ subroutine atom_plot_input_size(ioplot, nmax, numw, nump, nftp)
 ! removed H formats 22 January 2008. JLM
 ! converted to fortran 90, 6 August 2021
 ! kinetic, 9 October 2021. JLM
+! charge and kinetic energy densities. 16 November 2026. claude+JLM
 
 
   implicit none
@@ -130,6 +131,12 @@ subroutine atom_plot_input_size(ioplot, nmax, numw, nump, nftp)
 
          ifw = ifw+1
          if(number > nftp) nftp = number
+
+!     charge and kinetic energy densities (at most 4 of each)
+
+      elseif(marker(1:1) == 'd' .or. marker(1:1) == 't')then
+
+         if(number > nmax) nmax = number
 
       else
 

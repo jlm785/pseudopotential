@@ -2,7 +2,7 @@
 !>
 !>  \author       Manuel Maria Alemany, Jose Luis Martins
 !>  \version      6.1.0
-!>  \date         January 2000, 25 October 2026, 30 October 2026
+!>  \date         January 2000, 25 October 2026, 16 November 2026
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_gnuplot(iotmp, sfname, task)
@@ -12,6 +12,7 @@ subroutine atom_plot_gnuplot(iotmp, sfname, task)
 ! kill: own processes (pgrep), no crash if none, pid longer than 6. 25 October 2026. claude
 ! run: nothing (one warning) if gnuplot is not installed. 29 October 2026. JLM+claude
 ! call system replaced by the standard execute_command_line. 30 October 2026. JLM+claude
+! files: dens.gp, taur.gp. 16 November 2026. claude
 
   implicit none
 
@@ -89,6 +90,8 @@ subroutine atom_plot_gnuplot(iotmp, sfname, task)
     call execute_command_line('rm ./*t.gp ./log*.gp 2> /dev/null',         &
         exitstat=iexit, cmdstat=icmd)
     call execute_command_line('rm ./kb*.gp ./bas*.gp 2> /dev/null',        &
+        exitstat=iexit, cmdstat=icmd)
+    call execute_command_line('rm ./dens.gp ./taur.gp 2> /dev/null',       &
         exitstat=iexit, cmdstat=icmd)
     call execute_command_line('rm ./fig_*.dat 2> /dev/null',               &
         exitstat=iexit, cmdstat=icmd)
