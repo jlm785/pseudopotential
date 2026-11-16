@@ -463,9 +463,11 @@ See section~\ref{sec:orbital} for the details on how these orbitals are construc
 \subsection{Tested pseudopotentials}
 \label{sec:tested}
 
-For most elements the default parameters of the pseudopotential (reference configuration,
+For most elements the default parameters of the pseudopotential (relativistic or
+non-relativistic calculation, reference configuration,
 core radii, partial core correction and local component of the Kleinman-Bylander form)
-come from internal tables that are educated guesses.
+come from internal tables that are educated guesses
+(relativistic for the elements after calcium).
 For a few elements there are \textit{tested pseudopotentials}, sets of parameters that were
 compared with all-electron calculations of molecules and solids.
 An element may have one or several of them, each identified by a label of up to
@@ -473,7 +475,9 @@ four characters.
 For example carbon has a \texttt{HARD} pseudopotential, with a $2s^2 2p^2 3d^0$
 reference configuration, core radii of 1.10 bohr, partial core correction and the
 $d$ potential as local component, and a \texttt{SOFT} one, with $2s^2 2p^2$, core radii
-of 1.50 bohr, no partial core correction and the $p$ potential as local component.
+of 1.50 bohr, no partial core correction and the $p$ potential as local component,
+both non-relativistic, while silicon has a relativistic \texttt{HARD} and a
+non-relativistic \texttt{SOFT} pseudopotential.
 The list for an element, with a short description of the tests, is shown when
 you are asked to choose (see below); all of them are in the file
 \texttt{Src/lib\_atom/atom\_p\_tbl\_tested.f90}.
@@ -512,14 +516,15 @@ and the pseudopotential would no longer be the tested one.
 Instead, when the pseudopotential is constructed (\texttt{psd\_gen.exe}
 or \texttt{atom\_all.exe}) the parameters actually used are compared with those
 of the tested pseudopotentials of the element:
+the relativistic, spin-polarized or non-relativistic character of the calculation
+(the flag after the functional in \texttt{atom.dat}),
 the valence configuration (principal and angular quantum numbers and occupations,
 added over spin or $j$),
 the core radii (within 0.005 bohr), the partial core correction with its
 parameters \texttt{cfac} and \texttt{rcfac}, and the parameter \texttt{cfactau}
 of the partial core kinetic energy density, which is independent of the partial
 core correction (Section~\ref{sec:cc}).
-The exchange and correlation functional and the relativistic or spin-polarized
-character of the calculation are not compared, so you can generate the tested
+The exchange and correlation functional is not compared, so you can generate the tested
 pseudopotential with another functional, for example \texttt{../atom\_all.exe C HARD xcGGA}
 (check with which functional it was tested).
 The program reports the result,
@@ -538,7 +543,8 @@ or, for elements without tested pseudopotentials,
   There are no tested pseudopotentials for P, this one was not tested
   core radii: hard guess, test local and other choices
 \end{verbatim}
-Any change of a tested pseudopotential, a core radius in \texttt{atom.dat} or the
+Any change of a tested pseudopotential, a core radius or the relativistic flag in
+\texttt{atom.dat} or the
 partial core correction forced with \texttt{yes/no}, gives a pseudopotential that was not tested.
 
 When the pseudopotential was not tested, the last line gives the confidence on the
@@ -1449,6 +1455,9 @@ The file for Si could be:
 		\item (blank) : Non-polarized (spin ignored), non-relativistic
            		calculation.
 	    \end{itemize}
+	  The \texttt{atom.dat} file written by the code takes this flag from the
+	  tested pseudopotential (Section~\ref{sec:tested}), or, if there is none,
+	  is relativistic for the elements after calcium.
 	\end{itemize}
 
 	(format 3x,a2,3x,a2,a1,2x)

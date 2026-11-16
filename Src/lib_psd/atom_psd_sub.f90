@@ -2,7 +2,7 @@
 !>
 !>  \author       Norm Troullier, Jose Luis Martins
 !>  \version      6.2.0
-!>  \date         April 1990, 24 March 2026, 12 November 2026.
+!>  \date         April 1990, 24 March 2026, 15 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
@@ -22,6 +22,7 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
 ! more output files. 26 January 2026. JLM
 ! cfactau, 24 March 2026. JLM
 ! identifies tested pseudopotentials, label in psdtitle(11). 12 November 2026. JLM+claude
+! ispp compared with the tested pseudopotentials. 15 November 2026. claude
 
 
   implicit none
@@ -215,7 +216,7 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
 ! identifies tested pseudopotentials (before rc is rounded to the grid)
 
   call atom_psd_tested_match(iowrite, nameat,                           &
-      norb, ncore, no, lo, zo,                                          &
+      ispp, norb, ncore, no, lo, zo,                                    &
       rc, ifcore, cfac, rcfac, cfactau,                                 &
       label, nvar, vlist, status, lrctab,                               &
       mxdorb, mxdlc, MXDVAR)

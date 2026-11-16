@@ -1,14 +1,15 @@
 !>  Writes a default input configuration file from the chemical symbol
-!>  and the exchange and correlation functional, for the atomic ground
-!>  state configuration (non-spin-polarized up to Ca, relativistic above).
+!>  and the exchange and correlation functional.
 !>  User may edit that file to have the other cases.
-!>  The configuration, core radii and partial core correction come from
-!>  a tested pseudopotential (atom_p_tbl_tested) if there is one,
-!>  otherwise from the old tables (educated guess).
+!>  The relativistic flag, configuration, core radii and partial core
+!>  correction come from a tested pseudopotential (atom_p_tbl_tested)
+!>  if there is one, otherwise from the old tables (educated guess,
+!>  ground state configuration, non-relativistic up to Ca,
+!>  relativistic above).
 !>
 !>  \author       Jose Luis Martins
 !>  \version      6.2.0
-!>  \date         22 June 2021, 27 March 2026, 14 November 2026.
+!>  \date         22 June 2021, 27 March 2026, 15 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_atm_write_sub(ioread, filein, nameat, vtype, icorr)
@@ -23,6 +24,7 @@ subroutine atom_atm_write_sub(ioread, filein, nameat, vtype, icorr)
 ! cfactau from the tested pseudopotential. 12 November 2026. claude
 ! confidence on core radii only printed by atom_psd_tested_match. 12 November 2026. claude
 ! icorr is an argument. 14 November 2026. claude
+! ispp from the tested pseudopotential. 15 November 2026. claude
 
   implicit none
 
@@ -84,10 +86,12 @@ subroutine atom_atm_write_sub(ioread, filein, nameat, vtype, icorr)
   integer     ::  n, l
 
 
+  call atom_p_tbl_charge(nameat, iz)
+
 ! tested pseudopotentials
 
   call atom_p_tbl_tested(nameat, 'LIST', nvar, vlist, lfound,            &
-      ncore, nval, no, lo, zo, rc, pcc, llocal,                          &
+      ispp, ncore, nval, no, lo, zo, rc, pcc, llocal,                    &
       cfac, rcfac, cfactau, status_tst,                                  &
       MXDVAR)
 
@@ -126,7 +130,7 @@ subroutine atom_atm_write_sub(ioread, filein, nameat, vtype, icorr)
   if(vuse /= 'NONE') then
 
     call atom_p_tbl_tested(nameat, vuse, nvar, vlist, lfound,            &
-        ncore, nval, no, lo, zo, rc, pcc, llocal,                        &
+        ispp, ncore, nval, no, lo, zo, rc, pcc, llocal,                  &
         cfac, rcfac, cfactau, status_tst,                                &
         MXDVAR)
 
@@ -137,6 +141,9 @@ subroutine atom_atm_write_sub(ioread, filein, nameat, vtype, icorr)
          &   9(2x,a4))') trim(adjustl(nameat)), (vlist(n),n=1,nvar)
 
   else
+
+    ispp = ' '
+    if(iz > 20) ispp = 'r'
 
     jhard = 0
     call atom_p_tbl_psd_pcc(nameat, pcc, jhard)
@@ -165,11 +172,6 @@ subroutine atom_atm_write_sub(ioread, filein, nameat, vtype, icorr)
   ititle(3) = 'nerated by'
   ititle(4) = ' atm_write'
   ititle(5) = ' '//bdate
-
-  call atom_p_tbl_charge(nameat, iz)
-
-  ispp = ' '
-  if(iz > 20) ispp = 'r'
 
   call atom_atm_default_mesh(rmax, aa, bb)
 

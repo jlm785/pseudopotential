@@ -5,13 +5,14 @@
 !>
 !>  \author       claude
 !>  \version      6.2.0
-!>  \date         12 November 2026.
+!>  \date         12 November 2026. 15 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_llocal_default(nameat, llocal,                       &
       iowrite, ioreal, filereal)
 
 ! Written 12 November 2026. JLM+claude
+! ispp argument of atom_p_tbl_tested. 15 November 2026. claude
 
   implicit none
 
@@ -43,6 +44,7 @@ subroutine atom_kb_llocal_default(nameat, llocal,                       &
   integer                           ::  nvar                             !  number of tested pseudopotentials
   character(len=4)                  ::  vlist(MXDVAR)                    !  labels of tested pseudopotentials
   logical                           ::  lfound
+  character(len=1)                  ::  ispp
 
   integer                           ::  ncore, nval
   integer                           ::  no(LC+1), lo(LC+1)
@@ -76,7 +78,7 @@ subroutine atom_kb_llocal_default(nameat, llocal,                       &
   lfound = .FALSE.
   if(label /= 'NONE') then
     call atom_p_tbl_tested(nameat, label, nvar, vlist, lfound,           &
-        ncore, nval, no, lo, zo, rc, pcc, llocal,                        &
+        ispp, ncore, nval, no, lo, zo, rc, pcc, llocal,                  &
         cfac, rcfac, cfactau, status,                                    &
         MXDVAR)
   endif

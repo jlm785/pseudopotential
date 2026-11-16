@@ -4,11 +4,11 @@
 !>
 !>  \author       claude
 !>  \version      6.2.0
-!>  \date         12 November 2026.
+!>  \date         12 November 2026. 15 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_tested_match(iowrite, nameat,                       &
-      norb, ncore, no, lo, zo,                                          &
+      ispp, norb, ncore, no, lo, zo,                                    &
       rc, ifcore, cfac, rcfac, cfactau,                                 &
       label, nvar, vlist, status, lrctab,                               &
       mxdorb, mxdlc, mxdvar)
@@ -16,14 +16,15 @@ subroutine atom_psd_tested_match(iowrite, nameat,                       &
 ! Written 12 November 2026. JLM+claude
 ! cfactau compared, table values in local variables. 12 November 2026. claude
 ! message also to the default output (unit 6), contained tested_match_print. 12 November 2026. claude
+! ispp compared. 15 November 2026. JLM+claude
 
-! Compared: valence configuration (n, l and occupation summed over
-! spin or j), core radii of the valence l, partial core correction
-! and, if it is used, cfac and rcfac, and cfactau (the core kinetic
-! energy density correction is independent of the core charge one).
-! Not compared: exchange and correlation, relativistic or spin
-! polarized calculation, number of core orbitals (fixed by the
-! valence configuration).
+! Compared: relativistic or not (ispp), valence configuration (n, l
+! and occupation summed over spin or j), core radii of the valence l,
+! partial core correction and, if it is used, cfac and rcfac, and
+! cfactau (the core kinetic energy density correction is independent
+! of the core charge one).
+! Not compared: exchange and correlation, number of core orbitals
+! (fixed by the valence configuration).
 !
 ! It also identifies if the core radii of the valence l are those
 ! of the old table (atom_p_tbl_psd_tm2), and if the pseudopotential
@@ -45,6 +46,8 @@ subroutine atom_psd_tested_match(iowrite, nameat,                       &
   integer, intent(in)               ::  iowrite                          !<  default output tape
 
   character(len=2), intent(in)      ::  nameat                           !<  chemical symbol of the atom
+
+  character(len=1), intent(in)      ::  ispp                             !<  ' ' non-relativistic, 's' spin-polarized, 'r' relativistic
 
   integer, intent(in)               ::  norb                             !<  number of orbitals
   integer, intent(in)               ::  ncore                            !<  number of core orbitals
@@ -80,7 +83,8 @@ subroutine atom_psd_tested_match(iowrite, nameat,                       &
   integer                           ::  nvtmp
   logical                           ::  lfound, lmatch
 
-  integer                           ::  ncore_t, nval_t                  !  values in table
+  character(len=1)                  ::  ispp_t                           !  values in table
+  integer                           ::  ncore_t, nval_t
   integer                           ::  no_t(LC+1), lo_t(LC+1)
   real(REAL64)                      ::  zo_t(LC+1)
   real(REAL64)                      ::  rc_t(0:LC)
@@ -110,7 +114,7 @@ subroutine atom_psd_tested_match(iowrite, nameat,                       &
   status = '                              '
 
   call atom_p_tbl_tested(nameat, 'LIST', nvar, vlist, lfound,            &
-      ncore_t, nval_t, no_t, lo_t, zo_t, rc_t, pcc_t, llocal_t,          &
+      ispp_t, ncore_t, nval_t, no_t, lo_t, zo_t, rc_t, pcc_t, llocal_t,  &
       cfac_t, rcfac_t, cfactau_t, status_t,                              &
       mxdvar)
 
@@ -156,11 +160,11 @@ subroutine atom_psd_tested_match(iowrite, nameat,                       &
   do k = 1,nvar
 
     call atom_p_tbl_tested(nameat, vlist(k), nvtmp, vtmp, lfound,        &
-        ncore_t, nval_t, no_t, lo_t, zo_t, rc_t, pcc_t, llocal_t,        &
+        ispp_t, ncore_t, nval_t, no_t, lo_t, zo_t, rc_t, pcc_t, llocal_t,&
         cfac_t, rcfac_t, cfactau_t, status_t,                            &
         mxdvar)
 
-    lmatch = lfound .and. nval_t == nval
+    lmatch = lfound .and. nval_t == nval .and. ispp == ispp_t
 
     if(lmatch) then
       do j = 1,nval_t

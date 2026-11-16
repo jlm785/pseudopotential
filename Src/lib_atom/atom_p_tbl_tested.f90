@@ -1,6 +1,6 @@
 !>  Pseudopotentials that were tested against all-electron calculations:
-!>  configuration, core radii, partial core correction and
-!>  local component of the Kleinman-Bylander form.
+!>  relativistic or not, configuration, core radii, partial core
+!>  correction and local component of the Kleinman-Bylander form.
 !>
 !>  An element may have several tested pseudopotentials identified by
 !>  a label ('HARD', 'SOFT',...), the first one is the default.
@@ -15,16 +15,17 @@
 !>
 !>  \author       Jose Luis Martins+claude
 !>  \version      6.2.0
-!>  \date         12 November 2026. 14 November 2026.
+!>  \date         12 November 2026. 15 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_p_tbl_tested(name, vtype, nvar, vlist, lfound,          &
-      ncore, nval, no, lo, zo, rc, pcc, llocal,                         &
+      ispp, ncore, nval, no, lo, zo, rc, pcc, llocal,                   &
       cfac, rcfac, cfactau, status,                                     &
       mxdvar)
 
 ! Written 12 November 2026. JLM+claude
 ! Si, Ge. 14 November 2026. JLM+claude
+! ispp, relativistic or not. 15 November 2026. JLM+claude
 
   implicit none
 
@@ -46,6 +47,7 @@ subroutine atom_p_tbl_tested(name, vtype, nvar, vlist, lfound,          &
   character(len=4), intent(out)     ::  vlist(mxdvar)                    !<  labels of the tested pseudopotentials, vlist(1) is the default
   logical, intent(out)              ::  lfound                           !<  vtype is one of the labels and the following output is defined
 
+  character(len=1), intent(out)     ::  ispp                             !<  ' ' non-relativistic, 'r' relativistic
   integer, intent(out)              ::  ncore                            !<  number of core orbitals
   integer, intent(out)              ::  nval                             !<  number of valence orbitals
   integer, intent(out)              ::  no(LC+1), lo(LC+1)               !<  valence configuration
@@ -77,6 +79,7 @@ subroutine atom_p_tbl_tested(name, vtype, nvar, vlist, lfound,          &
   enddo
 
   lfound = .FALSE.
+  ispp = ' '
   ncore = 0
   nval = 0
   do i = 1,LC+1
@@ -105,6 +108,7 @@ subroutine atom_p_tbl_tested(name, vtype, nvar, vlist, lfound,          &
     if(vtype == 'HARD') then
 
       lfound = .TRUE.
+      ispp = ' '
       ncore = 1
       nval = 3
       no(1) = 2
@@ -129,6 +133,7 @@ subroutine atom_p_tbl_tested(name, vtype, nvar, vlist, lfound,          &
     elseif(vtype == 'SOFT') then
 
       lfound = .TRUE.
+      ispp = ' '
       ncore = 1
       nval = 2
       no(1) = 2
@@ -159,6 +164,7 @@ subroutine atom_p_tbl_tested(name, vtype, nvar, vlist, lfound,          &
     if(vtype == 'HARD') then
 
       lfound = .TRUE.
+      ispp = 'r'
       ncore = 3
       nval = 3
       no(1) = 3
@@ -183,6 +189,7 @@ subroutine atom_p_tbl_tested(name, vtype, nvar, vlist, lfound,          &
     elseif(vtype == 'SOFT') then
 
       lfound = .TRUE.
+      ispp = ' '
       ncore = 3
       nval = 2
       no(1) = 3
@@ -213,6 +220,7 @@ subroutine atom_p_tbl_tested(name, vtype, nvar, vlist, lfound,          &
     if(vtype == 'HARD') then
 
       lfound = .TRUE.
+      ispp = 'r'
       ncore = 6
       nval = 4
       no(1) = 4
@@ -241,6 +249,7 @@ subroutine atom_p_tbl_tested(name, vtype, nvar, vlist, lfound,          &
     elseif(vtype == 'SOFT') then
 
       lfound = .TRUE.
+      ispp = 'r'
       ncore = 6
       nval = 2
       no(1) = 4

@@ -4,12 +4,13 @@
 !>
 !>  \author       claude
 !>  \version      6.2.0
-!>  \date         12 November 2026.
+!>  \date         12 November 2026. 15 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_atm_tested_choose(nameat, vtype)
 
 ! Written 12 November 2026. JLM+claude
+! ispp argument of atom_p_tbl_tested. 15 November 2026. claude
 
   implicit none
 
@@ -34,6 +35,7 @@ subroutine atom_atm_tested_choose(nameat, vtype)
   integer                           ::  nvtmp
   logical                           ::  lfound
 
+  character(len=1)                  ::  ispp
   integer                           ::  ncore, nval
   integer                           ::  no(LC+1), lo(LC+1)
   real(REAL64)                      ::  zo(LC+1)
@@ -53,7 +55,7 @@ subroutine atom_atm_tested_choose(nameat, vtype)
 
 
   call atom_p_tbl_tested(nameat, 'LIST', nvar, vlist, lfound,            &
-      ncore, nval, no, lo, zo, rc, pcc, llocal,                          &
+      ispp, ncore, nval, no, lo, zo, rc, pcc, llocal,                    &
       cfac, rcfac, cfactau, status,                                      &
       MXDVAR)
 
@@ -69,7 +71,7 @@ subroutine atom_atm_tested_choose(nameat, vtype)
   write(6,*)
   do k = 1,nvar
     call atom_p_tbl_tested(nameat, vlist(k), nvtmp, vtmp, lfound,        &
-        ncore, nval, no, lo, zo, rc, pcc, llocal,                        &
+        ispp, ncore, nval, no, lo, zo, rc, pcc, llocal,                  &
         cfac, rcfac, cfactau, status,                                    &
         MXDVAR)
     write(6,'(4x,i2,3x,a4,3x,a30)') k, vlist(k), status
