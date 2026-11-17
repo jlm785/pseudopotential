@@ -24,7 +24,7 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
 ! identifies tested pseudopotentials, label in psdtitle(11). 12 November 2026. JLM+claude
 ! ispp compared with the tested pseudopotentials. 15 November 2026. claude
 ! valence charge and kinetic energy densities for the plots. 16 November 2026. claude+JLM
-! lr6 argument of atom_psd_partial_core, always .FALSE. 17 November 2026. claude+JLM
+! form of the partial core kinetic energy density (atom_psd_partial_core), always 'r2r4'. 17 November 2026. claude+JLM
 
 
   implicit none
@@ -397,11 +397,11 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
 ! applies (eventualy) the partial core truncation
 ! calculates zratio, zion, zval
 
-! .FALSE.: partial core kinetic energy density exp(a+b*r^2+c*r^4),
-! .TRUE. would add d*r^6 (atom_psd_pcc_exp), kept for later tests
+! form of the partial core kinetic energy density (atom_psd_pcc_exp), kept for later tests:
+! 'r2r4' exp(a+b*r^2+c*r^4) (default), 'r2r6' exp(a+b*r^2+c*r^4+d*r^6), 'r4r6' exp(a+c*r^4+d*r^6)
 
   call atom_psd_partial_core(ifcore, ispp, cfac, rcfac, cfactau,         &
-      .FALSE.,                                                           &
+      'r2r4',                                                            &
       nr, r, drdi,                                                       &
       norb, ncore, zo, znuc, zel, zratio, zion, zval,                    &
       cdpsd, cdc_total, cdc, tauc_total, tauc,                           &

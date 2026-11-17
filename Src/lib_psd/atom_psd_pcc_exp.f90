@@ -3,19 +3,23 @@
 !>  point icore. interpolation is done with Lagrange formula.
 !>  the core function is exp(ac+bc*r**2+cc*r**4)
 !>
-!>  if lr6 the core function is exp(ac+bc*r**2+cc*r**4+dc*r**6)
-!>  and the third derivative is also conserved, the Fourier
-!>  transform then decays as q**-6 instead of q**-5.
+!>  The keyword pccform chooses the form of the function:
+!>    'r2r4'  exp(ac+bc*r**2+cc*r**4), value, first and second derivatives
+!>            continuous, Fourier transform decays as q**-5 (default)
+!>    'r2r6'  exp(ac+bc*r**2+cc*r**4+dc*r**6), also the third derivative
+!>            continuous, Fourier transform decays as q**-6
+!>    'r4r6'  exp(ac+cc*r**4+dc*r**6) (bc = 0), flat at the origin, value,
+!>            first and second derivatives continuous, decays as q**-5
 !>
 !>  \author       Manuel Maria Alemany, Jose Luis Martins, claude
 !>  \version      6.2.0
 !>  \date         January 2000, 5 July 2021, 17 November 2026
 !>  \copyright    GNU Public License v2
 
-subroutine atom_psd_pcc_exp(nr, icore, lr6, ac, bc, cc, dc, r, cdc)
+subroutine atom_psd_pcc_exp(nr, icore, pccform, ac, bc, cc, dc, r, cdc)
 
 ! Converted to fortran90. 5 July 2021. JLM
-! optional r**6 term, lr6. 17 November 2026. claude+JLM
+! optional r**6 term, lr6, replaced by the form keyword pccform. 17 November 2026. claude+JLM
 
   implicit none
 
@@ -29,12 +33,12 @@ subroutine atom_psd_pcc_exp(nr, icore, lr6, ac, bc, cc, dc, r, cdc)
   real(REAL64), intent(in)          ::  r(nr)                         !<  radial grid
 
   integer, intent(in)               ::  icore                            !<  partial core correction for r < r(icore)
-  logical, intent(in)               ::  lr6                              !<  if true adds dc*r**6, third derivative continuous
+  character(len=4), intent(in)      ::  pccform                          !<  form of the function: 'r2r4', 'r2r6' or 'r4r6'
 
 ! output
 
   real(REAL64), intent(out)         ::  ac, bc, cc                       !<  core function is exp(ac+bc*r**2+cc*r**4)
-  real(REAL64), intent(out)         ::  dc                               !<  coefficient of r**6 (zero if not lr6)
+  real(REAL64), intent(out)         ::  dc                               !<  coefficient of r**6 (zero for 'r2r4')
 
 ! input and output
 
@@ -149,7 +153,21 @@ subroutine atom_psd_pcc_exp(nr, icore, lr6, ac, bc, cc, dc, r, cdc)
 
   cdcpp = (ddcdc - ddr * cdcp) / dr**2
 
-  if(lr6) then
+  select case (pccform)
+
+  case ('r2r4')
+
+    dc = ZERO
+
+    cc = r(icore) * cdcpp - cdcp
+    cc = cc / (8 * r(icore)**3)
+
+    bc = cdcp - 4 * cc * r(icore)**3
+    bc = bc / (2 * r(icore))
+
+    ac = cdc_sca(0) - bc*r(icore)**2 - cc*r(icore)**4
+
+  case ('r2r6')
 
 !   weights of the third derivative: 6 times the coefficient of x**3
 !   of the Lagrange polynomial prod_{jn/=in} (x-jn)/(in-jn)
@@ -191,28 +209,40 @@ subroutine atom_psd_pcc_exp(nr, icore, lr6, ac, bc, cc, dc, r, cdc)
     bc = (cdcp/rc - 4*cc*rc2 - 6*dc*rc2*rc2) / 2
     ac = cdc_sca(0) - ((dc*rc2 + cc)*rc2 + bc)*rc2
 
-    do i = 1,icore
-      cdc(i)= r(i)*r(i) *                                                &
-              exp( ((dc*r(i)*r(i) + cc)*r(i)*r(i) + bc) * r(i)*r(i) + ac )
-    enddo
+  case ('r4r6')
 
-  else
+!   ac + cc*r**4 + dc*r**6 and its first two derivatives at r(icore)
 
-    dc = ZERO
+    rc = r(icore)
+    rc2 = rc*rc
 
-    cc = r(icore) * cdcpp - cdcp
-    cc = cc / (8 * r(icore)**3)
+    dc = (cdcpp - 3*cdcp/rc) / (12*rc2*rc2)
+    cc = (cdcp/rc - 6*dc*rc2*rc2) / (4*rc2)
+    bc = ZERO
+    ac = cdc_sca(0) - (dc*rc2 + cc)*rc2*rc2
 
-    bc = cdcp - 4 * cc * r(icore)**3
-    bc = bc / (2 * r(icore))
+  case default
 
-    ac = cdc_sca(0) - bc*r(icore)**2 - cc*r(icore)**4
+    write(6,*)
+    write(6,*)
+    write(6,*)  ' error in psd_pcc_exp : '
+    write(6,*)  ' unknown form of the partial core ', pccform
+    write(6,*)
 
+    stop
+
+  end select
+
+  if(pccform == 'r2r4') then
     do i = 1,icore
         cdc(i)= r(i)*r(i) *             &
                 exp( (cc*r(i)*r(i) + bc) * r(i)*r(i) + ac )
     enddo
-
+  else
+    do i = 1,icore
+      cdc(i)= r(i)*r(i) *                                                &
+              exp( ((dc*r(i)*r(i) + cc)*r(i)*r(i) + bc) * r(i)*r(i) + ac )
+    enddo
   endif
 
   return

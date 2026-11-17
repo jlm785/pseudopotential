@@ -23,7 +23,7 @@ subroutine atom_kb_tauc_error(nql, delql, taucft, omega, err, nqmax)
 ! with the asymptotic q^-5 decay of tau_c(q) (third derivative discontinuous at the
 ! radius of the partial core), |tau_c|^2 = A / q^10 with A averaged over the last
 ! QFIT of the grid.  If tau_c(q) decays faster the estimate is too large (conservative).
-! With the r**6 term of the partial core (lr6 in atom_psd_partial_core) the decay is q^-6:
+! With the form 'r2r6' of the partial core (pccform in atom_psd_partial_core) the decay is q^-6:
 ! |tau_c|^2 = A / q^12, q**12 in afit and afit / (9*qmax**9) for the tail.
 
   implicit none

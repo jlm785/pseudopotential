@@ -8,7 +8,7 @@
 
 
 subroutine atom_psd_partial_core(ifcore, ispp, cfac, rcfac, cfactau,     &
-    lr6,                                                                 &
+    pccform,                                                             &
     nr, r, drdi,                                                         &
     norb, ncore, zo, znuc, zel, zratio, zion, zval,                      &
     cdpsd, cdc_total, cdc, tauc_total, tauc,                             &
@@ -17,7 +17,7 @@ subroutine atom_psd_partial_core(ifcore, ispp, cfac, rcfac, cfactau,     &
 ! extracted from atom_psd_unscreen, 5 February 2026. JLM
 ! added flexibility to tau correction radius. 24 March 2026. JLM
 ! full core kinetic energy density if cfactau < 0 (as cfac). 27 October 2026. claude
-! optional r**6 term in the partial core kinetic energy density, lr6. 17 November 2026. claude+JLM
+! form of the partial core kinetic energy density, pccform (was lr6). 17 November 2026. claude+JLM
 
 !mmga  modifications from early Sverre code by Manuel Maria Gonzalez Alemany
 
@@ -54,7 +54,7 @@ subroutine atom_psd_partial_core(ifcore, ispp, cfac, rcfac, cfactau,     &
   real(REAL64), intent(in)          ::  cfac                             !<  core correction factor for charge density
   real(REAL64), intent(in)          ::  rcfac                            !<  default core correction radius
   real(REAL64), intent(in)          ::  cfactau                          !<  core correction factor for kinetic energy density
-  logical, intent(in)               ::  lr6                              !<  if true the partial core kinetic energy density has an r**6 term
+  character(len=4), intent(in)      ::  pccform                          !<  form of the partial core kinetic energy density, 'r2r4', 'r2r6' or 'r4r6' (atom_psd_pcc_exp)
 
 ! output
 
@@ -133,7 +133,7 @@ subroutine atom_psd_partial_core(ifcore, ispp, cfac, rcfac, cfactau,     &
         enddo
       endif
 
-      call atom_psd_pcc_exp(nr, icore, .FALSE., ac, bc, cc, dc, r, cdc)
+      call atom_psd_pcc_exp(nr, icore, 'r2r4', ac, bc, cc, dc, r, cdc)
 
     endif
 
@@ -159,8 +159,9 @@ subroutine atom_psd_partial_core(ifcore, ispp, cfac, rcfac, cfactau,     &
 
 ! if cfactau < 0 or the valence charge is zero the full core kinetic
 ! energy density is used (tests with very large cutoffs)
-! tauc_partial(r) = r^2*exp(ac+bc*r^2+cc*r^4) inside r(icore), with lr6 also +dc*r^6
-! (third derivative continuous, Fourier transform decays as q^-6 instead of q^-5)
+! tauc_partial(r) = r^2*exp(ac+bc*r^2+cc*r^4) inside r(icore) ('r2r4'),
+! r^2*exp(ac+bc*r^2+cc*r^4+dc*r^6) ('r2r6', third derivative continuous, Fourier
+! transform decays as q^-6 instead of q^-5), r^2*exp(ac+cc*r^4+dc*r^6) ('r4r6', flat)
 
   if(xsum > EPS) then
 
@@ -178,15 +179,15 @@ subroutine atom_psd_partial_core(ifcore, ispp, cfac, rcfac, cfactau,     &
         if (cdc_total(i) > cdfac) exit
       enddo
 
-      call atom_psd_pcc_exp(nr, icore, lr6, ac, bc, cc, dc, r, tauc)
+      call atom_psd_pcc_exp(nr, icore, pccform, ac, bc, cc, dc, r, tauc)
 
       write(iowrite,*)
       write(iowrite,'(" kinetic energy density truncated")')
       write(iowrite,'(" inside r =",f7.3)') r(icore)
-      if(lr6) then
-        write(iowrite,'(" ac =",es11.3,"  bc =",es11.3,"  cc =",es11.3,"  dc =",es11.3)') ac, bc, cc, dc
-      else
+      if(pccform == 'r2r4') then
         write(iowrite,'(" ac =",f7.3," bc =",f7.3," cc =",f7.3)') ac, bc, cc
+      else
+        write(iowrite,'(1x,a4,"  ac =",es11.3,"  bc =",es11.3,"  cc =",es11.3,"  dc =",es11.3)') pccform, ac, bc, cc, dc
       endif
       write(iowrite,*)
 
