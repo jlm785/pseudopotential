@@ -2,7 +2,7 @@
 !>
 !>  \author       Norm Troullier, Jose Luis Martins
 !>  \version      6.2.0
-!>  \date         April 1990, 24 March 2026, 16 November 2026.
+!>  \date         April 1990, 24 March 2026, 17 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
@@ -24,6 +24,7 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
 ! identifies tested pseudopotentials, label in psdtitle(11). 12 November 2026. JLM+claude
 ! ispp compared with the tested pseudopotentials. 15 November 2026. claude
 ! valence charge and kinetic energy densities for the plots. 16 November 2026. claude+JLM
+! lr6 argument of atom_psd_partial_core, always .FALSE. 17 November 2026. claude+JLM
 
 
   implicit none
@@ -396,7 +397,11 @@ subroutine atom_psd_sub(rc, ifcore, cfac, rcfac, cfactau, lrci,          &
 ! applies (eventualy) the partial core truncation
 ! calculates zratio, zion, zval
 
+! .FALSE.: partial core kinetic energy density exp(a+b*r^2+c*r^4),
+! .TRUE. would add d*r^6 (atom_psd_pcc_exp), kept for later tests
+
   call atom_psd_partial_core(ifcore, ispp, cfac, rcfac, cfactau,         &
+      .FALSE.,                                                           &
       nr, r, drdi,                                                       &
       norb, ncore, zo, znuc, zel, zratio, zion, zval,                    &
       cdpsd, cdc_total, cdc, tauc_total, tauc,                           &

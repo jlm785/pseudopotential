@@ -3,14 +3,19 @@
 !>  point icore. interpolation is done with Lagrange formula.
 !>  the core function is exp(ac+bc*r**2+cc*r**4)
 !>
-!>  \author       Manuel Maria Alemany
-!>  \version      6.013
-!>  \date         January 2000, 5 July 2021
+!>  if lr6 the core function is exp(ac+bc*r**2+cc*r**4+dc*r**6)
+!>  and the third derivative is also conserved, the Fourier
+!>  transform then decays as q**-6 instead of q**-5.
+!>
+!>  \author       Manuel Maria Alemany, Jose Luis Martins, claude
+!>  \version      6.2.0
+!>  \date         January 2000, 5 July 2021, 17 November 2026
 !>  \copyright    GNU Public License v2
 
-subroutine atom_psd_pcc_exp(nr, icore, ac, bc, cc, r, cdc)
+subroutine atom_psd_pcc_exp(nr, icore, lr6, ac, bc, cc, dc, r, cdc)
 
 ! Converted to fortran90. 5 July 2021. JLM
+! optional r**6 term, lr6. 17 November 2026. claude+JLM
 
   implicit none
 
@@ -24,10 +29,12 @@ subroutine atom_psd_pcc_exp(nr, icore, ac, bc, cc, r, cdc)
   real(REAL64), intent(in)          ::  r(nr)                         !<  radial grid
 
   integer, intent(in)               ::  icore                            !<  partial core correction for r < r(icore)
+  logical, intent(in)               ::  lr6                              !<  if true adds dc*r**6, third derivative continuous
 
 ! output
 
   real(REAL64), intent(out)         ::  ac, bc, cc                       !<  core function is exp(ac+bc*r**2+cc*r**4)
+  real(REAL64), intent(out)         ::  dc                               !<  coefficient of r**6 (zero if not lr6)
 
 ! input and output
 
@@ -42,6 +49,11 @@ subroutine atom_psd_pcc_exp(nr, icore, ac, bc, cc, r, cdc)
   real(REAL64)             ::  f1, f2
   real(REAL64)             ::  dr, ddr
   real(REAL64)             ::  cdcp,cdcpp,ddcdc
+  real(REAL64)             ::  dddr_k(-nn:nn)                            !  weights of the third derivative
+  real(REAL64)             ::  p(0:2*nn)                                 !  coefficients of a Lagrange polynomial
+  real(REAL64)             ::  denom
+  real(REAL64)             ::  dddr, dddcdc, cdcppp
+  real(REAL64)             ::  rc, rc2
 
 ! constants
 
@@ -49,7 +61,7 @@ subroutine atom_psd_pcc_exp(nr, icore, ac, bc, cc, r, cdc)
 
 ! counters
 
-  integer     ::  i, in, jn, kn, ln
+  integer     ::  i, in, jn, kn, ln, ip, np
 
 
   if ( (icore - nn) < 1 .or. (icore + nn) > nr ) then
@@ -137,18 +149,71 @@ subroutine atom_psd_pcc_exp(nr, icore, ac, bc, cc, r, cdc)
 
   cdcpp = (ddcdc - ddr * cdcp) / dr**2
 
-  cc = r(icore) * cdcpp - cdcp
-  cc = cc / (8 * r(icore)**3)
+  if(lr6) then
 
-  bc = cdcp - 4 * cc * r(icore)**3
-  bc = bc / (2 * r(icore))
+!   weights of the third derivative: 6 times the coefficient of x**3
+!   of the Lagrange polynomial prod_{jn/=in} (x-jn)/(in-jn)
 
-  ac = cdc_sca(0) - bc*r(icore)**2 - cc*r(icore)**4
+    do in = in1,in2
+      p = ZERO
+      p(0) = ONE
+      np = 0
+      denom = ONE
+      do jn = in1,in2
+        if (jn /= in) then
+          np = np + 1
+          do ip = np,1,-1
+            p(ip) = p(ip-1) - jn*p(ip)
+          enddo
+          p(0) = -jn*p(0)
+          denom = denom * (in - jn)
+        endif
+      enddo
+      dddr_k(in) = 6*p(3) / denom
+    enddo
 
-  do i = 1,icore
-      cdc(i)= r(i)*r(i) *             &
-              exp( (cc*r(i)*r(i) + bc) * r(i)*r(i) + ac )
-  enddo
+    dddr   = ZERO
+    dddcdc = ZERO
+    do in = in1,in2
+      dddr   = dddr   + dddr_k(in) * r(icore+in)
+      dddcdc = dddcdc + dddr_k(in) * cdc_sca(in)
+    enddo
+
+    cdcppp = (dddcdc - 3*cdcpp*dr*ddr - cdcp*dddr) / dr**3
+
+!   ac + bc*r**2 + cc*r**4 + dc*r**6 and its first three derivatives at r(icore)
+
+    rc = r(icore)
+    rc2 = rc*rc
+
+    dc = ( cdcppp/(24*rc) - (cdcpp - cdcp/rc)/(8*rc2) ) / (2*rc2)
+    cc = cdcppp/(24*rc) - 5*dc*rc2
+    bc = (cdcp/rc - 4*cc*rc2 - 6*dc*rc2*rc2) / 2
+    ac = cdc_sca(0) - ((dc*rc2 + cc)*rc2 + bc)*rc2
+
+    do i = 1,icore
+      cdc(i)= r(i)*r(i) *                                                &
+              exp( ((dc*r(i)*r(i) + cc)*r(i)*r(i) + bc) * r(i)*r(i) + ac )
+    enddo
+
+  else
+
+    dc = ZERO
+
+    cc = r(icore) * cdcpp - cdcp
+    cc = cc / (8 * r(icore)**3)
+
+    bc = cdcp - 4 * cc * r(icore)**3
+    bc = bc / (2 * r(icore))
+
+    ac = cdc_sca(0) - bc*r(icore)**2 - cc*r(icore)**4
+
+    do i = 1,icore
+        cdc(i)= r(i)*r(i) *             &
+                exp( (cc*r(i)*r(i) + bc) * r(i)*r(i) + ac )
+    enddo
+
+  endif
 
   return
 
