@@ -4,7 +4,7 @@
 !>
 !>  \author       claude+JlMartins
 !>  \version      6.2.0
-!>  \date         25 October 2026, 16 November 2026.
+!>  \date         25 October 2026, 17 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_spec(iotape, sfname, nlabel, zion, lcentr,         &
@@ -13,6 +13,7 @@ subroutine atom_plot_spec(iotape, sfname, nlabel, zion, lcentr,         &
 ! Written by claude from atom_plot_command. 25 October 2026. claude
 ! fwft, fppt, kbop, kbtr, kbek, kbvk, ylog. 25 October 2026. claude
 ! dens, taur, kbtc, kbte. 16 November 2026. claude+JLM
+! reference line of kbte at the tolerance of atom_kb_sub (TOLTAU). 17 November 2026. claude+JLM
 
 ! Same arguments as atom_plot_command (without lpdf).
 ! All figures of atom_plot_command are implemented, unknown figures
@@ -261,9 +262,11 @@ subroutine atom_plot_spec(iotape, sfname, nlabel, zion, lcentr,         &
 
 ! reference lines, for kbek and kbte the suggested accuracies (Ry), none for the other log scales
 
-  if(sfname == 'kbek' .or. sfname == 'kbte') then
+  if(sfname == 'kbek') then
     write(iotape,'("hline = 0.0004")')
     write(iotape,'("hline = 0.005")')
+  elseif(sfname == 'kbte') then
+    write(iotape,'("hline = 0.05")')
   elseif(sfname == 'kbtc' .or. sfname == 'dens' .or. sfname == 'taur') then
     continue
   else

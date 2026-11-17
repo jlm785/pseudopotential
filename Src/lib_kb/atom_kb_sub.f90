@@ -1,8 +1,10 @@
-!>  Chooses the local potential in KB transformation
+!>  Converts a semi-local pseudopotential to the Kleinman and Bylander
+!>  form, PRL 48, 1425 (1982) and writes files in several formats with the
+!>  KB operators in both real and Fourier space.
 !>
 !>  \author       Norm Troullier, J.L.Martins
 !>  \version      6.2.0
-!>  \date         November 90, May 2012, 16 November 2026.
+!>  \date         November 90, May 2012, 17 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
@@ -12,10 +14,6 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
          iopsdkb, filepsdkb, ioplot, fileplot,                           &
          mxdnr, mxdl, mxdset)
 
-! converts a semi-local pseudopotential to the Kleinman and Bylander
-! form, PRL 48, 1425 (1982) and writes files in several formats with the
-! KB operators in both real and Fourier space.
-!
 !
 ! The program uses          RYDBERG UNITS
 !
@@ -42,6 +40,8 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 ! rpsi(:,:,0) to atom_kb_plot, rpsi initialized. 24 October 2026. JLM+claude
 ! basis function labels to plot_kb.dat. 7 November 2026. claude+JLM
 ! Fourier transform of the partial core kinetic energy density to plot_kb.dat. 16 November 2026. claude+JLM
+! cutoff of the partial core kinetic energy density (atom_kb_tauc_cutoff), suggested cutoffs
+! to the title of _POTKB_F.DAT. 17 November 2026. claude+JLM
 
 
   implicit none
@@ -174,6 +174,11 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 
   real(REAL64), allocatable         ::  ektot(:)                          !  Cumulative kineti energy of wave-functions in Fourier space
 
+  real(REAL64), allocatable         ::  errtau(:)                         !  truncation error of the partial core kinetic energy density (Ry)
+  real(REAL64)                      ::  omega                             !  volume of the sphere with 90% of the valence charge (bohr^3)
+  real(REAL64)                      ::  qtau                              !  wave-vector where errtau = TOLTAU
+  integer                           ::  iecut(3)                          !  suggested cutoffs (Ha): bands, pressure, partial core tau
+
 ! other local variables
 
   real(REAL64)                      ::  rtry
@@ -187,6 +192,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 
   real(REAL64), parameter           ::  ZERO = 0.0_REAL64, ONE = 1.0_REAL64
   real(REAL64), parameter           ::  SMALL = 1.0E-6_REAL64
+  real(REAL64), parameter           ::  TOLTAU = 0.05_REAL64             !  tolerance for the truncation error of tau_c (Ry), provisional
 
 ! counters
 
@@ -390,8 +396,35 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
     if(abs(ektot(nqbas)-ektot(j)) > 0.005) exit
   enddo
 
-  write(iowrite,*) '  lower  cutoff (bands)   ',nint(qb*qb/2),' Ha'
-  write(iowrite,*) '  higher cutoff (pressure)',nint(qa*qa/2),' Ha'
+  iecut(1) = nint(qb*qb/2)
+  iecut(2) = nint(qa*qa/2)
+
+  write(iowrite,*) '  lower  cutoff (bands)   ',iecut(1),' Ha'
+  write(iowrite,*) '  higher cutoff (pressure)',iecut(2),' Ha'
+  write(iowrite,*)
+
+! cutoff for the partial core kinetic energy density (meta-GGA), E = q^2/2 Ha
+
+  allocate(taucft(0:nqmax))
+  allocate(errtau(0:nqmax))
+
+  call atom_kb_tauc_cutoff(nr, r, drdi, cdv, tauc,                       &
+         nql, delql, TOLTAU, taucft, omega, errtau, qtau,                &
+         mxdnr, nqmax)
+
+  iecut(3) = nint(qtau*qtau/2)
+
+  write(iowrite,*) '  partial core tau cutoff ',iecut(3),' Ha'
+  if(errtau(0) == ZERO) then
+    write(iowrite,'("   (no core kinetic energy density)")')
+  else
+    write(iowrite,'("   (error of tau_c",es8.1," Ry in",f7.1," bohr^3)")')  &
+               TOLTAU, omega
+    if(qtau > nql*delql) then
+      write(iowrite,'("   (extrapolated beyond the Fourier grid, q >",f6.1,")")')  &
+               nql*delql
+    endif
+  endif
   write(iowrite,*)
 
   allocate(vlocal(mxdnr))
@@ -469,14 +502,13 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   allocate(vkbprft(0:nqmax,0:mxdl,-1:1))
   allocate(cdcft(0:nqmax))
   allocate(cdvft(0:nqmax))
-  allocate(taucft(0:nqmax))
   allocate(basft(0:nqbas,mxdbas,mxdset))
 
 
   call atom_kb_pot_four(npot, lo, irel, nicore, nr, r, drdi, zion,       &
          nql, nqnl, delql, nqbas, delqbas, vlocal, inorm, vkbproj,       &
-         cdc, cdv, tauc,                                                 &
-         vlocft, vql0, vkbprft, cdcft, cdvft, taucft, basft,             &
+         cdc, cdv,                                                       &
+         vlocft, vql0, vkbprft, cdcft, cdvft, basft,                     &
          n_bsets, norbas, lo_b, rpsi_b,                                  &
          mxdl, mxdnr, nqmax, nqbas, mxdbas, mxdset)
 
@@ -510,6 +542,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
 
   call atom_kb_psd_out_four(iokb, filekb,                                &
          nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,  &
+         iecut,                                                          &
          nql, nqnl, delql, nqbas, delqbas, zion, vql0,                   &
          npot, lo, ev, inorm, vkbprft, vlocft, cdcft, cdvft, taucft,     &
          n_bsets, norbas, lo_b, basft,                                   &
@@ -538,7 +571,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
       npot, lo, n_bsets, norbas, lo_b,                                   &
       kind_bas, nodes_bas, rc_bas, ev_bas,                               &
       inorm, vkbproj, nqnl, delql, vkbprft,                              &
-      nql, taucft, drdi, cdv,                                            &
+      nql, taucft, omega, errtau,                                        &
       mxdnr, nqmax, mxdl, mxdbas, mxdset)
 
 
@@ -574,6 +607,7 @@ subroutine atom_kb_sub(llocal, nql, delql, nqbas, delqbas,               &
   deallocate(cdcft)
   deallocate(cdvft)
   deallocate(taucft)
+  deallocate(errtau)
   deallocate(basft)
 
   return

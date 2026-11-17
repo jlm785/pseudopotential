@@ -563,6 +563,9 @@ The result is written as \texttt{var=HARD} (or \texttt{var=NONE} if the pseudopo
 was not tested) in the title of \texttt{psd.pot}, after the configuration and core radii,
 and from there it goes to the titles of \textit{Xy}\texttt{\_POTKB\_F.DAT} and
 \texttt{pseudokb.dat} and to the \textit{Xy}\texttt{.psml} file.
+In the title of \textit{Xy}\texttt{\_POTKB\_F.DAT} it is followed by the suggested
+kinetic energy cutoffs in Hartree (Section~\ref{sec:kb-cutoffs}),
+\texttt{ecb=} (bands), \texttt{ecp=} (pressure) and \texttt{ect=} (partial core kinetic energy density).
 \texttt{kb\_conv.exe} reads it from \texttt{psd.pot} and uses the local component of the
 tested pseudopotential, or the one of the old table (not tested) if the
 pseudopotential was not tested.
@@ -1065,7 +1068,20 @@ in the plane-wave code,
    lower  cutoff (bands)             12  Ha
    higher cutoff (pressure)          20  Ha
 \end{verbatim}
-and then it will
+\label{sec:kb-cutoffs}
+followed by the cutoff for the partial core kinetic energy density, $q^2/2$ (Ha) for the
+smallest $q$ where its truncation error $\Delta \tau_c(q)$ (figure \texttt{kbte}, Section~\ref{sec:run-show-kb})
+is below 0.05~Ry, a provisional value, with the volume $\Omega$ used for the error.
+\begin{verbatim}
+   partial core tau cutoff          131  Ha
+   (error of tau_c 5.0E-02 Ry in  262.5 bohr^3)
+\end{verbatim}
+(here for the tested Ge pseudopotential).  If $\Delta \tau_c$ is still above the tolerance at the
+end of the Fourier grid ($q = 40$~bohr$^{-1}$) the cutoff is extrapolated with the $q^{-5}$ tail
+and a third line says so.  As $\tau_c$ is on the grid of the density, whose $q$ is twice the one of
+the wave-functions, the corresponding wave-function cutoff is one fourth of this value.
+The three cutoffs are also written in the title of \textit{Xy}\texttt{\_POTKB\_F.DAT}.
+Then it will
 show the ratio $\int u_l^2\, \delta V_l\, dr / \int u_l^2\, |\delta V_l|\, dr$,
 where $u_l = r \psi_l$ is the pseudo-wave-function and $\delta V_l = V_l - V_\text{local}$
 the difference between the semi-local and local pseudopotentials.
@@ -1140,6 +1156,7 @@ of convergence of the total energy with plane-wave basis size by running
 
 \noindent\texttt{atom/WORK\$ ../plot{\_}kb{\_}show.exe}
 
+\label{sec:run-show-kb}
 The figure \texttt{kbtc} shows, in a logarithmic scale as \texttt{kbek}, the absolute value of the Fourier transform
 $\tau_c(q)$ of the partial core kinetic energy density.  Beyond the Gaussian-like decay it has a tail
 proportional to $\sin(q r_0)/q^5$ that comes from the discontinuity of the third derivative of $\tau_c(r)$ at the
@@ -1152,7 +1169,8 @@ which by Parseval and Cauchy-Schwarz is an upper bound of $\int_\Omega |\tau_c(\
 in the volume $\Omega$ of the sphere that contains 90\% of the valence charge
 (for elemental solids the Wigner-Seitz radius is on average 0.84 of its radius), shown in the legend.
 A finite volume is needed because the sharp truncation leaves ripples $\propto \cos(qr)/r^2$.
-It is in Rydberg as \texttt{kbek} and shows the same reference lines.  The part beyond the last point
+It is in Rydberg as \texttt{kbek}, and the reference line at 0.05~Ry (provisional) gives the
+partial core tau cutoff printed after the suggested range of kinetic energy cutoff.  The part beyond the last point
 of the Fourier grid is estimated from the $q^{-5}$ tail.  If the partial core kinetic energy
 density is in a plane-wave code on the grid of the density, its cutoff is twice the $q$ of the wave-functions.
 

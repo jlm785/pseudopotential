@@ -1,13 +1,15 @@
 !>  Writes the fourier transform of the KB pseudopotential in ascii format
 !>  to file fname
 !>
+!>
 !>  \author       N. Troullier, J.L.Martins
-!>  \version      6.1.0
-!>  \date         November 1990, April-June 2012, 5 February 2026.
+!>  \version      6.2.0
+!>  \date         November 1990, April-June 2012, 17 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_kb_psd_out_four(iotape, fname,                           &
       nameat, icorr, irel, nicore, irdate, irvers, irayps, psdtitle,     &
+      iecut,                                                             &
       nql, nqnl, delql, nqbas, delqbas, zion, vql0,                      &
       npot, lo, ev, inorm, vkbprft, vlocft, cdcft, cdvft, taucft,        &
       n_bsets, norbas, lo_b, basft,                                      &
@@ -17,6 +19,12 @@ subroutine atom_kb_psd_out_four(iotape, fname,                           &
 ! wv -> bas.  18 September 2021. JLM
 ! psdtitle. 19 May 2022. JLM
 ! taucft, 5 February 2026. JLM
+! suggested cutoffs in the title. 17 November 2026. claude+JLM
+
+
+!>  The title (first line) has after the label of the tested pseudopotential
+!>  (var=, field 11 of psdtitle) the suggested kinetic energy cutoffs in Ha:
+!>  ecb= (bands), ecp= (pressure) and ect= (partial core kinetic energy density)
 
   implicit none
 
@@ -40,6 +48,7 @@ subroutine atom_kb_psd_out_four(iotape, fname,                           &
   character(len=10), intent(in)     ::  irdate, irvers                   !<  date and version of original calculation
   character(len=10), intent(in)     ::  irayps(4)                        !<  type of pseudopotential
   character(len=10), intent(in)     ::  psdtitle(20)                     !<  pseudopotential parameters
+  integer, intent(in)               ::  iecut(3)                         !<  suggested cutoffs (Ha): bands, pressure, partial core tau
 
   integer, intent(in)               ::  npot(-1:1)                       !<  number of orbitals (s,p,d,...).  -1:  j=l-1/2.  0:  average.  1:  j=l+1/2
   integer, intent(in)               ::  nql                              !<  number of points for the local Fourier grid
@@ -70,6 +79,7 @@ subroutine atom_kb_psd_out_four(iotape, fname,                           &
 ! local variables
 
   integer          ::  l
+  character(len=10)  ::  title(20)                                       !  psdtitle with the suggested cutoffs
 
 ! constants
 
@@ -84,8 +94,17 @@ subroutine atom_kb_psd_out_four(iotape, fname,                           &
 
   open (unit = iotape, file = trim(fname), form='FORMATTED', status='UNKNOWN')
 
+! The title (first line) has after the label of the tested pseudopotential
+! (var=, field 11 of psdtitle) the suggested kinetic energy cutoffs in Ha:
+! ecb= (bands), ecp= (pressure) and ect= (partial core kinetic energy density)
+
+  title = psdtitle
+  write(title(12),'(" ecb=",i5)') iecut(1)
+  write(title(13),'(" ecp=",i5)') iecut(2)
+  write(title(14),'(" ect=",i5)') iecut(3)
+
   write(iotape,'(1x,a2,1x,a2,1x,a3,1x,a4,1x,6a10,1x,20a10)')             &
-       nameat,icorr,irel,nicore,irdate,irvers,irayps,psdtitle
+       nameat,icorr,irel,nicore,irdate,irvers,irayps,title
   write(iotape,*) nint(zion),nql,delql,vql0
 
   if(irel == 'rel') then

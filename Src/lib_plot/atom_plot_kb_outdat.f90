@@ -1,9 +1,9 @@
 !>  Writes the files with data for subsequent plotting
-!>  of wave-functions and potentials with gnuplot
+!>  of wave-functions, potentials, etc... with gnuplot
 !>
 !>  \author       Peter Schuster, Manuel Maria Alemany, Jose Luis Martins
 !>  \version      6.2.0
-!>  \date         4 September 2021, 25 October 2026, 16 November 2026.
+!>  \date         4 September 2021, 25 October 2026, 17 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
@@ -26,6 +26,7 @@ subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
 ! xmaxwb, largest radius of wave-functions and basis functions. 7 November 2026. claude+JLM
 ! Fourier transform (kbtc.gp) and truncation error (kbte.gp) of the partial core
 ! kinetic energy density. 16 November 2026. claude+JLM
+! range of kbte down to 10^-3 at least (reference line). 17 November 2026. claude+JLM
 
   implicit none
 
@@ -313,6 +314,7 @@ subroutine atom_plot_kb_outdat (iost, nmax, numw, numb, nump, nftp,      &
     ymaxte = (10*ONE)**floor(log10(te(1))+1)
     yminte = ymaxte/(10*ONE)**12
     if(te(numbte) > ZERO) yminte = max((10*ONE)**floor(log10(te(numbte))), yminte)
+    yminte = min(yminte, ONE/1000)
 
     close(iob)
 

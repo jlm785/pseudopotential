@@ -2,7 +2,7 @@
 !>
 !>  \author       Peter Schuster, Manuel Maria Alemany, Jose Luis Martins
 !>  \version      6.2.0
-!>  \date         April 1993, January 2000, 9 August 2021, 16 November 2026.
+!>  \date         April 1993, January 2000, 9 August 2021, 17 November 2026.
 !>  \copyright    GNU Public License v2
 
 subroutine atom_plot_command(iotape, sfname, nlabel, zion, lcentr, lpdf, &
@@ -13,6 +13,7 @@ subroutine atom_plot_command(iotape, sfname, nlabel, zion, lcentr, lpdf, &
 ! offset removed. 18 October 2021. JLM
 ! charge and kinetic energy densities (dens, taur), Fourier transform
 ! of the partial core kinetic energy density (kbtc) and its truncation error (kbte). 16 November 2026. claude+JLM
+! reference line of kbte at the tolerance of atom_kb_sub (TOLTAU). 17 November 2026. claude+JLM
 
   implicit none
 
@@ -315,7 +316,11 @@ subroutine atom_plot_command(iotape, sfname, nlabel, zion, lcentr, lpdf, &
 
     continue
 
-  elseif(sfname /= 'kbek' .and. sfname /= 'kbte') then
+  elseif(sfname == 'kbte') then
+
+    write(iotape,'("0.05 w li ls 6  notitle")')
+
+  elseif(sfname /= 'kbek') then
 
     write(iotape,'("0 w li ls 8  notitle")')
 
